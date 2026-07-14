@@ -10,8 +10,11 @@ export function TaperChecklist({ blocks }: { blocks: Block[] }) {
   const storageKey = "rtd-taper-checklist";
 
   useEffect(() => {
+    // Reads localStorage after mount (not during render) so the client's
+    // first paint matches the server's, avoiding a hydration mismatch.
     try {
       const raw = window.localStorage.getItem(storageKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setChecked(JSON.parse(raw));
     } catch {
       // ignore corrupt local state

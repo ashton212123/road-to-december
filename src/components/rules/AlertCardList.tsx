@@ -34,6 +34,9 @@ export function AlertCardList({ alerts }: { alerts: RuleAlert[] }) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Reads localStorage after mount (not during render) so the client's
+    // first paint matches the server's, avoiding a hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDismissed(loadDismissed());
   }, []);
 
