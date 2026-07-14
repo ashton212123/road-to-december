@@ -1,0 +1,402 @@
+{
+  "meta": {
+    "athlete": "National-level competitive swimmer — 200 Breaststroke primary",
+    "events": ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"],
+    "seasonStart": "2026-07-06",
+    "seasonEnd": "2026-12-04",
+    "timezone": "Asia/Manila",
+    "targets": {
+      "ncaaDate": "2026-12-04",
+      "ncaaName": "NCAA Philippines",
+      "aseanDate": "2026-11-25",
+      "aseanName": "ASEAN School Games",
+      "aseanConfirmed": null
+    },
+    "weeklyLoad": "9 swims + 3 lifts / week",
+    "bulkWindowEnd": "2026-08-30"
+  },
+  "PHASES": [
+    {
+      "id": "p1",
+      "tag": "P1",
+      "name": "Rebuild",
+      "weeks": "Wk 1–2",
+      "dates": "Jul 6–19",
+      "color": "#5AC8FA",
+      "blurb": "Careful return after the June gap. Tissue prep, RPE ≤7. No hero lifts.",
+      "start": "2026-07-06",
+      "end": "2026-07-19",
+      "isDeload": false,
+      "isRaceBlock": false,
+      "note": "Week 2: small load bumps, RPE stays ≤7. Goal is zero soreness into Wed/Fri 5 AM race-pace — you're re-entering, not proving anything.",
+      "sessions": {
+        "tue": {
+          "title": "Tue — Lower (~60 min)",
+          "exercises": [
+            { "name": "Goblet box squat", "sets": "3×8 @ RPE 6", "isExplosive": false },
+            { "name": "DB Romanian deadlift", "sets": "3×8 @ RPE 6", "isExplosive": false },
+            { "name": "Rear-foot split squat", "sets": "2×8/leg", "isExplosive": false },
+            { "name": "½-kneel landmine press", "sets": "2×10/side", "isExplosive": false },
+            { "name": "Copenhagen plank (short)", "sets": "3×20s/side", "isExplosive": false },
+            { "name": "Dead bug", "sets": "3×8/side, slow", "isExplosive": false },
+            { "name": "Calf + tibialis raise", "sets": "3×12 each", "isExplosive": false }
+          ]
+        },
+        "thu": {
+          "title": "Thu — Upper + Prehab (~55 min)",
+          "exercises": [
+            { "name": "Chin-up (band if needed)", "sets": "3×6–8", "isExplosive": false },
+            { "name": "Tempo push-up", "sets": "3×10 (3-1-1)", "isExplosive": false },
+            { "name": "Straight-arm pulldown", "sets": "3×10", "isExplosive": false },
+            { "name": "Face pull", "sets": "3×12", "isExplosive": false },
+            { "name": "Pallof press", "sets": "3×10/side", "isExplosive": false },
+            { "name": "Side plank", "sets": "3×30s/side", "isExplosive": false },
+            { "name": "Prone Y-T-W", "sets": "2×8 each", "isExplosive": false }
+          ]
+        },
+        "sun": {
+          "title": "Sun — Full Body (~75 min)",
+          "exercises": [
+            { "name": "Trap-bar deadlift (technique)", "sets": "3×6", "isExplosive": false },
+            { "name": "DB bench press", "sets": "3×8", "isExplosive": false },
+            { "name": "Lat pulldown", "sets": "3×10", "isExplosive": false },
+            { "name": "Barbell glute bridge", "sets": "3×10", "isExplosive": false },
+            { "name": "Slider leg curl", "sets": "2×8, slow", "isExplosive": false },
+            { "name": "Suitcase carry", "sets": "3×30m/side", "isExplosive": false },
+            { "name": "Spanish squat iso", "sets": "3×30s", "isExplosive": false }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p2",
+      "tag": "P2",
+      "name": "Muscle + Base",
+      "weeks": "Wk 3–8",
+      "dates": "Jul 20–Aug 30",
+      "color": "#30D158",
+      "blurb": "The gain window. Hypertrophy for legs, lats, posterior chain + eat 3,300–3,500 kcal.",
+      "start": "2026-07-20",
+      "end": "2026-08-30",
+      "isDeload": false,
+      "deloadWeek": 8,
+      "isRaceBlock": false,
+      "note": "Loads 65–75% @ RPE 7–8, eat 3,300+ kcal. Add 2.5–5kg or +1 rep/week. Wk 8 = deload: half sets @ 65%, jumps 2×2, keep all prehab.",
+      "sessions": {
+        "tue": {
+          "title": "Tue — Lower (cap 70 min)",
+          "exercises": [
+            { "name": "Box jump (step down)", "sets": "4×6 @ 70–75%", "isExplosive": true, "isMainLift": false },
+            { "name": "Back squat", "sets": "4×6 @ 70–75% · RPE 7–8", "isExplosive": false, "isMainLift": true, "movementPattern": "squat" },
+            { "name": "Bulgarian split squat", "sets": "3×8/leg", "isExplosive": false },
+            { "name": "Nordic curl (eccentric)", "sets": "3×4", "isExplosive": false },
+            { "name": "Hanging knee raise", "sets": "3×8", "isExplosive": false },
+            { "name": "Copenhagen plank (long)", "sets": "3×25s/side", "isExplosive": false }
+          ]
+        },
+        "thu": {
+          "title": "Thu — Upper (lightest day)",
+          "exercises": [
+            { "name": "Med-ball chest pass", "sets": "4×6 @ RPE 7–8", "isExplosive": true },
+            { "name": "Weighted chin-up", "sets": "4×6 @ RPE 7–8", "isExplosive": false, "isMainLift": true, "movementPattern": "pull" },
+            { "name": "DB incline bench", "sets": "4×8", "isExplosive": false },
+            { "name": "Chest-supported row", "sets": "3×10", "isExplosive": false },
+            { "name": "Straight-arm pulldown", "sets": "3×10", "isExplosive": false },
+            { "name": "Face pull + ext. rotation", "sets": "3×12 each", "isExplosive": false },
+            { "name": "Pallof + side plank", "sets": "3×10 / 3×40s", "isExplosive": false }
+          ]
+        },
+        "sun": {
+          "title": "Sun — Full Body (heavy)",
+          "exercises": [
+            { "name": "Broad jump (track best)", "sets": "3×3", "isExplosive": true },
+            { "name": "Trap-bar deadlift", "sets": "4×5 @ 72–78%", "isExplosive": false, "isMainLift": true, "movementPattern": "hinge" },
+            { "name": "Barbell hip thrust", "sets": "3×8 @ RPE 7–8", "isExplosive": false, "isMainLift": true, "movementPattern": "hinge" },
+            { "name": "½-kneel landmine press", "sets": "3×8/side", "isExplosive": false, "movementPattern": "press" },
+            { "name": "Pull-up", "sets": "3×8 BW", "isExplosive": false, "movementPattern": "pull" },
+            { "name": "Farmer carry", "sets": "3×40m", "isExplosive": false },
+            { "name": "Calf + tibialis", "sets": "3×10 / 2×15", "isExplosive": false }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p3",
+      "tag": "P3",
+      "name": "Max Strength",
+      "weeks": "Wk 9–13",
+      "dates": "Aug 31–Oct 4",
+      "color": "#FF9F0A",
+      "blurb": "Waves at 80–90% on squat, trap bar, weighted chins. Deload wk 13.",
+      "start": "2026-08-31",
+      "end": "2026-10-04",
+      "isDeload": false,
+      "deloadWeek": 13,
+      "isRaceBlock": false,
+      "note": "Wave: 4×4 @ 80% → 5×3 @ 85% → 3×2 @ 88–90% → wave again → deload wk13. Bar-speed rule: a grinding rep ends the set. Accessory volume -20% vs P2. Lactic-core finishers start here.",
+      "waveScheme": [
+        { "sets": 4, "reps": 4, "pctMin": 80, "pctMax": 80 },
+        { "sets": 5, "reps": 3, "pctMin": 85, "pctMax": 85 },
+        { "sets": 3, "reps": 2, "pctMin": 88, "pctMax": 90 }
+      ],
+      "sessions": {
+        "tue": {
+          "title": "Tue — Lower (cap 70 min)",
+          "exercises": [
+            { "name": "Hurdle hop (low)", "sets": "Wave · 3min rest", "isExplosive": true },
+            { "name": "Back squat", "sets": "Wave · 3min rest", "isExplosive": false, "isMainLift": true, "movementPattern": "squat" },
+            { "name": "Rear-foot split squat", "sets": "3×5/leg @ RPE 8", "isExplosive": false },
+            { "name": "Nordic curl", "sets": "3×5", "isExplosive": false },
+            { "name": "Ab wheel rollout", "sets": "3×6–8", "isExplosive": false },
+            { "name": "Lactic-core finisher", "sets": "hollow 3×25s + 3 jumps", "isExplosive": true }
+          ]
+        },
+        "thu": {
+          "title": "Thu — Upper (lightest day)",
+          "exercises": [
+            { "name": "Med-ball slam", "sets": "3×5", "isExplosive": true },
+            { "name": "Weighted pull-up", "sets": "Wave (a main lift!)", "isExplosive": false, "isMainLift": true, "movementPattern": "pull" },
+            { "name": "Barbell bench press", "sets": "4×4 @ 80–85%", "isExplosive": false, "isMainLift": true, "movementPattern": "press" },
+            { "name": "Chest-supported row", "sets": "3×6", "isExplosive": false },
+            { "name": "Cuff pack + push-up plus", "sets": "2×12 each", "isExplosive": false },
+            { "name": "Pallof iso hold", "sets": "3×20s/side", "isExplosive": false }
+          ]
+        },
+        "sun": {
+          "title": "Sun — Full Body (heavy, weekly monitor)",
+          "exercises": [
+            { "name": "CMJ ×3", "sets": "weekly monitor", "isExplosive": true, "isMonitor": true },
+            { "name": "Trap-bar deadlift", "sets": "Wave", "isExplosive": false, "isMainLift": true, "movementPattern": "hinge" },
+            { "name": "Barbell hip thrust", "sets": "4×5 @ 80–85%", "isExplosive": false, "movementPattern": "hinge" },
+            { "name": "Push press", "sets": "3×4 @ RPE 8", "isExplosive": false, "movementPattern": "press" },
+            { "name": "Iso mid-thigh pull", "sets": "3×5s max effort", "isExplosive": false },
+            { "name": "Lactic-core finisher", "sets": "", "isExplosive": true },
+            { "name": "Suitcase carry", "sets": "2×40m/side", "isExplosive": false }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p4",
+      "tag": "P4",
+      "name": "Strength–Speed",
+      "weeks": "Wk 14–16",
+      "dates": "Oct 5–25",
+      "color": "#FF9F0A",
+      "blurb": "Heavier waves + contrast pairs (heavy lift → jump). Deload wk 16.",
+      "start": "2026-10-05",
+      "end": "2026-10-25",
+      "isDeload": false,
+      "deloadWeek": 16,
+      "isRaceBlock": false,
+      "note": "Wave: 4×3 @ 84% → 4×2 @ 88% → 3×1–2 @ 90–92% → deload wk16. Heavy lift → matching jump = potentiation. Fatigue budget is tight — the RPE-minus-1 rule on double-swim days matters most here.",
+      "waveScheme": [
+        { "sets": 4, "reps": 3, "pctMin": 84, "pctMax": 84 },
+        { "sets": 4, "reps": 2, "pctMin": 88, "pctMax": 88 },
+        { "sets": 3, "reps": 1, "pctMin": 90, "pctMax": 92 }
+      ],
+      "sessions": {
+        "tue": {
+          "title": "Tue — Lower Contrast",
+          "exercises": [
+            { "name": "Back squat → box jump ×3", "sets": "Wave, 90s → 3min", "isExplosive": true, "isMainLift": true, "movementPattern": "squat" },
+            { "name": "Rear-foot split squat", "sets": "2×5/leg", "isExplosive": false },
+            { "name": "Nordic curl", "sets": "2×4", "isExplosive": false },
+            { "name": "Lactic-core finisher", "sets": "2×25s/side", "isExplosive": true },
+            { "name": "Copenhagen plank", "sets": "2×25s/side", "isExplosive": false }
+          ]
+        },
+        "thu": {
+          "title": "Thu — Upper Contrast",
+          "exercises": [
+            { "name": "Bench → plyo push-up ×4", "sets": "3×3 heavy", "isExplosive": true, "isMainLift": true, "movementPattern": "press" },
+            { "name": "Weighted pull-up → pulldown ×5", "sets": "Wave, rip it", "isExplosive": true, "isMainLift": true, "movementPattern": "pull" },
+            { "name": "Chest-supported row", "sets": "2×6", "isExplosive": false },
+            { "name": "Cuff pack", "sets": "2×12 each", "isExplosive": false }
+          ]
+        },
+        "sun": {
+          "title": "Sun — Full Body Contrast",
+          "exercises": [
+            { "name": "CMJ ×3", "sets": "monitor first", "isExplosive": true, "isMonitor": true },
+            { "name": "Trap-bar deadlift → broad jump ×3", "sets": "Wave", "isExplosive": true, "isMainLift": true, "movementPattern": "hinge" },
+            { "name": "Barbell hip thrust", "sets": "3×4", "isExplosive": false },
+            { "name": "Push press", "sets": "3×3", "isExplosive": false },
+            { "name": "Lactic-core finisher", "sets": "", "isExplosive": true }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p5",
+      "tag": "P5",
+      "name": "Power / RFD",
+      "weeks": "Wk 17–20",
+      "dates": "Oct 26–Nov 22",
+      "color": "#FF453A",
+      "blurb": "Convert it: jumps, throws, trap-bar jumps, speed work. Loads drop, intent maxes.",
+      "start": "2026-10-26",
+      "end": "2026-11-22",
+      "isDeload": false,
+      "isRaceBlock": false,
+      "note": "Ballistics @ 0–40%, every rep at 100% intent, full rest, mat/turf only. Progression = speed not load. Nordics are gone. Wk 20: cut ballistic volume ~30% into the race block.",
+      "sessions": {
+        "tue": {
+          "title": "Tue — Lower Power",
+          "exercises": [
+            { "name": "Hurdle hops", "sets": "4×3, fast contacts", "isExplosive": true },
+            { "name": "Seated box jump", "sets": "3×3 (the beep!)", "isExplosive": true },
+            { "name": "Back squat", "sets": "2×2 @ 85%, fast", "isExplosive": false, "isMainLift": true, "movementPattern": "squat" },
+            { "name": "Jump squat", "sets": "4×3 @ 30–40%", "isExplosive": true },
+            { "name": "Lateral bound, stick landing", "sets": "3×3/side", "isExplosive": true },
+            { "name": "Hollow + Copenhagen", "sets": "3×25s / 2×25s", "isExplosive": false }
+          ]
+        },
+        "thu": {
+          "title": "Thu — Upper Power",
+          "exercises": [
+            { "name": "Plyo push-up", "sets": "4×4", "isExplosive": true },
+            { "name": "MB chest pass + overhead slam", "sets": "3×4 + 3×4", "isExplosive": true },
+            { "name": "Weighted pull-up (maintain)", "sets": "2×3", "isExplosive": false },
+            { "name": "Explosive lat pulldown", "sets": "3×5", "isExplosive": true },
+            { "name": "Straight-arm pulldown, fast", "sets": "3×8", "isExplosive": true },
+            { "name": "Cuff pack", "sets": "2×12 each", "isExplosive": false }
+          ]
+        },
+        "sun": {
+          "title": "Sun — Start Simulation",
+          "exercises": [
+            { "name": "Broad jump", "sets": "4×3, chase PBs", "isExplosive": true, "isMonitor": true },
+            { "name": "Trap-bar jump", "sets": "4×3 @ 20–30% (wk 2–3 only)", "isExplosive": true },
+            { "name": "Depth jump 30cm", "sets": "3×3 @ ~75%, fast (wk 2–3 only)", "isExplosive": true },
+            { "name": "Push press", "sets": "3×5 @ 50–60%", "isExplosive": false },
+            { "name": "Speed hip thrust", "sets": "3×5 @ 50–60%", "isExplosive": true },
+            { "name": "Hollow rocks", "sets": "3×10", "isExplosive": false }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p6",
+      "tag": "P6",
+      "name": "Race Block",
+      "weeks": "Wk 21–22",
+      "dates": "Nov 23–Dec 4",
+      "color": "#BF5AF2",
+      "blurb": "ASEAN ~Nov 25 on a mini-taper → neural micro-doses → NCAA Dec 4 fully fresh.",
+      "start": "2026-11-23",
+      "end": "2026-12-04",
+      "isDeload": false,
+      "isRaceBlock": true,
+      "note": "Nothing new, nothing sore, nothing to failure. Last heavy bar 8–10 days out, last plyos 5 days out.",
+      "blocks": [
+        {
+          "id": "wk21-asean-on",
+          "title": "Wk 21 — ASEAN on (~Nov 25)",
+          "condition": "asean_confirmed",
+          "body": "Mon/Tue primer ~15 min: CMJ 3×2 · jump squat 2×2 @ 20%. MB chest pass 2×3 · pull-up 1×3.\n\nRace ASEAN springy, not worked.\n\nAfter: easy swims, sleep, food. No lifting within 48h of racing."
+        },
+        {
+          "id": "wk21-asean-cancelled",
+          "title": "Wk 21 — If ASEAN cancelled",
+          "condition": "asean_cancelled",
+          "body": "Tue neural ~35 min: hurdle hop 3×3, squat 2×2 @ 85%, trap-bar jump 3×3, weighted pull-up 2×3, MB pass 2×4.\n\nThu micro ~20 min: plyo push-up 2×3, explosive pulldown 2×5, cuff work.\n\nSun speed ~25 min: broad jump 3×2, seated box 2×3, jump squat 3×2 — last lower loading."
+        },
+        {
+          "id": "wk22-ncaa",
+          "title": "Wk 22 — NCAA week (Dec 4)",
+          "condition": "always",
+          "body": "Tue primer ~15 min: CMJ 3×2, jump squat 2×2 @ 20% · MB pass 2×3.\n\nOptional Thu 10 min: pogos + bands (skip if racing Friday).\n\nNothing within 48h of race one. Sleep 9h — food and rest ARE the training."
+        }
+      ]
+    }
+  ],
+  "WEEK": [
+    { "short": "MON", "full": "Monday", "summary": "Full rest — sacred", "sub": "Weigh-in AM · sleep", "color": "#5AC8FA", "swim": null, "gym": null },
+    { "short": "TUE", "full": "Tuesday", "summary": "Swim 4:20–6 · Gym 6:20–8", "sub": "School 7–4 · capped 60–70min · bed 9:30", "color": "#5AC8FA", "swim": "4:20 PM – 6:00 PM (main coach)", "gym": "6:20 PM – 8:00 PM" },
+    { "short": "WED", "full": "Wednesday", "summary": "5–7 AM race pace — hardest swim", "sub": "School → swim 4:20–6 · no land", "color": "#FF453A", "swim": "5:00 AM – 7:00 AM race pace (2nd coach); 4:20 PM – 6:00 PM", "gym": null },
+    { "short": "THU", "full": "Thursday", "summary": "Swim 4:20–6 · Gym 6:20–8", "sub": "School 7–4 · lightest lift · bed 9:30", "color": "#5AC8FA", "swim": "4:20 PM – 6:00 PM", "gym": "6:20 PM – 8:00 PM" },
+    { "short": "FRI", "full": "Friday", "summary": "5–7 AM race pace", "sub": "Online school → swim 4:20–6 · no land", "color": "#FF453A", "swim": "5:00 AM – 7:00 AM race pace (2nd coach); 4:20 PM – 6:00 PM", "gym": null },
+    { "short": "SAT", "full": "Saturday", "summary": "Swim 8–10 AM & 5–7 PM", "sub": "Nap 30–60 min between", "color": "#5AC8FA", "swim": "8:00 AM – 10:00 AM; 5:00 PM – 7:00 PM", "gym": "after 2nd swim — THE heavy session" },
+    { "short": "SUN", "full": "Sunday", "summary": "Swim 8–10 AM · Gym after", "sub": "THE heavy session · nap OK", "color": "#30D158", "swim": "8:00 AM – 10:00 AM", "gym": "after swim — untouchable heavy session" }
+  ],
+  "VERDICT_CARDS": [
+    { "tag": "Risk", "color": "#FF453A", "bg": "rgba(255,69,58,0.16)", "title": "Tue & Thu nights", "body": "Gym ends 8 PM → 5 AM start next day. Cap lifts 60–70 min, nothing to failure, asleep 9:30." },
+    { "tag": "Untouchable", "color": "#30D158", "bg": "rgba(48,209,88,0.16)", "title": "Sunday", "body": "The only heavy session with a full rest day behind it. Never trade it — trim Thursday instead." },
+    { "tag": "Ceiling", "color": "#5AC8FA", "bg": "rgba(10,132,255,0.16)", "title": "Sleep", "body": "At 17, muscle on 6 hours doesn't happen. 8+ on normal nights, weekend naps 30–60 min." },
+    { "tag": "Watch", "color": "#FF9F0A", "bg": "rgba(255,159,10,0.16)", "title": "Shins & double days", "body": "Plyos on mat/turf only. On double-swim days, drop every gym RPE target by 1." }
+  ],
+  "PB_ROWS": [
+    { "name": "50 Breast", "time": "30.46", "color": "rgba(235,235,245,0.7)" },
+    { "name": "100 Breast", "time": "1:05.87", "color": "rgba(235,235,245,0.7)" },
+    { "name": "200 Breast", "time": "2:24.53", "color": "#5AC8FA" },
+    { "name": "200 IM", "time": "2:10.87", "color": "#5AC8FA" },
+    { "name": "400 IM", "time": "4:47 low", "color": "rgba(235,235,245,0.7)" }
+  ],
+  "INBODY_ROWS": [
+    { "name": "Weight", "value": "63.0 kg", "note": "target says +2.7 kg", "noteColor": "#FF9F0A" },
+    { "name": "Skeletal muscle", "value": "31.1 kg", "note": "balanced, 102–107%", "noteColor": "#30D158" },
+    { "name": "Body fat", "value": "12.1 %", "note": "lean", "noteColor": "#30D158" },
+    { "name": "Fat mass", "value": "7.6 kg", "note": "below normal floor", "noteColor": "#FF453A" },
+    { "name": "InBody score", "value": "77 / 100", "note": "room = muscle, not fat loss", "noteColor": "rgba(235,235,245,0.5)" }
+  ],
+  "SPLIT_BARS": [
+    { "label": "1st 50", "yourPct": 70, "targetPct": 68, "color": "#0A84FF", "yourSeconds": 28, "targetSeconds": null },
+    { "label": "2nd 50", "yourPct": 76, "targetPct": 74, "color": "#0A84FF", "yourSeconds": 31, "targetSeconds": null },
+    { "label": "3rd 50", "yourPct": 86, "targetPct": 80, "color": "#0A84FF", "yourSeconds": 34, "targetSeconds": null },
+    { "label": "4th 50", "yourPct": 100, "targetPct": 87, "color": "#FF453A", "yourSeconds": 37, "targetSeconds": 37.5 }
+  ],
+  "DIAGNOSIS_CARDS": [
+    { "problem": "Start: never ahead at the flags", "why": "Squat ~60kg working at ~63kg BW — block force is the limiter.", "fix": "Max-strength waves (Sep–Oct), then seated box jumps + trap-bar jumps." },
+    { "problem": "Last-50 underwater dies (~6m)", "why": "Trunk stiffness and leg drive fade in lactate — you float up.", "fix": "\"Lactic core\" finishers: hollow holds + jumps right after main lifts." },
+    { "problem": "+3 strokes on the final 50", "why": "Force reserve too small + under-fueled: each stroke sits near max.", "fix": "Muscle-gain window (Jul–Aug) + strength waves raise the ceiling." }
+  ],
+  "KEEP_DOING": [
+    "Balanced body — every limb 102–107% on InBody",
+    "Front-half discipline: 31/36 shows up every race",
+    "Solid turns when fresh",
+    "400 IM engine — aerobic base is not your problem"
+  ],
+  "MAP_ROWS": [
+    { "title": "Block & leg power", "body": "Biggest % gain in the 50/100 BR — plus every start you own, both IMs included." },
+    { "title": "Pull / pullout strength", "body": "Every BR wall: 4 pullouts in the 200 BR, the BR legs of both IMs — same lats power fly & free." },
+    { "title": "Core stiffness under fatigue", "body": "The last-50 fix in the 200 BR is identical to the free leg of your 200 IM." },
+    { "title": "Turn & wall power", "body": "The 200 IM has 7 turns and 3 transitions — hip-thrust and jump work pays off most here." },
+    { "title": "Shoulder package", "body": "Keeps fly and back legs fast and healthy through 9 swims/week. Insurance that doubles as speed." }
+  ],
+  "MUSCLE_CARDS": [
+    { "title": "Nothing left to lose", "color": "#FF453A", "body": "Fat mass 7.6kg is below the normal floor. Getting \"skinnier\" eats into muscle — the thing that moves you." },
+    { "title": "Window closes Aug 30", "color": "#FF9F0A", "body": "Muscle is built in Phases 1–2. Sept is max strength, Oct–Nov is power+taper — you cannot bulk then." },
+    { "title": "Target: 65–66 kg by taper", "color": "#5AC8FA", "body": "+0.25–0.3 kg/week. InBody already prescribed +2.7kg in April. Weigh in every Monday." },
+    { "title": "Why it makes you faster", "color": "#30D158", "body": "More muscle = higher force ceiling = each stroke costs less. That's how the last 50 stops collapsing." }
+  ],
+  "TARGETS": [
+    { "id": "back_squat", "name": "Back squat (1RM)", "now": "~75–80 kg", "goal": "100 kg (1.5× BW)", "goalValue": 100, "unit": "kg", "why": "Block force" },
+    { "id": "trap_bar_deadlift", "name": "Trap-bar deadlift", "now": "100 kg", "goal": "130 kg", "goalValue": 130, "unit": "kg", "why": "Start posture power" },
+    { "id": "weighted_chinup", "name": "Weighted chin-up", "now": "test this week", "goal": "+10–15kg × 3–5", "goalValue": 15, "unit": "kg", "why": "Pullout engine" },
+    { "id": "broad_jump", "name": "Broad jump", "now": "baseline wk1", "goal": "+15–20 cm", "goalValue": 20, "unit": "cm", "why": "Block projection" },
+    { "id": "time_to_15m", "name": "Time to 15m (dive)", "now": "baseline w/coach", "goal": "−0.3s by taper", "goalValue": -0.3, "unit": "s", "why": "#1 weakness" },
+    { "id": "bodyweight", "name": "Bodyweight", "now": "63 kg, flat", "goal": "65–66 kg lean", "goalValue": 65.5, "unit": "kg", "why": "Force reserve" },
+    { "id": "swim_200br_200im", "name": "200 BR / 200 IM", "now": "2:24.53 / 2:10.87", "goal": "2:21–22 / ~2:08", "why": "Last 50 ≤37.5" }
+  ],
+  "HOMEWORK": [
+    "Monday weigh-ins every week — 63kg (Jul 5) is the baseline. +0.25kg/wk = the win.",
+    "Chin-up test: max clean bodyweight reps, filmed or counted honestly.",
+    "Ask coach to hand-time 3 dives to 15m — breakout distance fresh vs. end of a hard set.",
+    "Broad jump ×3, mark the best. Then 3 CMJs every Sunday — our fatigue monitor all season.",
+    "Next meet: log exact 50 splits for the 200 BR and 200 IM legs — rounded memory isn't coachable.",
+    "Tell me the moment ASEAN is confirmed or cancelled. The taper math locks that day."
+  ],
+  "MEALS": [
+    { "slot": 1, "time": "4:45 AM", "desc": "Wed/Fri: banana or bread + water before race-pace.", "tag": "pre_race_pace" },
+    { "slot": 2, "time": "7:15 AM", "desc": "Real breakfast after morning swim — eggs + rice.", "tag": "breakfast" },
+    { "slot": 3, "time": "12/3 PM", "desc": "Lunch + afternoon snack at school. Skipping = how June happened.", "tag": "lunch" },
+    { "slot": 4, "time": "6:05 PM", "desc": "Tue/Thu swim→gym gap: milk + banana or rice.", "tag": "pre_gym" },
+    { "slot": 5, "time": "8:15 PM", "desc": "Full dinner + protein after gym. Biggest meal of the day.", "tag": "dinner" },
+    { "slot": 6, "time": "9:30 PM", "desc": "Tue/Thu lights out — 5 AM alarm follows.", "tag": "bedtime" }
+  ],
+  "weighIns": [
+    { "date": "2026-04-20", "weight": 63.0 },
+    { "date": "2026-07-05", "weight": 63.0 }
+  ]
+}
