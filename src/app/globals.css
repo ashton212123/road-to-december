@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  --rtd-bg-radial: radial-gradient(1100px 700px at 50% -8%, #1b1f27 0%, #000000 62%);
+  --rtd-glass-base: #1c1c1e;
+  --rtd-glass-overlay: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.015)
+  );
+  --rtd-hairline: rgba(255, 255, 255, 0.07);
+  --rtd-inner-highlight: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --rtd-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  --rtd-blur: 20px;
+
+  --rtd-blue: #0a84ff;
+  --rtd-cyan: #5ac8fa;
+  --rtd-green: #30d158;
+  --rtd-orange: #ff9f0a;
+  --rtd-red: #ff453a;
+  --rtd-purple: #bf5af2;
+
+  --rtd-text: #f5f5f7;
+  --rtd-text-secondary: rgba(235, 235, 245, 0.65);
+  --rtd-text-tertiary: rgba(235, 235, 245, 0.45);
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+@theme inline {
+  --color-background: #000000;
+  --color-foreground: var(--rtd-text);
+  --color-rtd-blue: var(--rtd-blue);
+  --color-rtd-cyan: var(--rtd-cyan);
+  --color-rtd-green: var(--rtd-green);
+  --color-rtd-orange: var(--rtd-orange);
+  --color-rtd-red: var(--rtd-red);
+  --color-rtd-purple: var(--rtd-purple);
+  --color-rtd-text: var(--rtd-text);
+  --color-rtd-text-secondary: var(--rtd-text-secondary);
+  --color-rtd-text-tertiary: var(--rtd-text-tertiary);
+  --color-rtd-glass: var(--rtd-glass-base);
+  --font-sans: var(--font-sans);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: #000;
+  color: var(--rtd-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+.rtd-app-bg {
+  background: var(--rtd-bg-radial);
+  min-height: 100dvh;
+}
+
+.rtd-glass {
+  background-color: var(--rtd-glass-base);
+  background-image: var(--rtd-glass-overlay);
+  border: 0.5px solid var(--rtd-hairline);
+  box-shadow: var(--rtd-inner-highlight), var(--rtd-shadow);
+  border-radius: 20px;
+}
+
+.rtd-glass-blur {
+  -webkit-backdrop-filter: blur(var(--rtd-blur));
+  backdrop-filter: blur(var(--rtd-blur));
+}
+
+.rtd-micro-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rtd-text-tertiary);
+}
+
+.rtd-display {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+@keyframes rtd-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rtd-fade-in {
+  animation: rtd-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtd-fade-in {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
