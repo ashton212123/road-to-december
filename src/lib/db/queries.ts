@@ -1,4 +1,4 @@
-import { asc, desc, eq, gte } from "drizzle-orm";
+import { asc, desc, eq, gte, ilike } from "drizzle-orm";
 import { db } from "./index";
 import {
   phases,
@@ -171,4 +171,31 @@ export async function getWorkoutLogsWithExerciseSince(dateISO: string) {
 /** Best-set e1RM history per named main lift (for the strength trend chart). */
 export async function getMainLiftLogHistory() {
   return getWorkoutLogsWithExerciseSince("2000-01-01").then((rows) => rows.filter((r) => r.isMainLift));
+}
+
+/**
+ * Resolves a free-text exercise name (as an MCP tool caller would type it,
+ * e.g. "back squat") to a specific exercise row. Prefers a match inside
+ * the currently active phase so "back squat" resolves to this week's
+ * prescription rather than an identically-named entry from another phase.
+ */
+export async function resolveExerciseByName(name: string) {
+  const matches = await db
+    .select({
+      id: exercises.id,
+      name: exercises.name,
+      sessionId: exercises.sessionId,
+      phaseId: sessions.phaseId,
+    })
+    .from(exercises)
+    .innerJoin(sessions, eq(exercises.sessionId, sessions.id))
+    .where(ilike(exercises.name, `%${name}%`));
+
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
+
+  const allPhases = await getAllPhasesWithSessions();
+  const currentPhase = getCurrentPhase(allPhases);
+  const inCurrentPhase = currentPhase ? matches.find((m) => m.phaseId === currentPhase.id) : null;
+  return inCurrentPhase ?? matches[0];
 }
