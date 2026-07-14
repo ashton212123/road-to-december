@@ -1,0 +1,79 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import {
+  phases,
+  sessions,
+  exercises,
+  workoutLogs,
+  weighIns,
+  cmjTests,
+  jumpTests,
+  swimTimes,
+  timeTo15m,
+  foodLogs,
+  waterLogs,
+  sleepLogs,
+  sorenessLogs,
+  settings,
+} from "@/lib/db/schema";
+
+// Full JSON dump of every table — the user must never be locked in.
+// Auth-gated via proxy.ts like every other app route.
+export async function GET() {
+  const [
+    phasesRows,
+    sessionsRows,
+    exercisesRows,
+    workoutLogsRows,
+    weighInsRows,
+    cmjTestsRows,
+    jumpTestsRows,
+    swimTimesRows,
+    timeTo15mRows,
+    foodLogsRows,
+    waterLogsRows,
+    sleepLogsRows,
+    sorenessLogsRows,
+    settingsRows,
+  ] = await Promise.all([
+    db.select().from(phases),
+    db.select().from(sessions),
+    db.select().from(exercises),
+    db.select().from(workoutLogs),
+    db.select().from(weighIns),
+    db.select().from(cmjTests),
+    db.select().from(jumpTests),
+    db.select().from(swimTimes),
+    db.select().from(timeTo15m),
+    db.select().from(foodLogs),
+    db.select().from(waterLogs),
+    db.select().from(sleepLogs),
+    db.select().from(sorenessLogs),
+    db.select().from(settings),
+  ]);
+
+  const dump = {
+    exportedAt: new Date().toISOString(),
+    phases: phasesRows,
+    sessions: sessionsRows,
+    exercises: exercisesRows,
+    workoutLogs: workoutLogsRows,
+    weighIns: weighInsRows,
+    cmjTests: cmjTestsRows,
+    jumpTests: jumpTestsRows,
+    swimTimes: swimTimesRows,
+    timeTo15m: timeTo15mRows,
+    foodLogs: foodLogsRows,
+    waterLogs: waterLogsRows,
+    sleepLogs: sleepLogsRows,
+    sorenessLogs: sorenessLogsRows,
+    settings: settingsRows,
+  };
+
+  return new NextResponse(JSON.stringify(dump, null, 2), {
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Disposition": `attachment; filename="road-to-december-export-${new Date().toISOString().slice(0, 10)}.json"`,
+    },
+  });
+}

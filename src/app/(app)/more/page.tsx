@@ -1,11 +1,36 @@
+import Link from "next/link";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { IconChevronRight } from "@/components/ui/icons";
+import { LogoutButton } from "@/components/more/LogoutButton";
+
+const LINKS = [
+  { href: "/more/recovery", label: "Recovery", desc: "Sleep, soreness, readiness lights", icon: "🌙" },
+  { href: "/more/settings", label: "Settings", desc: "ASEAN toggle, water target, data export", icon: "⚙️" },
+  { href: "/more/coach-ai", label: "Coach AI", desc: "Connect this app to your Claude account", icon: "🤖" },
+];
 
 export default function MorePage() {
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
       <SectionLabel>More</SectionLabel>
-      <EmptyState title="Recovery, Coach AI and Settings are being wired up" body="These land in a later milestone." />
+      <div className="flex flex-col gap-3">
+        {LINKS.map((link) => (
+          <Link key={link.href} href={link.href}>
+            <GlassCard className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-white/[0.06] flex items-center justify-center text-lg shrink-0">
+                {link.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold">{link.label}</div>
+                <div className="text-xs text-[var(--rtd-text-tertiary)] truncate">{link.desc}</div>
+              </div>
+              <IconChevronRight />
+            </GlassCard>
+          </Link>
+        ))}
+      </div>
+      <LogoutButton />
     </div>
   );
 }
