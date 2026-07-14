@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./load-env";
 import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { phases, sessions, exercises, weighIns, settings } from "./schema";
