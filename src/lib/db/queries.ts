@@ -144,3 +144,31 @@ export async function getRecentWeighInsWindow(days: number) {
   const from = addDaysISO(todayManilaISO(), -days);
   return db.select().from(weighIns).where(gte(weighIns.date, from)).orderBy(asc(weighIns.date));
 }
+
+/** Workout logs joined with their exercise (name, movement pattern, main-lift flag). */
+export async function getWorkoutLogsWithExerciseSince(dateISO: string) {
+  const rows = await db
+    .select({
+      id: workoutLogs.id,
+      date: workoutLogs.date,
+      setNumber: workoutLogs.setNumber,
+      weightKg: workoutLogs.weightKg,
+      reps: workoutLogs.reps,
+      rpe: workoutLogs.rpe,
+      createdAt: workoutLogs.createdAt,
+      exerciseId: exercises.id,
+      exerciseName: exercises.name,
+      movementPattern: exercises.movementPattern,
+      isMainLift: exercises.isMainLift,
+    })
+    .from(workoutLogs)
+    .innerJoin(exercises, eq(workoutLogs.exerciseId, exercises.id))
+    .where(gte(workoutLogs.date, dateISO))
+    .orderBy(asc(workoutLogs.date));
+  return rows;
+}
+
+/** Best-set e1RM history per named main lift (for the strength trend chart). */
+export async function getMainLiftLogHistory() {
+  return getWorkoutLogsWithExerciseSince("2000-01-01").then((rows) => rows.filter((r) => r.isMainLift));
+}
