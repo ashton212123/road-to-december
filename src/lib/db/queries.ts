@@ -84,8 +84,16 @@ export async function getFoodLogsForDate(dateISO: string) {
   return db.select().from(foodLogs).where(eq(foodLogs.date, dateISO)).orderBy(asc(foodLogs.timeSlot));
 }
 
+export async function getFoodLogsSince(dateISO: string) {
+  return db.select().from(foodLogs).where(gte(foodLogs.date, dateISO)).orderBy(desc(foodLogs.date));
+}
+
 export async function getWaterLogsForDate(dateISO: string) {
   return db.select().from(waterLogs).where(eq(waterLogs.date, dateISO));
+}
+
+export async function getWaterLogsSince(dateISO: string) {
+  return db.select().from(waterLogs).where(gte(waterLogs.date, dateISO)).orderBy(desc(waterLogs.date));
 }
 
 export async function getSleepLogs(limit = 30) {
