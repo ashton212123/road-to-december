@@ -1,6 +1,10 @@
 import { TabBar, SideBar, type TabItem } from "@/components/ui/TabBar";
 import { IconHome, IconTrain, IconFuel, IconAnalytics, IconMore } from "@/components/ui/icons";
 
+// Every screen under here reads live, personal, auth-gated data (today's
+// date, logs, alerts) — never statically prerender it at build time.
+export const dynamic = "force-dynamic";
+
 const NAV_ITEMS: TabItem[] = [
   { href: "/home", label: "Home", icon: <IconHome /> },
   { href: "/train", label: "Train", icon: <IconTrain /> },
