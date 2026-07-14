@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Road to December
 
-## Getting Started
+Personal athlete command center for the road to NCAA Philippines (Dec 4,
+2026) and possibly ASEAN School Games (~Nov 25). v1 covers Train, Fuel,
+Analytics, Recovery and a Rules Engine "Coach" — a school module, business
+module, and in-app AI assistant panel are future versions.
 
-First, run the development server:
+The periodized S&C program and season data live in `/data/program.md` and
+`/data/road_to_december_data.json` — these are the source of truth; the
+database is seeded from them (`npm run db:seed`).
+
+## Stack
+
+Next.js 16 (App Router, TypeScript strict) · Tailwind CSS v4 · Drizzle ORM
++ Supabase Postgres · Recharts · a hand-rolled PWA (manifest + service
+worker) · a remote MCP server at `/api/mcp` so your own Claude subscription
+can act as the app's AI layer.
+
+## Local setup
 
 ```bash
+npm install
+cp .env.example .env.local   # fill in DATABASE_URL, AUTH_PASSWORD_HASH, etc — see DEPLOY.md
+npm run db:push              # apply the schema to your Supabase database
+npm run db:seed              # idempotent — seeds phases/sessions/exercises from /data
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Full Supabase + Vercel + MCP connector setup: **[DEPLOY.md](./DEPLOY.md)**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | What it does |
+|---|---|
+| `npm run dev` / `build` / `start` | Standard Next.js dev/build/start |
+| `npm run db:generate` | Generate a Drizzle migration from `src/lib/db/schema.ts` |
+| `npm run db:push` | Apply the schema to the database |
+| `npm run db:studio` | Open Drizzle Studio |
+| `npm run db:seed` | Idempotently seed program data from `/data` |
+| `npm run auth:hash -- "password"` | Generate the value for `AUTH_PASSWORD_HASH` |
 
-## Learn More
+## Never locked in
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Settings → "Download full export" streams every logged row as one JSON
+file at any time.
