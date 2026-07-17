@@ -58,13 +58,15 @@ export default async function HomePage() {
     Math.max(0, Math.round((daysBetween(seasonStart, today) / daysBetween(seasonStart, seasonEnd)) * 100))
   );
   const daysToNcaa = Math.max(0, daysBetween(today, seasonData.meta.targets.ncaaDate));
+  const daysToAsean = Math.max(0, daysBetween(today, seasonData.meta.targets.aseanDate));
+  const aseanDateLabel = new Date(seasonData.meta.targets.aseanDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   const aseanLabel =
     settingsRow.aseanConfirmed === true
-      ? `ASEAN confirmed — ~${new Date(seasonData.meta.targets.aseanDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+      ? `ASEAN confirmed — ~${aseanDateLabel}`
       : settingsRow.aseanConfirmed === false
         ? "ASEAN cancelled — full taper into NCAA"
-        : "ASEAN unconfirmed — plan covers both";
+        : `ASEAN unconfirmed — ~${aseanDateLabel} if it happens`;
 
   const weekDay = seasonData.WEEK[DAY_KEY_TO_WEEK_INDEX[todayKey]];
   const todaySession = currentPhase.sessions.find((s) => s.dayKey === todayKey) ?? null;
@@ -97,7 +99,17 @@ export default async function HomePage() {
             {currentPhase.tag} · {currentPhase.name}
           </span>
         </div>
-        <div className="text-xs text-[var(--rtd-text-secondary)]">{aseanLabel}</div>
+        {settingsRow.aseanConfirmed !== false ? (
+          <div className="flex items-baseline gap-1.5">
+            <span className="rtd-display text-lg">{daysToAsean}</span>
+            <span className="text-xs text-[var(--rtd-text-secondary)]">
+              days to ASEAN · {aseanDateLabel}
+              {settingsRow.aseanConfirmed === null && " (unconfirmed)"}
+            </span>
+          </div>
+        ) : (
+          <div className="text-xs text-[var(--rtd-text-secondary)]">{aseanLabel}</div>
+        )}
         <div>
           <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
             <div

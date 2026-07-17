@@ -28,14 +28,14 @@ export function TabBar({ items }: { items: TabItem[] }) {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <div className="flex items-stretch justify-around px-1 pt-2 pb-1 max-w-[430px] mx-auto">
+      <div className="flex items-stretch px-1 pt-2 pb-1 max-w-[430px] mx-auto">
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-1 px-2 py-1 min-w-[56px]"
+              className="flex-1 min-w-0 flex flex-col items-center gap-1 px-0.5 py-1"
             >
               <span
                 className="w-6 h-6 flex items-center justify-center"
@@ -44,7 +44,7 @@ export function TabBar({ items }: { items: TabItem[] }) {
                 {item.icon}
               </span>
               <span
-                className="text-[10px] font-medium"
+                className="text-[9px] font-medium truncate max-w-full"
                 style={{ color: active ? "var(--rtd-blue)" : "var(--rtd-text-tertiary)" }}
               >
                 {item.label}
