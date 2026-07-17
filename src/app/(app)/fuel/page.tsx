@@ -3,6 +3,8 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { MealSlot } from "@/components/fuel/MealSlot";
 import { WaterLogger } from "@/components/fuel/WaterLogger";
+import { MacroDonut } from "@/components/fuel/MacroDonut";
+import { MealQuickLog } from "@/components/fuel/MealQuickLog";
 import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, todayDayKey, daysBetween, addDaysISO } from "@/lib/time";
 import {
@@ -14,7 +16,7 @@ import {
   getCurrentPhase,
   getFoodLogsSince,
 } from "@/lib/db/queries";
-import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 
 export default async function FuelPage() {
   const today = todayManilaISO();
@@ -36,7 +38,10 @@ export default async function FuelPage() {
 
   const kcalToday = todaysFood.reduce((s, f) => s + f.kcal, 0);
   const proteinToday = todaysFood.reduce((s, f) => s + Number(f.proteinG), 0);
+  const carbsToday = todaysFood.reduce((s, f) => s + Number(f.carbsG ?? 0), 0);
+  const fatToday = todaysFood.reduce((s, f) => s + Number(f.fatG ?? 0), 0);
   const waterToday = todaysWater.reduce((s, w) => s + w.ml, 0);
+  const { carbsG: carbsTargetG, fatG: fatTargetG } = computeCarbsAndFatTargetG(kcalTarget.mid, proteinTarget.mid);
 
   const daysToBulkEnd = daysBetween(today, seasonData.meta.bulkWindowEnd);
 
@@ -105,6 +110,27 @@ export default async function FuelPage() {
           </div>
         )}
       </GlassCard>
+
+      <div>
+        <SectionLabel>Macros</SectionLabel>
+        <GlassCard>
+          <MacroDonut
+            kcalLogged={kcalToday}
+            kcalTarget={kcalTarget.mid}
+            proteinLoggedG={proteinToday}
+            proteinTargetG={proteinTarget.mid}
+            carbsLoggedG={carbsToday}
+            carbsTargetG={carbsTargetG}
+            fatLoggedG={fatToday}
+            fatTargetG={fatTargetG}
+          />
+        </GlassCard>
+      </div>
+
+      <div>
+        <SectionLabel>Quick log</SectionLabel>
+        <MealQuickLog />
+      </div>
 
       {banners.length > 0 && (
         <div className="flex flex-col gap-2">

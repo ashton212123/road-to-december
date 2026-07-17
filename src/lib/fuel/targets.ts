@@ -47,6 +47,23 @@ export function computeProteinTargetG(sevenDayAvgKg: number): { min: number; max
   return { min, max, mid: Math.round((min + max) / 2) };
 }
 
+/**
+ * Carbs/fat targets aren't specified in program.md (only kcal + protein
+ * are), so they're derived: ~25% of kcal from fat (standard athletic
+ * guidance for hormone health without crowding out training fuel), protein
+ * fixed from computeProteinTargetG, remaining kcal to carbs. Flagged as a
+ * judgment call in DECISIONS.md -- adjust the fat percentage if a coach
+ * specifies otherwise.
+ */
+export function computeCarbsAndFatTargetG(kcalMid: number, proteinMidG: number): { carbsG: number; fatG: number } {
+  const proteinKcal = proteinMidG * 4;
+  const fatKcal = kcalMid * 0.25;
+  const fatG = Math.round(fatKcal / 9);
+  const carbsKcal = Math.max(0, kcalMid - proteinKcal - fatKcal);
+  const carbsG = Math.round(carbsKcal / 4);
+  return { carbsG, fatG };
+}
+
 export function sevenDayAverage(weighIns: { date: string; kg: string | number }[]): number | null {
   if (weighIns.length === 0) return null;
   const sorted = [...weighIns].sort((a, b) => (a.date < b.date ? 1 : -1)); // newest first

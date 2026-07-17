@@ -237,6 +237,45 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "log_meal",
+      {
+        description: "Log a full meal in one call -- multiple foods at once (e.g. describing a whole day's eating). Claude should estimate macros per food, then call this once with the list.",
+        inputSchema: {
+          date: z.string().optional().describe("YYYY-MM-DD, defaults to today"),
+          time_slot: z.string().describe("One of: pre_race_pace, breakfast, lunch, pre_gym, dinner, bedtime, snack, or a custom label"),
+          foods: z
+            .array(
+              z.object({
+                description: z.string(),
+                kcal: z.number(),
+                protein_g: z.number(),
+                carbs_g: z.number().optional(),
+                fat_g: z.number().optional(),
+              })
+            )
+            .min(1),
+        },
+      },
+      async ({ date, time_slot, foods }) => {
+        const d = date ?? todayManilaISO();
+        await db.insert(foodLogs).values(
+          foods.map((f) => ({
+            date: d,
+            timeSlot: time_slot,
+            description: f.description,
+            kcal: Math.round(f.kcal),
+            proteinG: String(f.protein_g),
+            carbsG: f.carbs_g !== undefined ? String(f.carbs_g) : null,
+            fatG: f.fat_g !== undefined ? String(f.fat_g) : null,
+            source: "ai" as const,
+          }))
+        );
+        const totalKcal = foods.reduce((s, f) => s + f.kcal, 0);
+        return { content: [{ type: "text" as const, text: `Logged ${foods.length} food${foods.length === 1 ? "" : "s"} for ${time_slot} (${totalKcal} kcal total).` }] };
+      }
+    );
+
+    server.registerTool(
       "log_water",
       { description: "Log water intake in milliliters.", inputSchema: { ml: z.number(), date: z.string().optional() } },
       async ({ ml, date }) => {
