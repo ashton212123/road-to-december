@@ -43,7 +43,17 @@ Every judgment call made without asking, per your "don't block on questions" ins
 
 - The goal doc calls this "Swim Page" but doesn't explicitly say "make it a new top-level nav tab." Nav is already at 7 items (Home/Train/Fuel/Analytics/Business/School/More) after Phase 1. I kept swim living inside the existing Analytics → Swim tab rather than promoting it to an 8th top-level tab, and built the hero/logging/target-times additions inside that tab. "Hero section at top" reads fine as "top of the Swim tab's content," not necessarily a standalone route. Easy to split into its own top-level tab later if you'd rather — the components are self-contained.
 
+## Home "needs attention" list — what counts as unlogged, and color assignment
+
+- **Domain colors reuse the existing 6-color palette** (`--rtd-blue`/`cyan`/`orange`/`red`/`green`/`purple`) 1:1 against the 6 domains (train/swim/fuel/recovery/business/school) rather than inventing new colors, so new UI stays visually native to the app. "Urgent" is a separate text badge, not a 7th color, so it never collides with a domain's own color (recovery happens to use red as its domain color; an urgent recovery item still reads clearly because urgency is a badge, not a hue).
+- **"Unlogged" thresholds are time-of-day gated**, not "flag it the instant it's technically possible to log": fuel flags at hour ≥10 (not 12:01am), sleep at hour ≥9, gym only flags as urgent after hour ≥20 late in the day. Chosen to avoid nagging at 6am for things you haven't had a chance to do yet — same spirit as the existing "missed lunch by 4pm" Coach rule from Phase 1.
+- Swim's "log today" link goes to `/analytics` generally, not directly to the Swim sub-tab (no URL-param tab-switching exists yet on that page) — a minor known gap, not worth adding query-param routing for given everything else still in scope tonight.
+
 ## Carried over from Phase 1
 
 - Deployed Phase 1 (MCP completion, checkbox gym logging, swim logging, business tracker) to production before starting Phase 2.1.
 - Added a training-day streak to Home (Phase 1's Dashboard spec asked for "streaks," which nothing tracked) — see entry below for definition.
+
+## Status as of this writing
+
+Everything in the Phase 2.1 goal is built, typechecked, linted, verified against the dev database and/or the live MCP protocol, committed, and merged to local `master`. The only open item is the one flagged at the top: **your Canvas token needs regenerating** — everything else (nutrition, target times/swim, gym program review, Canvas urgency plumbing, Home redesign, all 25 MCP tools) is done and about to be deployed to production as part of this same pass. If anything here reads as a wrong call, it's a one-line fix, not a rebuild — say which one and why.
