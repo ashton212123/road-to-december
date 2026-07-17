@@ -54,10 +54,6 @@ Every judgment call made without asking, per your "don't block on questions" ins
 - Deployed Phase 1 (MCP completion, checkbox gym logging, swim logging, business tracker) to production before starting Phase 2.1.
 - Added a training-day streak to Home (Phase 1's Dashboard spec asked for "streaks," which nothing tracked) — see entry below for definition.
 
-## Connection pool sizing — a defensive fix, not a confirmed root cause
-
-After reverting the region change, timing the exact same request back-to-back gave wildly inconsistent results: 0.6s, then 3.6s, then 20s+ (timed out). That pattern — fast when it's fast, hanging when it's not, on an identical request — is the signature of connection-pool contention, not raw latency. The `postgres` client had no connection limit set, defaulting to up to 10 connections *per serverless instance*, and Vercel can run several instances concurrently against Supabase's pooler, which has its own shared connection limit. Set `max: 5` (down from the unbounded default of 10) and `idle_timeout: 20` on the client. I'm being honest that this is a well-established best practice for serverless + pooled Postgres, not something I fully root-caused against your actual Supabase connection limits (I don't have dashboard access to see those) — if timing is still unstable after this, the next thing to check is Supabase dashboard → Database → your pooler's max connections setting.
-
 ## Tried pinning Vercel functions to Singapore — reverted, broke the database connection
 
 You said it was still slow, so I dug further: `X-Vercel-Id` on a database-touching request showed `sin1::iad1::...` — the function was executing in `iad1` (US East) while the Supabase database is in `ap-southeast-1` (Singapore, confirmed from `DATABASE_URL`'s host). Every query was paying a full trans-Pacific round trip. Added `vercel.json` with `{"regions": ["sin1"]}` to co-locate the function with the database and deployed it.
