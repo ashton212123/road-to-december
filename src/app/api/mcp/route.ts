@@ -3,7 +3,19 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { db } from "@/lib/db";
-import { workoutLogs, weighIns, sleepLogs, waterLogs, foodLogs, swimTimes, cmjTests } from "@/lib/db/schema";
+import {
+  workoutLogs,
+  weighIns,
+  sleepLogs,
+  waterLogs,
+  foodLogs,
+  swimTimes,
+  cmjTests,
+  jumpTests,
+  sorenessLogs,
+  timeTo15m,
+  settings,
+} from "@/lib/db/schema";
 import { todayManilaISO, daysBetween, addDaysISO } from "@/lib/time";
 import { seasonData } from "@/lib/data/season-data";
 import {
@@ -19,6 +31,10 @@ import {
   resolveExerciseByName,
   getCmjTests,
   getSwimTimes,
+  getJumpTests,
+  getSorenessLogs,
+  getSleepLogs,
+  getTimeTo15mLogs,
 } from "@/lib/db/queries";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
@@ -109,10 +125,27 @@ const handler = createMcpHandler(
     server.registerTool(
       "get_analytics",
       {
-        description: "Analytics for one metric: e1rm, tonnage, cmj, bodyweight, or swim.",
-        inputSchema: { metric: z.enum(["e1rm", "tonnage", "cmj", "bodyweight", "swim"]) },
+        description:
+          "Analytics for one metric: e1rm, tonnage, cmj, bodyweight, swim, soreness, jump, sleep, or time_to_15m.",
+        inputSchema: {
+          metric: z.enum([
+            "e1rm",
+            "tonnage",
+            "cmj",
+            "bodyweight",
+            "swim",
+            "soreness",
+            "jump",
+            "sleep",
+            "time_to_15m",
+          ]),
+          jump_type: z
+            .enum(["broad_jump", "seated_box"])
+            .optional()
+            .describe("Only used when metric is 'jump'. Omit for both types."),
+        },
       },
-      async ({ metric }) => {
+      async ({ metric, jump_type }) => {
         const today = todayManilaISO();
         if (metric === "e1rm") {
           const logs = await getWorkoutLogsWithExerciseSince(addDaysISO(today, -180));
@@ -135,6 +168,22 @@ const handler = createMcpHandler(
         }
         if (metric === "bodyweight") {
           const rows = await getWeighIns(60);
+          return { content: [{ type: "text" as const, text: JSON.stringify(rows, null, 2) }] };
+        }
+        if (metric === "soreness") {
+          const rows = await getSorenessLogs(30);
+          return { content: [{ type: "text" as const, text: JSON.stringify(rows, null, 2) }] };
+        }
+        if (metric === "jump") {
+          const rows = await getJumpTests(jump_type, 50);
+          return { content: [{ type: "text" as const, text: JSON.stringify(rows, null, 2) }] };
+        }
+        if (metric === "sleep") {
+          const rows = await getSleepLogs(30);
+          return { content: [{ type: "text" as const, text: JSON.stringify(rows, null, 2) }] };
+        }
+        if (metric === "time_to_15m") {
+          const rows = await getTimeTo15mLogs(50);
           return { content: [{ type: "text" as const, text: JSON.stringify(rows, null, 2) }] };
         }
         const rows = await getSwimTimes(50);
@@ -279,6 +328,79 @@ const handler = createMcpHandler(
       async ({ cm }) => {
         await db.insert(cmjTests).values({ date: todayManilaISO(), bestOf3Cm: String(cm) });
         return { content: [{ type: "text" as const, text: `Logged CMJ: ${cm}cm.` }] };
+      }
+    );
+
+    server.registerTool(
+      "log_soreness",
+      {
+        description: "Log a muscle soreness rating for a body area.",
+        inputSchema: {
+          rating: z.number().min(1).max(5).describe("1 (none) to 5 (severe)"),
+          area: z.string().describe("e.g. 'shins', 'shoulders', 'quads'"),
+          date: z.string().optional(),
+        },
+      },
+      async ({ rating, area, date }) => {
+        await db.insert(sorenessLogs).values({ date: date ?? todayManilaISO(), rating1to5: rating, area });
+        return { content: [{ type: "text" as const, text: `Logged soreness: ${area} at ${rating}/5.` }] };
+      }
+    );
+
+    server.registerTool(
+      "log_jump_test",
+      {
+        description: "Log a broad jump or seated box jump test result.",
+        inputSchema: {
+          type: z.enum(["broad_jump", "seated_box"]),
+          cm: z.number(),
+          date: z.string().optional(),
+        },
+      },
+      async ({ type, cm, date }) => {
+        await db.insert(jumpTests).values({ date: date ?? todayManilaISO(), type, valueCm: String(cm) });
+        return { content: [{ type: "text" as const, text: `Logged ${type.replace("_", " ")}: ${cm}cm.` }] };
+      }
+    );
+
+    server.registerTool(
+      "log_time_to_15m",
+      {
+        description: "Log a 15m sprint acceleration time, fresh or fatigued.",
+        inputSchema: {
+          seconds: z.number(),
+          condition: z.enum(["fresh", "fatigued"]),
+          date: z.string().optional(),
+        },
+      },
+      async ({ seconds, condition, date }) => {
+        await db.insert(timeTo15m).values({ date: date ?? todayManilaISO(), seconds: String(seconds), condition });
+        return { content: [{ type: "text" as const, text: `Logged 15m time: ${seconds}s (${condition}).` }] };
+      }
+    );
+
+    server.registerTool(
+      "update_settings",
+      {
+        description:
+          "Update app settings: ASEAN confirmation status, daily water target, or preferred weight unit. Only the fields provided are changed.",
+        inputSchema: {
+          asean_confirmed: z.boolean().nullable().optional().describe("true=confirmed, false=cancelled, null=unknown"),
+          water_target_ml: z.number().optional(),
+          weight_unit: z.enum(["kg", "lb"]).optional(),
+        },
+      },
+      async ({ asean_confirmed, water_target_ml, weight_unit }) => {
+        const current = await getSettingsRow();
+        await db
+          .update(settings)
+          .set({
+            aseanConfirmed: asean_confirmed !== undefined ? asean_confirmed : current.aseanConfirmed,
+            waterTargetMl: water_target_ml ?? current.waterTargetMl,
+            weightUnit: weight_unit ?? current.weightUnit,
+          })
+          .where(eq(settings.id, "singleton"));
+        return { content: [{ type: "text" as const, text: "Settings updated." }] };
       }
     );
   },
