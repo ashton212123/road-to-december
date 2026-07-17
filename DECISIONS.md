@@ -54,9 +54,13 @@ Every judgment call made without asking, per your "don't block on questions" ins
 - Deployed Phase 1 (MCP completion, checkbox gym logging, swim logging, business tracker) to production before starting Phase 2.1.
 - Added a training-day streak to Home (Phase 1's Dashboard spec asked for "streaks," which nothing tracked) — see entry below for definition.
 
-## The actual biggest slowness cause: Vercel functions running in the wrong region
+## Tried pinning Vercel functions to Singapore — reverted, broke the database connection
 
-You said it was still slow after the query-level fix, so I dug further and found the real dominant cause: `X-Vercel-Id` on a real database-touching request came back as `sin1::iad1::...` — meaning the request routes through Singapore edge, but the **serverless function itself executes in `iad1` (Washington DC, US East)**. The Supabase database is in `ap-southeast-1` (Singapore, confirmed from `DATABASE_URL`'s host). Every single database query was paying a full US↔Singapore round trip — 200-300ms+ each way — on top of whatever the query itself takes. No amount of parallelizing queries fixes that; it's physics, not code. Added `vercel.json` with `{"regions": ["sin1"]}` so functions execute in Singapore, co-located with the database. This should be the dominant fix — the query-level work from before still matters (fewer round trips is still better even at low latency), but this removes the ~250ms-per-query tax that was on every single one of them, everywhere in the app, not just Home.
+You said it was still slow, so I dug further: `X-Vercel-Id` on a database-touching request showed `sin1::iad1::...` — the function was executing in `iad1` (US East) while the Supabase database is in `ap-southeast-1` (Singapore, confirmed from `DATABASE_URL`'s host). Every query was paying a full trans-Pacific round trip. Added `vercel.json` with `{"regions": ["sin1"]}` to co-locate the function with the database and deployed it.
+
+**This made latency much better (confirmed: 0.47s and `sin1::sin1::...` in the header) but broke every database query outright** — `get_dashboard_summary` started returning `"Failed query: select ... from weigh_ins ..."`. Almost certainly Supabase network/IP restrictions scoped to Vercel's old region's egress IPs, now rejecting connections from Singapore's egress IPs instead. **Reverted immediately** — a broken app is worse than a slow one, full stop — and redeployed on the default region to restore working queries.
+
+**If you want this speed-up, it needs one thing from you first**: check Supabase dashboard → your project → Settings → Database → Network Restrictions. If any IP allowlist is configured there, either disable it or add Vercel's Singapore (`sin1`) egress IP ranges (Vercel publishes these in their docs). Once that's sorted, tell me and I'll re-add `vercel.json` and redeploy — the config itself is fine, it's purely a network-policy mismatch on Supabase's side.
 
 ## Home was actually slow — real bug, found and fixed
 
