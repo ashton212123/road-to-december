@@ -4,9 +4,9 @@ import { StatCard } from "@/components/ui/StatCard";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { AlertCardList } from "@/components/rules/AlertCardList";
-import { AssignmentRow } from "@/components/school/AssignmentRow";
+import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, todayDayKey, daysBetween, addDaysISO } from "@/lib/time";
+import { todayManilaISO, todayDayKey, daysBetween, addDaysISO, manilaHourNow } from "@/lib/time";
 import {
   getAllPhasesWithSessions,
   getCurrentPhase,
@@ -17,11 +17,14 @@ import {
   getSettingsRow,
   getUndoneBusinessTasks,
   getWorkoutLogsSince,
+  getSwimSessions,
+  getSleepLogs,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
 import { computeTrainingStreak } from "@/lib/analytics/streak";
+import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -37,19 +40,33 @@ export default async function HomePage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts, undoneTasks, canvas, recentWorkoutLogs] =
-    await Promise.all([
-      getAllPhasesWithSessions(),
-      getLatestWeighIn(),
-      getWeighIns(10),
-      getFoodLogsForDate(today),
-      getWaterLogsForDate(today),
-      getSettingsRow(),
-      evaluateAlerts(),
-      getUndoneBusinessTasks(5),
-      getCanvasSummary(),
-      getWorkoutLogsSince(addDaysISO(today, -400)),
-    ]);
+  const [
+    allPhases,
+    latestWeighIn,
+    weighInHistory,
+    todaysFood,
+    todaysWater,
+    settingsRow,
+    alerts,
+    undoneTasks,
+    canvas,
+    recentWorkoutLogs,
+    recentSwimSessions,
+    recentSleepLogs,
+  ] = await Promise.all([
+    getAllPhasesWithSessions(),
+    getLatestWeighIn(),
+    getWeighIns(10),
+    getFoodLogsForDate(today),
+    getWaterLogsForDate(today),
+    getSettingsRow(),
+    evaluateAlerts(),
+    getUndoneBusinessTasks(5),
+    getCanvasSummary(),
+    getWorkoutLogsSince(addDaysISO(today, -400)),
+    getSwimSessions(5),
+    getSleepLogs(1),
+  ]);
 
   // Anything within 48h is already a distinct, more severe "Coach" alert
   // (see rules/engine.ts) -- exclude it here so it doesn't show twice.
@@ -96,6 +113,22 @@ export default async function HomePage() {
     weighInHistory.length >= 2
       ? Number(weighInHistory[0].kg) - Number(weighInHistory[1].kg)
       : null;
+
+  const hour = manilaHourNow();
+  const needsAttention = buildAttentionItems({
+    today,
+    todayKey,
+    hour,
+    currentPhaseId: currentPhase.id,
+    todaySession,
+    weekDay,
+    loggedWorkoutToday: recentWorkoutLogs.some((l) => l.date === today),
+    loggedSwimSessionToday: recentSwimSessions.some((s) => s.date === today),
+    foodLoggedTodayCount: todaysFood.length,
+    sleepLoggedToday: recentSleepLogs.some((s) => s.date === today),
+    undoneBusinessTasks: undoneTasks,
+    urgentSchoolAssignments: urgentAssignments,
+  });
 
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
@@ -150,28 +183,10 @@ export default async function HomePage() {
         </div>
       )}
 
-      {(urgentAssignments.length > 0 || undoneTasks.length > 0) && (
+      {needsAttention.length > 0 && (
         <div>
-          <SectionLabel>Priorities</SectionLabel>
-          <GlassCard className="flex flex-col divide-y divide-white/[0.06]">
-            {urgentAssignments.map((a) => (
-              <AssignmentRow key={`canvas-${a.id}`} assignment={a} />
-            ))}
-            {undoneTasks.map((t) => (
-              <Link key={`task-${t.id}`} href={`/business/${t.businessId}`} className="py-1 flex items-center justify-between text-xs">
-                <div className="min-w-0">
-                  <div className="text-[var(--rtd-text)] truncate">{t.title}</div>
-                  <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
-                    {t.businessName}
-                    {t.dueDate ? ` · due ${t.dueDate}` : ""}
-                  </div>
-                </div>
-                <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)]">
-                  Task
-                </span>
-              </Link>
-            ))}
-          </GlassCard>
+          <SectionLabel>Needs attention</SectionLabel>
+          <NeedsAttentionList items={needsAttention} />
         </div>
       )}
 

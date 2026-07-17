@@ -19,7 +19,7 @@ import {
   businessTasks,
   swimSessions,
 } from "@/lib/db/schema";
-import { todayManilaISO, daysBetween, addDaysISO } from "@/lib/time";
+import { todayManilaISO, daysBetween, addDaysISO, todayDayKey, manilaHourNow } from "@/lib/time";
 import { seasonData } from "@/lib/data/season-data";
 import {
   getAllPhasesWithSessions,
@@ -43,6 +43,9 @@ import {
   resolveBusinessByName,
   resolveBusinessTaskByTitle,
   getAllMeetsWithEvents,
+  getUndoneBusinessTasks,
+  getWorkoutLogsSince,
+  getSwimSessions,
 } from "@/lib/db/queries";
 import { computeProfit } from "@/lib/business/profit";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
@@ -52,6 +55,7 @@ import { evaluateAlerts } from "@/lib/rules/engine";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
+import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 
 const handler = createMcpHandler(
   (server) => {
@@ -616,6 +620,108 @@ const handler = createMcpHandler(
           }),
         }));
         return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+      }
+    );
+
+    server.registerTool(
+      "log_gym_session",
+      {
+        description: "Log a full gym session in one call -- every set across every exercise (e.g. describing a whole workout: 'squats 3x5 at 80kg, bench 3x8 at 60kg'). Each exercise is matched by name against today's/current-phase prescriptions, same as log_workout_set.",
+        inputSchema: {
+          sets: z
+            .array(
+              z.object({
+                exercise: z.string().describe("Exercise name, e.g. 'Back squat'"),
+                weight_kg: z.number().optional(),
+                reps: z.number().optional(),
+                rpe: z.number().optional(),
+              })
+            )
+            .min(1),
+        },
+      },
+      async ({ sets }) => {
+        const today = todayManilaISO();
+        const logged: string[] = [];
+        const notFound: string[] = [];
+        const setNumberByExerciseId = new Map<number, number>();
+
+        for (const s of sets) {
+          const match = await resolveExerciseByName(s.exercise);
+          if (!match) {
+            notFound.push(s.exercise);
+            continue;
+          }
+          if (!setNumberByExerciseId.has(match.id)) {
+            const existing = await db
+              .select()
+              .from(workoutLogs)
+              .where(and(eq(workoutLogs.exerciseId, match.id), eq(workoutLogs.date, today)));
+            setNumberByExerciseId.set(match.id, existing.length);
+          }
+          const setNumber = setNumberByExerciseId.get(match.id)! + 1;
+          setNumberByExerciseId.set(match.id, setNumber);
+          await db.insert(workoutLogs).values({
+            date: today,
+            exerciseId: match.id,
+            setNumber,
+            weightKg: s.weight_kg !== undefined ? String(s.weight_kg) : null,
+            reps: s.reps ?? null,
+            rpe: s.rpe !== undefined ? String(s.rpe) : null,
+          });
+          logged.push(`${match.name} set ${setNumber}: ${s.weight_kg ?? "–"}kg x ${s.reps ?? "–"} @ RPE ${s.rpe ?? "–"}`);
+        }
+
+        const summary = `Logged ${logged.length} set${logged.length === 1 ? "" : "s"}.${notFound.length > 0 ? ` No exercise found matching: ${notFound.join(", ")}.` : ""}`;
+        return {
+          content: [{ type: "text" as const, text: `${summary}\n${logged.join("\n")}` }],
+          isError: notFound.length > 0 && logged.length === 0,
+        };
+      }
+    );
+
+    server.registerTool(
+      "get_pending_items",
+      {
+        description: "Everything needing attention right now across every module: unlogged training/swim/fuel/recovery for today, undone business tasks, and upcoming school assignments. The daily digest -- ask this any time to know what to log or do.",
+        inputSchema: {},
+      },
+      async () => {
+        const today = todayManilaISO();
+        const todayKey = todayDayKey();
+        const hour = manilaHourNow();
+        const dayIndex: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 };
+
+        const [allPhases, todaysFood, undoneTasks, canvas, recentWorkoutLogs, recentSwimSessions, recentSleepLogs] = await Promise.all([
+          getAllPhasesWithSessions(),
+          getFoodLogsForDate(today),
+          getUndoneBusinessTasks(10),
+          getCanvasSummary(),
+          getWorkoutLogsSince(addDaysISO(today, -400)),
+          getSwimSessions(5),
+          getSleepLogs(1),
+        ]);
+
+        const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
+        const todaySession = currentPhase.sessions.find((s) => s.dayKey === todayKey) ?? null;
+        const weekDay = seasonData.WEEK[dayIndex[todayKey]];
+
+        const items = buildAttentionItems({
+          today,
+          todayKey,
+          hour,
+          currentPhaseId: currentPhase.id,
+          todaySession: todaySession ? { title: todaySession.title } : null,
+          weekDay,
+          loggedWorkoutToday: recentWorkoutLogs.some((l) => l.date === today),
+          loggedSwimSessionToday: recentSwimSessions.some((s) => s.date === today),
+          foodLoggedTodayCount: todaysFood.length,
+          sleepLoggedToday: recentSleepLogs.some((s) => s.date === today),
+          undoneBusinessTasks: undoneTasks,
+          urgentSchoolAssignments: getUrgentAssignments(canvas.assignments),
+        });
+
+        return { content: [{ type: "text" as const, text: JSON.stringify(items, null, 2) }] };
       }
     );
   },
