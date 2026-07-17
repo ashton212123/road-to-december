@@ -10,7 +10,7 @@ import {
   getWorkoutLogsSince,
 } from "../db/queries";
 import { seasonData } from "../data/season-data";
-import { getCanvasSummary, getCriticalAssignments } from "../canvas/sync";
+import { getCanvasSummary, getCriticalAssignments, type CanvasSummary } from "../canvas/sync";
 
 export type RuleAlert = {
   id: string;
@@ -42,12 +42,30 @@ function weekdayGroups<T extends { date: string }>(rows: T[]) {
  * the database; every rule maps 1:1 to a bullet in /data/program.md's
  * "Coaching Rules Summary" section.
  */
-export async function evaluateAlerts(): Promise<RuleAlert[]> {
+/** `canvasSummary`: pass a pre-fetched summary to avoid a duplicate fetch/sync
+ * when the caller already has one (e.g. Home renders this alongside its own
+ * Canvas read) -- omit to fetch internally (e.g. the MCP get_dashboard_summary
+ * tool, which has nothing else to share it with). */
+export async function evaluateAlerts(canvasSummary?: CanvasSummary): Promise<RuleAlert[]> {
   const alerts: RuleAlert[] = [];
   const today = todayManilaISO();
   const todayKey = todayDayKey();
+  const hour = manilaHourNow();
 
-  const allPhases = await getAllPhasesWithSessions();
+  // Every query this function needs, fetched in parallel instead of one
+  // sequential chain of ~8 round-trips (the original structure serialized
+  // independent queries -- allPhases, cmjRows, weighIns, settings, workout
+  // logs, food logs, and Canvas all one-after-another -- which was the real
+  // cause of Home feeling slow to load, not any single query being heavy).
+  const [allPhases, cmjRows, recentWeighIns, settingsRow, workoutLogsToday, todaysFood, canvas] = await Promise.all([
+    getAllPhasesWithSessions(),
+    getCmjTests(12),
+    getWeighIns(21),
+    getSettingsRow(),
+    getWorkoutLogsSince(today),
+    getFoodLogsForDate(today),
+    canvasSummary ? Promise.resolve(canvasSummary) : getCanvasSummary(),
+  ]);
   const currentPhase = getCurrentPhase(allPhases, today);
 
   // Rule 1: double-swim day RPE drop.
@@ -71,7 +89,6 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
   }
 
   // Rule 3: CMJ down 2 consecutive weeks.
-  const cmjRows = await getCmjTests(12);
   const cmjWeeks = weekdayGroups(cmjRows).map(([, rows]) => {
     const best = Math.max(...rows.map((r) => Number(r.bestOf3Cm)));
     return best;
@@ -87,7 +104,6 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
 
   // Rule 4: bodyweight flat 2 weeks during P2 (bulk window).
   if (currentPhase?.id === "p2") {
-    const recentWeighIns = await getWeighIns(21);
     const weeks = weekdayGroups(recentWeighIns).slice(0, 2);
     if (weeks.length === 2) {
       const [thisWeek, lastWeek] = weeks;
@@ -106,7 +122,6 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
   }
 
   // Rule 5: ASEAN status still unknown, reminder to confirm as the date nears.
-  const settingsRow = await getSettingsRow();
   if (settingsRow.aseanConfirmed === null) {
     const daysToAsean = daysBetween(today, seasonData.meta.targets.aseanDate);
     if (daysToAsean <= 42 && daysToAsean >= 0) {
@@ -126,8 +141,7 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
   for (const meetDate of meetDates) {
     const daysToMeet = daysBetween(today, meetDate);
     if (daysToMeet >= 0 && daysToMeet <= 10) {
-      const recentLogs = await getWorkoutLogsSince(today);
-      const hasHeavyBarbell = recentLogs.some(
+      const hasHeavyBarbell = workoutLogsToday.some(
         (l) => l.date === today && Number(l.weightKg ?? 0) > 0 && daysToMeet < 8
       );
       if (hasHeavyBarbell) {
@@ -150,9 +164,7 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
   }
 
   // Rule 7: missed lunch by 4 PM.
-  const hour = manilaHourNow();
   if (hour >= 16) {
-    const todaysFood = await getFoodLogsForDate(today);
     const loggedLunch = todaysFood.some((f) => f.timeSlot === "lunch" || f.description.toLowerCase().includes("lunch"));
     if (!loggedLunch) {
       alerts.push({
@@ -167,7 +179,6 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
   // Rule 8: Canvas assignments due within 48h -- sync + alert only, never
   // auto-completed or auto-submitted. A distinct, more severe tier than the
   // general due-soon list on Home.
-  const canvas = await getCanvasSummary();
   if (canvas.configured && !canvas.error) {
     for (const a of getCriticalAssignments(canvas.assignments)) {
       const overdue = a.dueAt !== null && a.dueAt.getTime() < Date.now();

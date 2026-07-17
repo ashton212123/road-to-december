@@ -40,6 +40,13 @@ export default async function HomePage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
+  // Cache-only read (no live Canvas API call) so Home never blocks on
+  // Canvas's response time -- the School page's live sync (with its own
+  // "Sync now" button) is where a human is expected to wait a moment.
+  // Fetched once and shared with evaluateAlerts() below so a stale-cache
+  // window can't trigger two concurrent live syncs racing each other.
+  const canvas = await getCanvasSummary({ sync: false });
+
   const [
     allPhases,
     latestWeighIn,
@@ -49,7 +56,6 @@ export default async function HomePage() {
     settingsRow,
     alerts,
     undoneTasks,
-    canvas,
     recentWorkoutLogs,
     recentSwimSessions,
     recentSleepLogs,
@@ -60,10 +66,9 @@ export default async function HomePage() {
     getFoodLogsForDate(today),
     getWaterLogsForDate(today),
     getSettingsRow(),
-    evaluateAlerts(),
+    evaluateAlerts(canvas),
     getUndoneBusinessTasks(5),
-    getCanvasSummary(),
-    getWorkoutLogsSince(addDaysISO(today, -400)),
+    getWorkoutLogsSince(addDaysISO(today, -150)),
     getSwimSessions(5),
     getSleepLogs(1),
   ]);

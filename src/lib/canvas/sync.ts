@@ -61,10 +61,14 @@ export type CanvasSummary = {
 };
 
 /** Reads cached Canvas data, refreshing from the live API first if the cache
- * is missing/stale. Never throws — sync failures surface as `error` so a
- * page can show a clear banner (e.g. expired token) without crashing, and
- * still serve whatever was last cached. */
-export async function getCanvasSummary(): Promise<CanvasSummary> {
+ * is missing/stale (unless `sync: false`, which always reads cache-only --
+ * fast, DB-only, for pages where a human is waiting on the render and
+ * ≤20-minute-old data is plenty). Never throws — sync failures surface as
+ * `error` so a page can show a clear banner (e.g. expired token) without
+ * crashing, and still serve whatever was last cached. */
+export async function getCanvasSummary(opts: { sync?: boolean } = {}): Promise<CanvasSummary> {
+  const shouldSync = opts.sync ?? true;
+
   if (!isCanvasConfigured()) {
     return { configured: false, courses: [], assignments: [], syncedAt: null, error: null };
   }
@@ -73,7 +77,7 @@ export async function getCanvasSummary(): Promise<CanvasSummary> {
   const isStale = cachedCourses.length === 0 || Date.now() - cachedCourses[0].syncedAt.getTime() > STALE_AFTER_MS;
 
   let error: string | null = null;
-  if (isStale) {
+  if (isStale && shouldSync) {
     try {
       await syncCanvasData();
     } catch (err) {
