@@ -54,6 +54,10 @@ Every judgment call made without asking, per your "don't block on questions" ins
 - Deployed Phase 1 (MCP completion, checkbox gym logging, swim logging, business tracker) to production before starting Phase 2.1.
 - Added a training-day streak to Home (Phase 1's Dashboard spec asked for "streaks," which nothing tracked) — see entry below for definition.
 
+## The actual biggest slowness cause: Vercel functions running in the wrong region
+
+You said it was still slow after the query-level fix, so I dug further and found the real dominant cause: `X-Vercel-Id` on a real database-touching request came back as `sin1::iad1::...` — meaning the request routes through Singapore edge, but the **serverless function itself executes in `iad1` (Washington DC, US East)**. The Supabase database is in `ap-southeast-1` (Singapore, confirmed from `DATABASE_URL`'s host). Every single database query was paying a full US↔Singapore round trip — 200-300ms+ each way — on top of whatever the query itself takes. No amount of parallelizing queries fixes that; it's physics, not code. Added `vercel.json` with `{"regions": ["sin1"]}` so functions execute in Singapore, co-located with the database. This should be the dominant fix — the query-level work from before still matters (fewer round trips is still better even at low latency), but this removes the ~250ms-per-query tax that was on every single one of them, everywhere in the app, not just Home.
+
 ## Home was actually slow — real bug, found and fixed
 
 You reported Home just sitting there loading. Root-caused it to two real, compounding issues (not vague "slowness," specific bugs):
