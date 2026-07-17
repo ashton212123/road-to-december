@@ -93,6 +93,7 @@ export default async function AnalyticsPage() {
         splitBars={seasonData.SPLIT_BARS}
         splitAutopsy={splitAutopsy}
         timeTo15m={timeTo15m.map((t) => ({ date: t.date, seconds: Number(t.seconds), condition: t.condition }))}
+        recentSwimTimes={swimTimes.map((t) => ({ id: t.id, date: t.date, event: t.event, timeMs: t.timeMs, meetName: t.meetName }))}
       />
     </div>
   );

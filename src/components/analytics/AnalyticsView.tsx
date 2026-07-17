@@ -28,6 +28,7 @@ export function AnalyticsView(props: {
   splitBars: SeedSplitBar[];
   splitAutopsy: { date: string; splits: number[]; strokeCounts: number[] }[];
   timeTo15m: { date: string; seconds: number; condition: string }[];
+  recentSwimTimes: { id: number; date: string; event: string; timeMs: number; meetName: string | null }[];
 }) {
   const [tab, setTab] = useState<Tab>("strength");
 
@@ -57,6 +58,7 @@ export function AnalyticsView(props: {
           splitBars={props.splitBars}
           splitAutopsy={props.splitAutopsy}
           timeTo15m={props.timeTo15m}
+          recentTimes={props.recentSwimTimes}
         />
       )}
     </div>
