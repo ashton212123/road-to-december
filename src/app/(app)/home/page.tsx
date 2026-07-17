@@ -6,7 +6,7 @@ import { ProgressRing } from "@/components/ui/ProgressRing";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { AssignmentRow } from "@/components/school/AssignmentRow";
 import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, todayDayKey, daysBetween } from "@/lib/time";
+import { todayManilaISO, todayDayKey, daysBetween, addDaysISO } from "@/lib/time";
 import {
   getAllPhasesWithSessions,
   getCurrentPhase,
@@ -16,10 +16,12 @@ import {
   getWaterLogsForDate,
   getSettingsRow,
   getUndoneBusinessTasks,
+  getWorkoutLogsSince,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
+import { computeTrainingStreak } from "@/lib/analytics/streak";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -35,7 +37,7 @@ export default async function HomePage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts, undoneTasks, canvas] =
+  const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts, undoneTasks, canvas, recentWorkoutLogs] =
     await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
@@ -46,9 +48,15 @@ export default async function HomePage() {
       evaluateAlerts(),
       getUndoneBusinessTasks(5),
       getCanvasSummary(),
+      getWorkoutLogsSince(addDaysISO(today, -400)),
     ]);
 
   const urgentAssignments = getUrgentAssignments(canvas.assignments).slice(0, 5);
+  const trainingStreak = computeTrainingStreak({
+    today,
+    phases: allPhases,
+    loggedDates: new Set(recentWorkoutLogs.map((l) => l.date)),
+  });
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
   const seasonStart = seasonData.meta.seasonStart;
@@ -92,12 +100,19 @@ export default async function HomePage() {
             <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
             <div className="rtd-display text-4xl mt-1">{daysToNcaa}</div>
           </div>
-          <span
-            className="text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: `${currentPhase.color}26`, color: currentPhase.color }}
-          >
-            {currentPhase.tag} · {currentPhase.name}
-          </span>
+          <div className="flex flex-col items-end gap-1.5">
+            <span
+              className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: `${currentPhase.color}26`, color: currentPhase.color }}
+            >
+              {currentPhase.tag} · {currentPhase.name}
+            </span>
+            {trainingStreak > 0 && (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--rtd-orange)]/15 text-[var(--rtd-orange)]">
+                🔥 {trainingStreak} day{trainingStreak === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
         </div>
         {settingsRow.aseanConfirmed !== false ? (
           <div className="flex items-baseline gap-1.5">
