@@ -3,8 +3,14 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { IconBolt } from "@/components/ui/icons";
-import { logSetAction, deleteSetAction } from "@/app/(app)/train/actions";
+import { IconBolt, IconCheck, IconChevronDown } from "@/components/ui/icons";
+import {
+  logSetAction,
+  deleteSetAction,
+  updateSetAction,
+  completeExerciseAction,
+  uncompleteExerciseAction,
+} from "@/app/(app)/train/actions";
 import type { ProgressionSuggestion } from "@/lib/train/progression";
 
 type LoggedSet = {
@@ -14,6 +20,7 @@ type LoggedSet = {
   reps: number | null;
   rpe: string | null;
   restSeconds: number | null;
+  notes: string | null;
 };
 
 type PastSet = { weightKg: string | null; reps: number | null; rpe: string | null };
@@ -30,6 +37,8 @@ export function ExerciseCard({
     name: string;
     prescription: string;
     targetSets: number | null;
+    targetRepsMin: number | null;
+    targetRepsMax: number | null;
     restSecondsPrescribed: number | null;
     isExplosive: boolean;
     isMainLift: boolean;
@@ -39,12 +48,15 @@ export function ExerciseCard({
   todaysSets: LoggedSet[];
   progression: ProgressionSuggestion | null;
 }) {
+  const [pending, startTransition] = useTransition();
+  const [expanded, setExpanded] = useState(false);
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [rpe, setRpe] = useState("");
-  const [pending, startTransition] = useTransition();
   const [restElapsed, setRestElapsed] = useState<number | null>(null);
   const lastLogAt = useRef<number | null>(null);
+
+  const completed = todaysSets.length > 0;
 
   useEffect(() => {
     if (restElapsed === null) return;
@@ -56,7 +68,28 @@ export function ExerciseCard({
     return () => clearInterval(interval);
   }, [restElapsed]);
 
-  function handleLog() {
+  function toggleCompleted() {
+    if (completed) {
+      startTransition(() => uncompleteExerciseAction(exercise.id, phaseId));
+      return;
+    }
+    const lastTopWeight = lastSessionSets.reduce<number | null>((best, s) => {
+      const w = s.weightKg ? Number(s.weightKg) : null;
+      if (w === null) return best;
+      return best === null || w > best ? w : best;
+    }, null);
+    startTransition(() =>
+      completeExerciseAction({
+        exerciseId: exercise.id,
+        phaseId,
+        setCount: exercise.targetSets ?? 1,
+        defaultReps: exercise.targetRepsMax ?? exercise.targetRepsMin ?? null,
+        defaultWeightKg: lastTopWeight,
+      })
+    );
+  }
+
+  function handleAddSet() {
     const restSeconds = lastLogAt.current ? Math.floor((Date.now() - lastLogAt.current) / 1000) : null;
     const setNumber = todaysSets.length + 1;
     startTransition(async () => {
@@ -71,6 +104,9 @@ export function ExerciseCard({
       });
       lastLogAt.current = Date.now();
       setRestElapsed(0);
+      setWeight("");
+      setReps("");
+      setRpe("");
     });
   }
 
@@ -86,8 +122,24 @@ export function ExerciseCard({
 
   return (
     <GlassCard className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={toggleCompleted}
+          disabled={pending}
+          aria-label={completed ? "Mark not completed" : "Mark completed"}
+          aria-pressed={completed}
+          className="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-transform active:scale-90"
+          style={{
+            background: completed ? "var(--rtd-green)" : "rgba(255,255,255,0.08)",
+            border: completed ? "none" : "1.5px solid rgba(255,255,255,0.25)",
+            color: "#fff",
+          }}
+        >
+          {completed && <IconCheck size={15} />}
+        </button>
+
+        <button type="button" onClick={() => setExpanded((v) => !v)} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold truncate">{exercise.name}</span>
             {exercise.isExplosive && (
@@ -102,7 +154,14 @@ export function ExerciseCard({
             )}
           </div>
           <div className="text-xs text-[var(--rtd-text-secondary)]">{exercise.prescription || "—"}</div>
-        </div>
+        </button>
+
+        <span
+          className="shrink-0 mt-1 text-[var(--rtd-text-tertiary)] transition-transform"
+          style={{ transform: expanded ? "rotate(180deg)" : "none" }}
+        >
+          <IconChevronDown />
+        </span>
       </div>
 
       {progression && (
@@ -112,99 +171,179 @@ export function ExerciseCard({
         </div>
       )}
 
-      {lastSessionSets.length > 0 && (
+      {!expanded && lastSessionSets.length > 0 && (
         <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
           Last session: {lastSessionSets.map((s) => `${s.weightKg ?? "–"}×${s.reps ?? "–"}@${s.rpe ?? "–"}`).join("  ·  ")}
         </div>
       )}
 
-      {todaysSets.length > 0 && (
-        <div className="flex flex-col gap-1">
-          {todaysSets.map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center justify-between text-xs bg-white/[0.04] rounded-lg px-2.5 py-1.5"
-            >
-              <span className="text-[var(--rtd-text-tertiary)]">Set {s.setNumber}</span>
-              <span className="text-[var(--rtd-text)]">
-                {s.weightKg ?? "–"}kg × {s.reps ?? "–"} @ RPE {s.rpe ?? "–"}
-                {s.restSeconds !== null && (
-                  <span className="text-[var(--rtd-text-tertiary)]"> · rest {s.restSeconds}s</span>
-                )}
-              </span>
-              <button
-                onClick={() => startTransition(() => deleteSetAction(s.id, phaseId))}
-                className="text-[var(--rtd-red)] ml-2"
-                aria-label="Delete set"
-              >
-                ✕
-              </button>
+      {completed && !expanded && (
+        <div className="text-[10px] text-[var(--rtd-green)]">
+          {todaysSets.length} set{todaysSets.length === 1 ? "" : "s"} logged — tap to edit details
+        </div>
+      )}
+
+      {expanded && (
+        <div className="flex flex-col gap-3 rtd-fade-in">
+          {lastSessionSets.length > 0 && (
+            <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
+              Last session: {lastSessionSets.map((s) => `${s.weightKg ?? "–"}×${s.reps ?? "–"}@${s.rpe ?? "–"}`).join("  ·  ")}
             </div>
-          ))}
+          )}
+
+          {todaysSets.length > 0 && (
+            <div className="flex flex-col gap-1">
+              {todaysSets.map((s) => (
+                <SetRow key={s.id} set={s} phaseId={phaseId} />
+              ))}
+            </div>
+          )}
+
+          {restElapsed !== null && (
+            <div
+              className="text-center text-xs rounded-xl py-2"
+              style={{
+                background:
+                  restCompare === "under"
+                    ? "rgba(255,159,10,0.12)"
+                    : restCompare === "over"
+                      ? "rgba(255,69,58,0.12)"
+                      : "rgba(48,209,88,0.12)",
+                color:
+                  restCompare === "under"
+                    ? "var(--rtd-orange)"
+                    : restCompare === "over"
+                      ? "var(--rtd-red)"
+                      : "var(--rtd-green)",
+              }}
+            >
+              Rest: {Math.floor(restElapsed / 60)}:{String(restElapsed % 60).padStart(2, "0")}
+              {restPrescribed && <span className="opacity-70"> / target {Math.round(restPrescribed / 60)}min</span>}
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-2 items-end">
+            <label className="flex flex-col gap-1 col-span-1">
+              <span className="rtd-micro-label !text-[9px]">kg</span>
+              <input
+                inputMode="decimal"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1 col-span-1">
+              <span className="rtd-micro-label !text-[9px]">reps</span>
+              <input
+                inputMode="numeric"
+                value={reps}
+                onChange={(e) => setReps(e.target.value)}
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1 col-span-1">
+              <span className="rtd-micro-label !text-[9px]">rpe</span>
+              <input
+                inputMode="decimal"
+                value={rpe}
+                onChange={(e) => setRpe(e.target.value)}
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+              />
+            </label>
+            <Button type="button" variant="secondary" disabled={pending} onClick={handleAddSet} className="col-span-1 !px-2">
+              Add set
+            </Button>
+          </div>
         </div>
       )}
+    </GlassCard>
+  );
+}
 
-      {restElapsed !== null && (
-        <div
-          className="text-center text-xs rounded-xl py-2"
-          style={{
-            background:
-              restCompare === "under"
-                ? "rgba(255,159,10,0.12)"
-                : restCompare === "over"
-                  ? "rgba(255,69,58,0.12)"
-                  : "rgba(48,209,88,0.12)",
-            color:
-              restCompare === "under"
-                ? "var(--rtd-orange)"
-                : restCompare === "over"
-                  ? "var(--rtd-red)"
-                  : "var(--rtd-green)",
-          }}
-        >
-          Rest: {Math.floor(restElapsed / 60)}:{String(restElapsed % 60).padStart(2, "0")}
-          {restPrescribed && <span className="opacity-70"> / target {Math.round(restPrescribed / 60)}min</span>}
-        </div>
-      )}
+function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
+  const [pending, startTransition] = useTransition();
+  const [editing, setEditing] = useState(false);
+  const [weight, setWeight] = useState(set.weightKg ?? "");
+  const [reps, setReps] = useState(set.reps !== null ? String(set.reps) : "");
+  const [rpe, setRpe] = useState(set.rpe ?? "");
+  const [notes, setNotes] = useState(set.notes ?? "");
 
-      <div className="grid grid-cols-4 gap-2 items-end">
-        <label className="flex flex-col gap-1 col-span-1">
-          <span className="rtd-micro-label !text-[9px]">kg</span>
+  function save() {
+    startTransition(async () => {
+      await updateSetAction({
+        logId: set.id,
+        weightKg: weight ? Number(weight) : null,
+        reps: reps ? Number(reps) : null,
+        rpe: rpe ? Number(rpe) : null,
+        notes: notes || null,
+        phaseId,
+      });
+      setEditing(false);
+    });
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2 bg-white/[0.04] rounded-lg px-2.5 py-2">
+        <div className="grid grid-cols-3 gap-2">
           <input
             inputMode="decimal"
+            placeholder="kg"
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
           />
-        </label>
-        <label className="flex flex-col gap-1 col-span-1">
-          <span className="rtd-micro-label !text-[9px]">reps</span>
           <input
             inputMode="numeric"
+            placeholder="reps"
             value={reps}
             onChange={(e) => setReps(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
           />
-        </label>
-        <label className="flex flex-col gap-1 col-span-1">
-          <span className="rtd-micro-label !text-[9px]">rpe</span>
           <input
             inputMode="decimal"
+            placeholder="rpe"
             value={rpe}
             onChange={(e) => setRpe(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
           />
-        </label>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={pending}
-          onClick={handleLog}
-          className="col-span-1 !px-2"
-        >
-          Log
-        </Button>
+        </div>
+        <input
+          placeholder="Notes (optional)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs outline-none"
+        />
+        <div className="flex gap-2">
+          <Button type="button" variant="secondary" disabled={pending} onClick={save} className="flex-1 !py-1.5 !text-xs">
+            Save
+          </Button>
+          <Button type="button" variant="ghost" disabled={pending} onClick={() => setEditing(false)} className="flex-1 !py-1.5 !text-xs">
+            Cancel
+          </Button>
+        </div>
       </div>
-    </GlassCard>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between text-xs bg-white/[0.04] rounded-lg px-2.5 py-1.5">
+      <button type="button" onClick={() => setEditing(true)} className="flex-1 text-left">
+        <span className="text-[var(--rtd-text-tertiary)]">Set {set.setNumber}</span>{" "}
+        <span className="text-[var(--rtd-text)]">
+          {set.weightKg ?? "–"}kg × {set.reps ?? "–"} @ RPE {set.rpe ?? "–"}
+          {set.restSeconds !== null && <span className="text-[var(--rtd-text-tertiary)]"> · rest {set.restSeconds}s</span>}
+          {set.notes && <span className="text-[var(--rtd-text-tertiary)]"> · {set.notes}</span>}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => startTransition(() => deleteSetAction(set.id, phaseId))}
+        className="text-[var(--rtd-red)] ml-2"
+        aria-label="Delete set"
+      >
+        ✕
+      </button>
+    </div>
   );
 }
