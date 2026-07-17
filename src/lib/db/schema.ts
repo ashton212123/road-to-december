@@ -218,6 +218,30 @@ export const businessNotes = pgTable("business_notes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ---------- Canvas LMS cache ----------
+// Mirrors Canvas's own ids (not serial) — the sync job fully replaces these
+// rows from the live API, so local edits are never expected.
+
+export const canvasCourses = pgTable("canvas_courses", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  courseCode: text("course_code"),
+  currentGrade: text("current_grade"),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).notNull(),
+});
+
+export const canvasAssignments = pgTable("canvas_assignments", {
+  id: integer("id").primaryKey(),
+  courseId: integer("course_id").notNull(),
+  name: text("name").notNull(),
+  dueAt: timestamp("due_at", { withTimezone: true }),
+  submitted: boolean("submitted").notNull().default(false),
+  pointsPossible: numeric("points_possible", { precision: 6, scale: 2 }),
+  score: numeric("score", { precision: 6, scale: 2 }),
+  htmlUrl: text("html_url"),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).notNull(),
+});
+
 export type Phase = typeof phases.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
@@ -236,3 +260,5 @@ export type Business = typeof businesses.$inferSelect;
 export type BusinessTransaction = typeof businessTransactions.$inferSelect;
 export type BusinessTask = typeof businessTasks.$inferSelect;
 export type BusinessNote = typeof businessNotes.$inferSelect;
+export type CanvasCourse = typeof canvasCourses.$inferSelect;
+export type CanvasAssignment = typeof canvasAssignments.$inferSelect;

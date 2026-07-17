@@ -15,6 +15,13 @@
       "when": 1784295180160,
       "tag": "0001_pale_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784296090288,
+      "tag": "0002_stormy_white_queen",
+      "breakpoints": true
     }
   ]
 }

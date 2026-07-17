@@ -4,6 +4,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { AlertCardList } from "@/components/rules/AlertCardList";
+import { AssignmentRow } from "@/components/school/AssignmentRow";
 import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, todayDayKey, daysBetween } from "@/lib/time";
 import {
@@ -14,9 +15,11 @@ import {
   getFoodLogsForDate,
   getWaterLogsForDate,
   getSettingsRow,
+  getUndoneBusinessTasks,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
+import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -32,7 +35,7 @@ export default async function HomePage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts] =
+  const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts, undoneTasks, canvas] =
     await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
@@ -41,7 +44,11 @@ export default async function HomePage() {
       getWaterLogsForDate(today),
       getSettingsRow(),
       evaluateAlerts(),
+      getUndoneBusinessTasks(5),
+      getCanvasSummary(),
     ]);
+
+  const urgentAssignments = getUrgentAssignments(canvas.assignments).slice(0, 5);
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
   const seasonStart = seasonData.meta.seasonStart;
@@ -108,6 +115,31 @@ export default async function HomePage() {
         <div className="flex flex-col gap-2">
           <SectionLabel>Coach</SectionLabel>
           <AlertCardList alerts={alerts} />
+        </div>
+      )}
+
+      {(urgentAssignments.length > 0 || undoneTasks.length > 0) && (
+        <div>
+          <SectionLabel>Priorities</SectionLabel>
+          <GlassCard className="flex flex-col divide-y divide-white/[0.06]">
+            {urgentAssignments.map((a) => (
+              <AssignmentRow key={`canvas-${a.id}`} assignment={a} />
+            ))}
+            {undoneTasks.map((t) => (
+              <Link key={`task-${t.id}`} href={`/business/${t.businessId}`} className="py-1 flex items-center justify-between text-xs">
+                <div className="min-w-0">
+                  <div className="text-[var(--rtd-text)] truncate">{t.title}</div>
+                  <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
+                    {t.businessName}
+                    {t.dueDate ? ` · due ${t.dueDate}` : ""}
+                  </div>
+                </div>
+                <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)]">
+                  Task
+                </span>
+              </Link>
+            ))}
+          </GlassCard>
         </div>
       )}
 

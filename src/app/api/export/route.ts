@@ -19,6 +19,8 @@ import {
   businessTransactions,
   businessTasks,
   businessNotes,
+  canvasCourses,
+  canvasAssignments,
 } from "@/lib/db/schema";
 
 // Full JSON dump of every table — the user must never be locked in.
@@ -43,6 +45,8 @@ export async function GET() {
     businessTransactionsRows,
     businessTasksRows,
     businessNotesRows,
+    canvasCoursesRows,
+    canvasAssignmentsRows,
   ] = await Promise.all([
     db.select().from(phases),
     db.select().from(sessions),
@@ -62,6 +66,8 @@ export async function GET() {
     db.select().from(businessTransactions),
     db.select().from(businessTasks),
     db.select().from(businessNotes),
+    db.select().from(canvasCourses),
+    db.select().from(canvasAssignments),
   ]);
 
   const dump = {
@@ -84,6 +90,8 @@ export async function GET() {
     businessTransactions: businessTransactionsRows,
     businessTasks: businessTasksRows,
     businessNotes: businessNotesRows,
+    canvasCourses: canvasCoursesRows,
+    canvasAssignments: canvasAssignmentsRows,
   };
 
   return new NextResponse(JSON.stringify(dump, null, 2), {

@@ -211,6 +211,24 @@ export async function getBusinessNotes(businessId: number) {
   return db.select().from(businessNotes).where(eq(businessNotes.businessId, businessId)).orderBy(desc(businessNotes.createdAt));
 }
 
+/** Undone tasks across every non-archived venture, for the Home dashboard's merged priorities. */
+export async function getUndoneBusinessTasks(limit = 10) {
+  const rows = await db
+    .select({
+      id: businessTasks.id,
+      title: businessTasks.title,
+      dueDate: businessTasks.dueDate,
+      businessId: businessTasks.businessId,
+      businessName: businesses.name,
+    })
+    .from(businessTasks)
+    .innerJoin(businesses, eq(businessTasks.businessId, businesses.id))
+    .where(and(eq(businessTasks.done, false), eq(businesses.archived, false)))
+    .orderBy(asc(businessTasks.dueDate))
+    .limit(limit);
+  return rows;
+}
+
 export async function resolveBusinessByName(name: string) {
   const matches = await db.select().from(businesses).where(ilike(businesses.name, `%${name}%`));
   return matches[0] ?? null;

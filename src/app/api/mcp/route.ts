@@ -43,6 +43,7 @@ import {
   resolveBusinessTaskByTitle,
 } from "@/lib/db/queries";
 import { computeProfit } from "@/lib/business/profit";
+import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { bestSetE1RM } from "@/lib/train/e1rm";
@@ -498,6 +499,27 @@ const handler = createMcpHandler(
         }
         await db.update(businessTasks).set({ done: true }).where(eq(businessTasks.id, taskMatch.id));
         return { content: [{ type: "text" as const, text: `Marked "${taskMatch.title}" done for ${businessMatch.name}.` }] };
+      }
+    );
+
+    server.registerTool(
+      "get_school_summary",
+      {
+        description:
+          "Canvas LMS summary: active courses with current grades, and assignments with due dates/submission status. Returns configured=false if Canvas isn't set up yet.",
+        inputSchema: { urgent_only: z.boolean().optional().describe("If true, only overdue/due-within-3-days unsubmitted assignments.") },
+      },
+      async ({ urgent_only }) => {
+        const summary = await getCanvasSummary();
+        const assignments = urgent_only ? getUrgentAssignments(summary.assignments) : summary.assignments;
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ ...summary, assignments }, null, 2),
+            },
+          ],
+        };
       }
     );
   },
