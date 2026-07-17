@@ -109,10 +109,20 @@ export async function getCanvasSummary(): Promise<CanvasSummary> {
   };
 }
 
-const URGENT_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // due within 3 days counts as urgent
+const URGENT_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // due within 3 days -- general "priorities" list
+const CRITICAL_WINDOW_MS = 48 * 60 * 60 * 1000; // due within 48h -- distinct, more severe "urgent" tier
 
 export function getUrgentAssignments(assignments: CanvasAssignmentWithCourse[], now = new Date()) {
   return assignments.filter(
     (a) => !a.submitted && a.dueAt !== null && a.dueAt.getTime() - now.getTime() <= URGENT_WINDOW_MS
+  );
+}
+
+/** Stricter than getUrgentAssignments -- due within 48h, unsubmitted. Feeds the
+ * rules-engine "Coach" alerts (a distinct, more prominent tier than the
+ * general Priorities merge) rather than the everyday due-soon list. */
+export function getCriticalAssignments(assignments: CanvasAssignmentWithCourse[], now = new Date()) {
+  return assignments.filter(
+    (a) => !a.submitted && a.dueAt !== null && a.dueAt.getTime() - now.getTime() <= CRITICAL_WINDOW_MS
   );
 }

@@ -10,6 +10,7 @@ import {
   getWorkoutLogsSince,
 } from "../db/queries";
 import { seasonData } from "../data/season-data";
+import { getCanvasSummary, getCriticalAssignments } from "../canvas/sync";
 
 export type RuleAlert = {
   id: string;
@@ -159,6 +160,22 @@ export async function evaluateAlerts(): Promise<RuleAlert[]> {
         tone: "warning",
         title: "No lunch logged yet",
         body: "Skipping lunch is how June happened — log it or eat something now.",
+      });
+    }
+  }
+
+  // Rule 8: Canvas assignments due within 48h -- sync + alert only, never
+  // auto-completed or auto-submitted. A distinct, more severe tier than the
+  // general due-soon list on Home.
+  const canvas = await getCanvasSummary();
+  if (canvas.configured && !canvas.error) {
+    for (const a of getCriticalAssignments(canvas.assignments)) {
+      const overdue = a.dueAt !== null && a.dueAt.getTime() < Date.now();
+      alerts.push({
+        id: `canvas-critical-${a.id}`,
+        tone: "danger",
+        title: overdue ? "Canvas assignment overdue" : "Canvas assignment due within 48h",
+        body: `${a.name} (${a.courseName})`,
       });
     }
   }

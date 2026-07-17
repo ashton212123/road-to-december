@@ -20,7 +20,7 @@ import {
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
-import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
+import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
 import { computeTrainingStreak } from "@/lib/analytics/streak";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
@@ -51,7 +51,12 @@ export default async function HomePage() {
       getWorkoutLogsSince(addDaysISO(today, -400)),
     ]);
 
-  const urgentAssignments = getUrgentAssignments(canvas.assignments).slice(0, 5);
+  // Anything within 48h is already a distinct, more severe "Coach" alert
+  // (see rules/engine.ts) -- exclude it here so it doesn't show twice.
+  const criticalIds = new Set(getCriticalAssignments(canvas.assignments).map((a) => a.id));
+  const urgentAssignments = getUrgentAssignments(canvas.assignments)
+    .filter((a) => !criticalIds.has(a.id))
+    .slice(0, 5);
   const trainingStreak = computeTrainingStreak({
     today,
     phases: allPhases,
