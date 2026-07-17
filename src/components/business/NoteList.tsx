@@ -1,0 +1,58 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
+import { addNoteAction, deleteNoteAction } from "@/app/(app)/business/actions";
+
+type Note = { id: number; body: string; createdAt: string | Date };
+
+export function NoteList({ businessId, notes }: { businessId: number; notes: Note[] }) {
+  const [pending, startTransition] = useTransition();
+  const [body, setBody] = useState("");
+
+  function addNote() {
+    if (!body.trim()) return;
+    startTransition(async () => {
+      await addNoteAction({ businessId, body: body.trim() });
+      setBody("");
+    });
+  }
+
+  return (
+    <GlassCard className="flex flex-col gap-2">
+      {notes.length === 0 && <div className="text-xs text-[var(--rtd-text-tertiary)]">No notes yet.</div>}
+      {notes.map((note) => (
+        <div key={note.id} className="flex items-start justify-between gap-2 bg-white/[0.04] rounded-lg px-3 py-2">
+          <div className="min-w-0">
+            <div className="text-xs text-[var(--rtd-text)] whitespace-pre-wrap">{note.body}</div>
+            <div className="text-[10px] text-[var(--rtd-text-tertiary)] mt-0.5">
+              {new Date(note.createdAt).toLocaleDateString()}
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => startTransition(() => deleteNoteAction(note.id, businessId))}
+            className="text-[var(--rtd-red)] text-xs shrink-0"
+            aria-label="Delete note"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-2 pt-1">
+        <textarea
+          placeholder="Add a note"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={2}
+          className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none resize-none"
+        />
+        <Button variant="secondary" disabled={pending || !body.trim()} onClick={addNote} className="!px-3 self-end">
+          Add
+        </Button>
+      </div>
+    </GlassCard>
+  );
+}

@@ -78,3 +78,13 @@ export function IconChevronDown() {
     </svg>
   );
 }
+
+export function IconBusiness() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="3.5" y="8" width="17" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.5 8V6.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2V8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3.5 13h17" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}

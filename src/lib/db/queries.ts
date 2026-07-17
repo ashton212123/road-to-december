@@ -1,4 +1,4 @@
-import { asc, desc, eq, gte, ilike } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike } from "drizzle-orm";
 import { db } from "./index";
 import {
   phases,
@@ -15,6 +15,10 @@ import {
   timeTo15m,
   jumpTests,
   sorenessLogs,
+  businesses,
+  businessTransactions,
+  businessTasks,
+  businessNotes,
 } from "./schema";
 import { todayManilaISO, addDaysISO } from "../time";
 import { seasonData } from "../data/season-data";
@@ -171,6 +175,53 @@ export async function getWorkoutLogsWithExerciseSince(dateISO: string) {
 /** Best-set e1RM history per named main lift (for the strength trend chart). */
 export async function getMainLiftLogHistory() {
   return getWorkoutLogsWithExerciseSince("2000-01-01").then((rows) => rows.filter((r) => r.isMainLift));
+}
+
+export async function getBusinesses() {
+  return db.select().from(businesses).orderBy(asc(businesses.archived), asc(businesses.name));
+}
+
+export async function getBusinessById(businessId: number) {
+  const rows = await db.select().from(businesses).where(eq(businesses.id, businessId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getBusinessTransactions(businessId: number, limit = 200) {
+  return db
+    .select()
+    .from(businessTransactions)
+    .where(eq(businessTransactions.businessId, businessId))
+    .orderBy(desc(businessTransactions.date), desc(businessTransactions.id))
+    .limit(limit);
+}
+
+export async function getAllBusinessTransactions(limit = 500) {
+  return db.select().from(businessTransactions).orderBy(desc(businessTransactions.date)).limit(limit);
+}
+
+export async function getBusinessTasks(businessId: number) {
+  return db
+    .select()
+    .from(businessTasks)
+    .where(eq(businessTasks.businessId, businessId))
+    .orderBy(asc(businessTasks.done), desc(businessTasks.createdAt));
+}
+
+export async function getBusinessNotes(businessId: number) {
+  return db.select().from(businessNotes).where(eq(businessNotes.businessId, businessId)).orderBy(desc(businessNotes.createdAt));
+}
+
+export async function resolveBusinessByName(name: string) {
+  const matches = await db.select().from(businesses).where(ilike(businesses.name, `%${name}%`));
+  return matches[0] ?? null;
+}
+
+export async function resolveBusinessTaskByTitle(businessId: number, title: string) {
+  const matches = await db
+    .select()
+    .from(businessTasks)
+    .where(and(eq(businessTasks.businessId, businessId), ilike(businessTasks.title, `%${title}%`)));
+  return matches[0] ?? null;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { TabBar, SideBar, type TabItem } from "@/components/ui/TabBar";
-import { IconHome, IconTrain, IconFuel, IconAnalytics, IconMore } from "@/components/ui/icons";
+import { IconHome, IconTrain, IconFuel, IconAnalytics, IconBusiness, IconMore } from "@/components/ui/icons";
 
 // Every screen under here reads live, personal, auth-gated data (today's
 // date, logs, alerts) — never statically prerender it at build time.
@@ -10,6 +10,7 @@ const NAV_ITEMS: TabItem[] = [
   { href: "/train", label: "Train", icon: <IconTrain /> },
   { href: "/fuel", label: "Fuel", icon: <IconFuel /> },
   { href: "/analytics", label: "Analytics", icon: <IconAnalytics /> },
+  { href: "/business", label: "Business", icon: <IconBusiness /> },
   { href: "/more", label: "More", icon: <IconMore /> },
 ];
 

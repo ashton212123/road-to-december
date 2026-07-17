@@ -176,6 +176,48 @@ export const settings = pgTable("settings", {
   weightUnit: text("weight_unit").notNull().default("kg"), // 'kg' | 'lb'
 });
 
+// ---------- Business tracker ----------
+
+export const businesses = pgTable("businesses", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  archived: boolean("archived").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const businessTransactions = pgTable("business_transactions", {
+  id: serial("id").primaryKey(),
+  businessId: integer("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // 'income' | 'expense'
+  amountPhp: numeric("amount_php", { precision: 12, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  date: date("date").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const businessTasks = pgTable("business_tasks", {
+  id: serial("id").primaryKey(),
+  businessId: integer("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  done: boolean("done").notNull().default(false),
+  dueDate: date("due_date"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const businessNotes = pgTable("business_notes", {
+  id: serial("id").primaryKey(),
+  businessId: integer("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Phase = typeof phases.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
@@ -190,3 +232,7 @@ export type WaterLog = typeof waterLogs.$inferSelect;
 export type SleepLog = typeof sleepLogs.$inferSelect;
 export type SorenessLog = typeof sorenessLogs.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
+export type Business = typeof businesses.$inferSelect;
+export type BusinessTransaction = typeof businessTransactions.$inferSelect;
+export type BusinessTask = typeof businessTasks.$inferSelect;
+export type BusinessNote = typeof businessNotes.$inferSelect;

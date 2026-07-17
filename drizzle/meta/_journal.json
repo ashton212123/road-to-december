@@ -8,6 +8,13 @@
       "when": 1784040714166,
       "tag": "0000_careful_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784295180160,
+      "tag": "0001_pale_strong_guy",
+      "breakpoints": true
     }
   ]
 }

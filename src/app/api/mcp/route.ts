@@ -15,6 +15,8 @@ import {
   sorenessLogs,
   timeTo15m,
   settings,
+  businessTransactions,
+  businessTasks,
 } from "@/lib/db/schema";
 import { todayManilaISO, daysBetween, addDaysISO } from "@/lib/time";
 import { seasonData } from "@/lib/data/season-data";
@@ -35,7 +37,12 @@ import {
   getSorenessLogs,
   getSleepLogs,
   getTimeTo15mLogs,
+  getBusinesses,
+  getBusinessTransactions,
+  resolveBusinessByName,
+  resolveBusinessTaskByTitle,
 } from "@/lib/db/queries";
+import { computeProfit } from "@/lib/business/profit";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { bestSetE1RM } from "@/lib/train/e1rm";
@@ -401,6 +408,96 @@ const handler = createMcpHandler(
           })
           .where(eq(settings.id, "singleton"));
         return { content: [{ type: "text" as const, text: "Settings updated." }] };
+      }
+    );
+
+    server.registerTool(
+      "get_businesses",
+      {
+        description: "List all business ventures with income/expense totals and profit.",
+        inputSchema: {},
+      },
+      async () => {
+        const allBusinesses = await getBusinesses();
+        const summaries = await Promise.all(
+          allBusinesses.map(async (b) => {
+            const transactions = await getBusinessTransactions(b.id, 1000);
+            const profit = computeProfit(transactions);
+            return { id: b.id, name: b.name, archived: b.archived, ...profit };
+          })
+        );
+        return { content: [{ type: "text" as const, text: JSON.stringify(summaries, null, 2) }] };
+      }
+    );
+
+    server.registerTool(
+      "log_business_transaction",
+      {
+        description: "Log an income or expense entry (in PHP) for a business venture, matched by name.",
+        inputSchema: {
+          business: z.string().describe("Venture name, e.g. 'Print shop'"),
+          type: z.enum(["income", "expense"]),
+          amount_php: z.number(),
+          description: z.string(),
+          date: z.string().optional(),
+        },
+      },
+      async ({ business, type, amount_php, description, date }) => {
+        const match = await resolveBusinessByName(business);
+        if (!match) {
+          return { content: [{ type: "text" as const, text: `No business found matching "${business}".` }], isError: true };
+        }
+        await db.insert(businessTransactions).values({
+          businessId: match.id,
+          type,
+          amountPhp: String(amount_php),
+          description,
+          date: date ?? todayManilaISO(),
+        });
+        return { content: [{ type: "text" as const, text: `Logged ${type} of ₱${amount_php} for ${match.name}: ${description}.` }] };
+      }
+    );
+
+    server.registerTool(
+      "add_business_task",
+      {
+        description: "Add a to-do task to a business venture, matched by name.",
+        inputSchema: {
+          business: z.string().describe("Venture name"),
+          title: z.string(),
+          due_date: z.string().optional().describe("YYYY-MM-DD"),
+        },
+      },
+      async ({ business, title, due_date }) => {
+        const match = await resolveBusinessByName(business);
+        if (!match) {
+          return { content: [{ type: "text" as const, text: `No business found matching "${business}".` }], isError: true };
+        }
+        await db.insert(businessTasks).values({ businessId: match.id, title, dueDate: due_date ?? null });
+        return { content: [{ type: "text" as const, text: `Added task "${title}" to ${match.name}.` }] };
+      }
+    );
+
+    server.registerTool(
+      "complete_business_task",
+      {
+        description: "Mark a business task done, matched by venture name and task title.",
+        inputSchema: {
+          business: z.string().describe("Venture name"),
+          task: z.string().describe("Task title (or substring)"),
+        },
+      },
+      async ({ business, task }) => {
+        const businessMatch = await resolveBusinessByName(business);
+        if (!businessMatch) {
+          return { content: [{ type: "text" as const, text: `No business found matching "${business}".` }], isError: true };
+        }
+        const taskMatch = await resolveBusinessTaskByTitle(businessMatch.id, task);
+        if (!taskMatch) {
+          return { content: [{ type: "text" as const, text: `No task found matching "${task}" for ${businessMatch.name}.` }], isError: true };
+        }
+        await db.update(businessTasks).set({ done: true }).where(eq(businessTasks.id, taskMatch.id));
+        return { content: [{ type: "text" as const, text: `Marked "${taskMatch.title}" done for ${businessMatch.name}.` }] };
       }
     );
   },

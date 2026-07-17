@@ -15,6 +15,10 @@ import {
   sleepLogs,
   sorenessLogs,
   settings,
+  businesses,
+  businessTransactions,
+  businessTasks,
+  businessNotes,
 } from "@/lib/db/schema";
 
 // Full JSON dump of every table — the user must never be locked in.
@@ -35,6 +39,10 @@ export async function GET() {
     sleepLogsRows,
     sorenessLogsRows,
     settingsRows,
+    businessesRows,
+    businessTransactionsRows,
+    businessTasksRows,
+    businessNotesRows,
   ] = await Promise.all([
     db.select().from(phases),
     db.select().from(sessions),
@@ -50,6 +58,10 @@ export async function GET() {
     db.select().from(sleepLogs),
     db.select().from(sorenessLogs),
     db.select().from(settings),
+    db.select().from(businesses),
+    db.select().from(businessTransactions),
+    db.select().from(businessTasks),
+    db.select().from(businessNotes),
   ]);
 
   const dump = {
@@ -68,6 +80,10 @@ export async function GET() {
     sleepLogs: sleepLogsRows,
     sorenessLogs: sorenessLogsRows,
     settings: settingsRows,
+    businesses: businessesRows,
+    businessTransactions: businessTransactionsRows,
+    businessTasks: businessTasksRows,
+    businessNotes: businessNotesRows,
   };
 
   return new NextResponse(JSON.stringify(dump, null, 2), {
