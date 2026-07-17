@@ -242,6 +242,36 @@ export const canvasAssignments = pgTable("canvas_assignments", {
   syncedAt: timestamp("synced_at", { withTimezone: true }).notNull(),
 });
 
+// ---------- Meets & target-time readiness ----------
+
+export const meets = pgTable("meets", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  date: date("date").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const meetEvents = pgTable("meet_events", {
+  id: serial("id").primaryKey(),
+  meetId: integer("meet_id")
+    .notNull()
+    .references(() => meets.id, { onDelete: "cascade" }),
+  event: text("event").notNull(),
+  currentTimeMs: integer("current_time_ms"),
+  targetTimeMs: integer("target_time_ms").notNull(),
+});
+
+// ---------- Swim training sessions (daily load, distinct from race-pace swim_times) ----------
+
+export const swimSessions = pgTable("swim_sessions", {
+  id: serial("id").primaryKey(),
+  date: date("date").notNull(),
+  loadRating: integer("load_rating").notNull(), // 1-10 subjective session load (RPE-style)
+  setsText: text("sets_text"), // free-text description, e.g. "10x100 BR @1:30, main set 6x200 IM"
+  parsedDistanceM: integer("parsed_distance_m"), // best-effort total distance parsed from setsText
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Phase = typeof phases.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
@@ -262,3 +292,6 @@ export type BusinessTask = typeof businessTasks.$inferSelect;
 export type BusinessNote = typeof businessNotes.$inferSelect;
 export type CanvasCourse = typeof canvasCourses.$inferSelect;
 export type CanvasAssignment = typeof canvasAssignments.$inferSelect;
+export type Meet = typeof meets.$inferSelect;
+export type MeetEvent = typeof meetEvents.$inferSelect;
+export type SwimSession = typeof swimSessions.$inferSelect;

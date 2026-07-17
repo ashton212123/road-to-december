@@ -9,10 +9,13 @@ import {
   getJumpTests,
   getSwimTimes,
   getTimeTo15mLogs,
+  getAllMeetsWithEvents,
+  getSwimSessions,
 } from "@/lib/db/queries";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
 import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/tonnage";
+import { computeMeetReadiness } from "@/lib/swim/readiness";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
@@ -23,13 +26,15 @@ export default async function AnalyticsPage() {
   const today = todayManilaISO();
   const since = addDaysISO(today, -180);
 
-  const [mainLiftLogs, weighIns, cmjTests, broadJumps, swimTimes, timeTo15m] = await Promise.all([
+  const [mainLiftLogs, weighIns, cmjTests, broadJumps, swimTimes, timeTo15m, meetsWithEvents, swimSessions] = await Promise.all([
     getWorkoutLogsWithExerciseSince(since),
     getWeighIns(180),
     getCmjTests(30),
     getJumpTests("broad_jump", 30),
-    getSwimTimes(50),
+    getSwimTimes(200),
     getTimeTo15mLogs(30),
+    getAllMeetsWithEvents(),
+    getSwimSessions(60),
   ]);
 
   // Strength: best-set e1RM per main lift per date it was logged.
@@ -75,6 +80,31 @@ export default async function AnalyticsPage() {
     .slice(0, 5)
     .map((s) => ({ date: s.date, splits: s.splits as number[], strokeCounts: (s.strokeCounts as number[]) ?? [] }));
 
+  const meetsWithReadiness = meetsWithEvents.map((meet) => ({
+    id: meet.id,
+    name: meet.name,
+    date: meet.date,
+    events: meet.events.map((ev) => {
+      const loggedTimes = swimTimes.filter((s) => s.event === ev.event).map((s) => ({ date: s.date, timeMs: s.timeMs }));
+      return {
+        id: ev.id,
+        event: ev.event,
+        currentTimeMs: ev.currentTimeMs,
+        targetTimeMs: ev.targetTimeMs,
+        readiness: computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today }),
+      };
+    }),
+  }));
+
+  // Most recent logged time per event, to auto-fill "current time" when adding a meet.
+  const latestByEvent = new Map<string, number>();
+  for (const s of [...swimTimes].sort((a, b) => (a.date < b.date ? 1 : -1))) {
+    if (!latestByEvent.has(s.event)) latestByEvent.set(s.event, s.timeMs);
+  }
+
+  const CANONICAL_EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"];
+  const allEventNames = [...new Set([...CANONICAL_EVENTS, ...swimTimes.map((s) => s.event)])];
+
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
       <SectionLabel>Analytics</SectionLabel>
@@ -93,7 +123,13 @@ export default async function AnalyticsPage() {
         splitBars={seasonData.SPLIT_BARS}
         splitAutopsy={splitAutopsy}
         timeTo15m={timeTo15m.map((t) => ({ date: t.date, seconds: Number(t.seconds), condition: t.condition }))}
-        recentSwimTimes={swimTimes.map((t) => ({ id: t.id, date: t.date, event: t.event, timeMs: t.timeMs, meetName: t.meetName }))}
+        recentSwimTimes={swimTimes.slice(0, 50).map((t) => ({ id: t.id, date: t.date, event: t.event, timeMs: t.timeMs, meetName: t.meetName }))}
+        allSwimTimesByEvent={Object.fromEntries(
+          allEventNames.map((ev) => [ev, swimTimes.filter((s) => s.event === ev).map((s) => ({ date: s.date, timeMs: s.timeMs }))])
+        )}
+        meets={meetsWithReadiness}
+        latestTimeByEvent={Object.fromEntries(latestByEvent)}
+        swimSessions={swimSessions.map((s) => ({ id: s.id, date: s.date, loadRating: s.loadRating, setsText: s.setsText, parsedDistanceM: s.parsedDistanceM }))}
       />
     </div>
   );

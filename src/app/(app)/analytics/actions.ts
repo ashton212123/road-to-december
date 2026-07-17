@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { swimTimes } from "@/lib/db/schema";
+import { swimTimes, meets, meetEvents, swimSessions } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
+import { estimateDistanceM } from "@/lib/swim/parseSets";
 
 export async function logSwimTimeAction(input: {
   event: string;
@@ -26,5 +27,41 @@ export async function logSwimTimeAction(input: {
 
 export async function deleteSwimTimeAction(id: number) {
   await db.delete(swimTimes).where(eq(swimTimes.id, id));
+  revalidatePath("/analytics");
+}
+
+export async function createMeetAction(input: {
+  name: string;
+  date: string;
+  events: { event: string; currentTimeMs: number | null; targetTimeMs: number }[];
+}) {
+  const [meet] = await db.insert(meets).values({ name: input.name, date: input.date }).returning();
+  if (input.events.length > 0) {
+    await db.insert(meetEvents).values(
+      input.events.map((e) => ({ meetId: meet.id, event: e.event, currentTimeMs: e.currentTimeMs, targetTimeMs: e.targetTimeMs }))
+    );
+  }
+  revalidatePath("/analytics");
+  return meet;
+}
+
+export async function deleteMeetAction(meetId: number) {
+  await db.delete(meets).where(eq(meets.id, meetId));
+  revalidatePath("/analytics");
+}
+
+export async function logSwimSessionAction(input: { loadRating: number; setsText: string | null; date?: string }) {
+  await db.insert(swimSessions).values({
+    date: input.date ?? todayManilaISO(),
+    loadRating: input.loadRating,
+    setsText: input.setsText,
+    parsedDistanceM: input.setsText ? estimateDistanceM(input.setsText) : null,
+  });
+  revalidatePath("/analytics");
+  revalidatePath("/home");
+}
+
+export async function deleteSwimSessionAction(id: number) {
+  await db.delete(swimSessions).where(eq(swimSessions.id, id));
   revalidatePath("/analytics");
 }

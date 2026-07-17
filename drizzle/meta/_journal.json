@@ -22,6 +22,13 @@
       "when": 1784296090288,
       "tag": "0002_stormy_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784326528021,
+      "tag": "0003_white_gwen_stacy",
+      "breakpoints": true
     }
   ]
 }

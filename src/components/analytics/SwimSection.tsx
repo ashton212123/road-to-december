@@ -8,10 +8,23 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
 import { chartTheme } from "./chart-theme";
 import { SwimTimeLogger } from "./SwimTimeLogger";
+import { SwimHero } from "./SwimHero";
+import { AddMeetForm } from "./AddMeetForm";
+import { MeetsList } from "./MeetsList";
+import { SwimSessionLogger } from "./SwimSessionLogger";
+import { SwimSessionList } from "./SwimSessionList";
 import { deleteSwimTimeAction } from "@/app/(app)/analytics/actions";
 import { formatSwimTime } from "@/lib/swim/format";
+import type { ReadinessResult } from "@/lib/swim/readiness";
 
 type RecentSwimTime = { id: number; date: string; event: string; timeMs: number; meetName: string | null };
+type MeetWithEvents = {
+  id: number;
+  name: string;
+  date: string;
+  events: { id: number; event: string; currentTimeMs: number | null; targetTimeMs: number; readiness: ReadinessResult }[];
+};
+type SwimSessionRow = { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null };
 
 export function SwimSection({
   pbRows,
@@ -20,6 +33,10 @@ export function SwimSection({
   splitAutopsy,
   timeTo15m,
   recentTimes,
+  allSwimTimesByEvent,
+  meets,
+  latestTimeByEvent,
+  swimSessions,
 }: {
   pbRows: SeedPbRow[];
   targets: SeedTarget[];
@@ -27,12 +44,38 @@ export function SwimSection({
   splitAutopsy: { date: string; splits: number[]; strokeCounts: number[] }[];
   timeTo15m: { date: string; seconds: number; condition: string }[];
   recentTimes: RecentSwimTime[];
+  allSwimTimesByEvent: Record<string, { date: string; timeMs: number }[]>;
+  meets: MeetWithEvents[];
+  latestTimeByEvent: Record<string, number>;
+  swimSessions: SwimSessionRow[];
 }) {
   const swimTarget = targets.find((t) => t.id === "swim_200br_200im");
   const [pending, startTransition] = useTransition();
 
+  const meetEventsFlat = meets.flatMap((m) =>
+    m.events.map((e) => ({ event: e.event, targetTimeMs: e.targetTimeMs, readiness: e.readiness, meetName: m.name, meetDate: m.date }))
+  );
+
   return (
     <div className="flex flex-col gap-4">
+      <SwimHero allSwimTimesByEvent={allSwimTimesByEvent} meetEventsFlat={meetEventsFlat} />
+
+      <div>
+        <SectionLabel>Meets & targets</SectionLabel>
+        <div className="flex flex-col gap-3">
+          <MeetsList meets={meets} />
+          <AddMeetForm latestTimeByEvent={latestTimeByEvent} />
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Swim training log</SectionLabel>
+        <div className="flex flex-col gap-3">
+          <SwimSessionLogger />
+          <SwimSessionList sessions={swimSessions} />
+        </div>
+      </div>
+
       <SwimTimeLogger />
 
       <div>

@@ -17,6 +17,7 @@ import {
   settings,
   businessTransactions,
   businessTasks,
+  swimSessions,
 } from "@/lib/db/schema";
 import { todayManilaISO, daysBetween, addDaysISO } from "@/lib/time";
 import { seasonData } from "@/lib/data/season-data";
@@ -41,8 +42,11 @@ import {
   getBusinessTransactions,
   resolveBusinessByName,
   resolveBusinessTaskByTitle,
+  getAllMeetsWithEvents,
 } from "@/lib/db/queries";
 import { computeProfit } from "@/lib/business/profit";
+import { computeMeetReadiness } from "@/lib/swim/readiness";
+import { estimateDistanceM } from "@/lib/swim/parseSets";
 import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
@@ -520,6 +524,59 @@ const handler = createMcpHandler(
             },
           ],
         };
+      }
+    );
+
+    server.registerTool(
+      "log_swim_session",
+      {
+        description: "Log a swim training session: subjective load (1-10) and optional free-text sets. Distinct from log_swim_time (race/time-trial results).",
+        inputSchema: {
+          load_rating: z.number().min(1).max(10),
+          sets_text: z.string().optional().describe("e.g. '10x100 BR @1:30, main set 6x200 IM'"),
+          date: z.string().optional(),
+        },
+      },
+      async ({ load_rating, sets_text, date }) => {
+        await db.insert(swimSessions).values({
+          date: date ?? todayManilaISO(),
+          loadRating: load_rating,
+          setsText: sets_text ?? null,
+          parsedDistanceM: sets_text ? estimateDistanceM(sets_text) : null,
+        });
+        return { content: [{ type: "text" as const, text: `Logged swim session: load ${load_rating}/10${sets_text ? `, ${sets_text}` : ""}.` }] };
+      }
+    );
+
+    server.registerTool(
+      "get_meet_readiness",
+      {
+        description: "Per-event readiness for upcoming meets: current best, projected time at the meet date (trend-fit from logged swim times), gap to target, and confidence.",
+        inputSchema: {
+          meet: z.string().optional().describe("Meet name (or substring). Omit for all meets."),
+        },
+      },
+      async ({ meet }) => {
+        const allMeets = await getAllMeetsWithEvents();
+        const filtered = meet ? allMeets.filter((m) => m.name.toLowerCase().includes(meet.toLowerCase())) : allMeets;
+        if (meet && filtered.length === 0) {
+          return { content: [{ type: "text" as const, text: `No meet found matching "${meet}".` }], isError: true };
+        }
+        const today = todayManilaISO();
+        const allSwimTimes = await getSwimTimes(200);
+        const result = filtered.map((m) => ({
+          meet: m.name,
+          date: m.date,
+          events: m.events.map((ev) => {
+            const loggedTimes = allSwimTimes.filter((s) => s.event === ev.event).map((s) => ({ date: s.date, timeMs: s.timeMs }));
+            return {
+              event: ev.event,
+              targetTimeMs: ev.targetTimeMs,
+              ...computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: m.date, today }),
+            };
+          }),
+        }));
+        return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
       }
     );
   },

@@ -19,6 +19,9 @@ import {
   businessTransactions,
   businessTasks,
   businessNotes,
+  meets,
+  meetEvents,
+  swimSessions,
 } from "./schema";
 import { todayManilaISO, addDaysISO } from "../time";
 import { seasonData } from "../data/season-data";
@@ -227,6 +230,29 @@ export async function getUndoneBusinessTasks(limit = 10) {
     .orderBy(asc(businessTasks.dueDate))
     .limit(limit);
   return rows;
+}
+
+export async function getMeets() {
+  return db.select().from(meets).orderBy(asc(meets.date));
+}
+
+export async function getMeetById(meetId: number) {
+  const rows = await db.select().from(meets).where(eq(meets.id, meetId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getMeetEvents(meetId: number) {
+  return db.select().from(meetEvents).where(eq(meetEvents.meetId, meetId)).orderBy(asc(meetEvents.id));
+}
+
+export async function getAllMeetsWithEvents() {
+  const allMeets = await getMeets();
+  const allEvents = await db.select().from(meetEvents);
+  return allMeets.map((m) => ({ ...m, events: allEvents.filter((e) => e.meetId === m.id) }));
+}
+
+export async function getSwimSessions(limit = 60) {
+  return db.select().from(swimSessions).orderBy(desc(swimSessions.date)).limit(limit);
 }
 
 export async function resolveBusinessByName(name: string) {

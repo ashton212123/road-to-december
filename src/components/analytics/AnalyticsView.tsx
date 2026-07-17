@@ -29,6 +29,21 @@ export function AnalyticsView(props: {
   splitAutopsy: { date: string; splits: number[]; strokeCounts: number[] }[];
   timeTo15m: { date: string; seconds: number; condition: string }[];
   recentSwimTimes: { id: number; date: string; event: string; timeMs: number; meetName: string | null }[];
+  allSwimTimesByEvent: Record<string, { date: string; timeMs: number }[]>;
+  meets: {
+    id: number;
+    name: string;
+    date: string;
+    events: {
+      id: number;
+      event: string;
+      currentTimeMs: number | null;
+      targetTimeMs: number;
+      readiness: import("@/lib/swim/readiness").ReadinessResult;
+    }[];
+  }[];
+  latestTimeByEvent: Record<string, number>;
+  swimSessions: { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null }[];
 }) {
   const [tab, setTab] = useState<Tab>("strength");
 
@@ -59,6 +74,10 @@ export function AnalyticsView(props: {
           splitAutopsy={props.splitAutopsy}
           timeTo15m={props.timeTo15m}
           recentTimes={props.recentSwimTimes}
+          allSwimTimesByEvent={props.allSwimTimesByEvent}
+          meets={props.meets}
+          latestTimeByEvent={props.latestTimeByEvent}
+          swimSessions={props.swimSessions}
         />
       )}
     </div>
