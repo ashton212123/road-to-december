@@ -355,11 +355,13 @@ Amber/explosive-intent markers (⚡) apply to: box jumps, broad jumps, trap-bar 
 
 ### P6 — Race Block — Wk 21–22 — Nov 23–Dec 4
 
-**Wk 21 — ASEAN on (~Nov 25):** Mon or Tue primer ~15 min — CMJ 3×2 · jump squat 2×2 @ 20%. MB chest pass 2×3 · pull-up 1×3. Race ASEAN springy, not worked. After: easy swims, sleep, food. No lifting within 48h of racing.
+**Wk 21 — ASEAN on (~Nov 25):** Mon or Tue primer ~15 min — CMJ 3×2 · jump squat 2×2 @ 20%. MB chest pass 2×3 · pull-up 1×3 · band pull-aparts 2×15 (shoulder insurance never stops, even here — it's load-free). Race ASEAN springy, not worked. After: easy swims, sleep, food. No lifting within 48h of racing.
 
 **Wk 21 — If ASEAN cancelled:** Tue neural ~35 min: hurdle hop 3×3, squat 2×2 @ 85%, trap-bar jump 3×3, weighted pull-up 2×3, MB pass 2×4. Thu micro ~20 min: plyo push-up 2×3, explosive pulldown 2×5, cuff work. Sun speed ~25 min: broad jump 3×2, seated box 2×3, jump squat 3×2 — last lower loading.
 
-**Wk 22 — NCAA week (Dec 4):** Tue primer ~15 min: CMJ 3×2, jump squat 2×2 @ 20% · MB pass 2×3. Optional Thu 10 min: pogos + bands (skip if racing Friday). Nothing within 48h of race one. Sleep 9h — food and rest ARE the training.
+**Wk 22 — NCAA week (Dec 4):** Tue primer ~15 min: CMJ 3×2, jump squat 2×2 @ 20% · MB pass 2×3 · band pull-aparts 2×15 (still never skipped). Optional Thu 10 min: pogos + bands (skip if racing Friday). Nothing within 48h of race one. Sleep 9h — food and rest ARE the training.
+
+**Evidence check (2026):** cross-referenced against current sports-science literature — see COACH_NOTES.md for full sourcing. Verdict: the existing periodization structure, taper timing, and injury-prevention package already match current consensus closely; the one concrete gap found and fixed was the taper phase's shoulder-care work being stated as "never skipped" but absent from the actual Wk21/Wk22 session text above.
 
 **Rule:** Nothing new, nothing sore, nothing to failure. Last heavy bar 8–10 days out, last plyos 5 days out. Between meets you hold power on micro-doses — fitness is banked, freshness wins December. In taper, sessions render as compact primer checklists rather than full logging screens.
 
