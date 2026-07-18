@@ -16,6 +16,10 @@ Every judgment call made without asking, per your "don't block on questions" ins
 
 **The actual permanent fix, if you want one**: upgrade the Supabase project's compute size from Micro to Small (or larger) on a paid plan. This is a real cost decision (Supabase Pro starts around $25/mo, compute add-ons are separate line items on top) that only you can make — I'm not doing this unilaterally. Until then, the retry layer above should make the app *usable* even when the database is under load, just not instant every time.
 
+**One more free lever, shipped**: `getAllPhasesWithSessions()` (the 21-week program structure — phases/sessions/exercises) was firing 3 fresh DB queries on *every* call, and it's hit by nearly every page (Home, Train, Fuel, Analytics) plus the MCP route — 6+ call sites, all reading data that only changes when the program itself is edited via the seed script. Wrapped it in Next.js's `unstable_cache` (5-minute TTL). Verified locally: 0.4s → 0.008s on a cache hit, same correct data. This directly cuts real DB round-trips per page load across the whole app, reducing connection pressure without spending anything.
+
+**Verified against the live production site** (not just claimed): 5 sequential real requests through the actual deployed `/api/mcp` endpoint (same DB, same code path as the web pages) — all 5 succeeded, correct data. `pg_stat_activity` active-query count dropped from 6-9 to 3 after the caching fix landed. This is the most direct verification available without browser access to the live site (Claude in Chrome is not connected in this session) — one MCP call did fail earlier in this same window even after exhausting all 3 retries, so intermittent failures under real load are reduced, not eliminated. The compute upgrade above remains the only way to eliminate them entirely.
+
 ---
 
 ## Everything below this point is the investigation trail that led to the above — kept for the full record, but the "RESOLVED" framing right below is superseded by the correction above.
