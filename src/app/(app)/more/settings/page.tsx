@@ -1,9 +1,10 @@
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { SettingsForm } from "@/components/more/SettingsForm";
 import { getSettingsRow } from "@/lib/db/queries";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function SettingsPage() {
-  const settingsRow = await getSettingsRow();
+  const settingsRow = await withRetry(() => getSettingsRow());
 
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">

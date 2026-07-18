@@ -11,7 +11,7 @@ const globalForDb = globalThis as unknown as { rtdQueryClient?: ReturnType<typeo
 
 const queryClient =
   globalForDb.rtdQueryClient ??
-  postgres(connectionString, { prepare: false, idle_timeout: 20 });
+  postgres(connectionString, { prepare: false, idle_timeout: 20, connect_timeout: 8 });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.rtdQueryClient = queryClient;

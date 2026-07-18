@@ -7,6 +7,7 @@ import { getSleepLogs, getSorenessLogs, getCmjTests, getWorkoutLogsWithExerciseS
 import { computeReadinessSignals, type ReadinessLight } from "@/lib/rules/readiness";
 import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
 import { addDaysISO, todayManilaISO } from "@/lib/time";
+import { withRetry } from "@/lib/db/withRetry";
 
 const LIGHT_COLOR: Record<ReadinessLight, string> = {
   green: "var(--rtd-green)",
@@ -16,12 +17,14 @@ const LIGHT_COLOR: Record<ReadinessLight, string> = {
 
 export default async function RecoveryPage() {
   const today = todayManilaISO();
-  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs] = await Promise.all([
-    getSleepLogs(14),
-    getSorenessLogs(10),
-    getCmjTests(4),
-    getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)),
-  ]);
+  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs] = await withRetry(() =>
+    Promise.all([
+      getSleepLogs(14),
+      getSorenessLogs(10),
+      getCmjTests(4),
+      getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)),
+    ])
+  );
 
   const lastSleep = sleepLogs[0] ? Number(sleepLogs[0].hours) : null;
 

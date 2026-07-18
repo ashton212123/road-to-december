@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/queries";
 import { todayManilaISO, todayDayKey } from "@/lib/time";
 import { suggestNextLoad } from "@/lib/train/progression";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function PhaseSessionPage({
   params,
@@ -24,11 +25,11 @@ export default async function PhaseSessionPage({
   const { phaseId } = await params;
   const { day } = await searchParams;
 
-  const phase = await getPhaseById(phaseId);
+  const phase = await withRetry(() => getPhaseById(phaseId));
   if (!phase) notFound();
 
   if (phase.isRaceBlock) {
-    const settingsRow = await getSettingsRow();
+    const settingsRow = await withRetry(() => getSettingsRow());
     const condition = settingsRow.aseanConfirmed === true ? "asean_confirmed" : settingsRow.aseanConfirmed === false ? "asean_cancelled" : null;
     const blocks = (phase.blocks ?? []).filter(
       (b) => b.condition === "always" || b.condition === condition || (condition === null && b.condition !== "asean_cancelled")
@@ -51,12 +52,13 @@ export default async function PhaseSessionPage({
   const today = todayManilaISO();
 
   const exerciseData = session
-    ? await Promise.all(
-        session.exercises.map(async (ex) => {
-          const [lastSessionSets, todaysSets] = await Promise.all([
-            getLastSessionSetsForExercise(ex.id),
-            getTodaysSetsForExercise(ex.id, today),
-          ]);
+    ? await withRetry(() =>
+        Promise.all(
+          session.exercises.map(async (ex) => {
+            const [lastSessionSets, todaysSets] = await Promise.all([
+              getLastSessionSetsForExercise(ex.id),
+              getTodaysSetsForExercise(ex.id, today),
+            ]);
           const progression = suggestNextLoad({
             phaseId: phase.id,
             lastSessionSets: lastSessionSets.map((s) => ({
@@ -67,8 +69,9 @@ export default async function PhaseSessionPage({
             rpeTargetMax: ex.rpeMax ? Number(ex.rpeMax) : null,
             waveScheme: phase.waveScheme,
           });
-          return { exercise: ex, lastSessionSets, todaysSets, progression };
-        })
+            return { exercise: ex, lastSessionSets, todaysSets, progression };
+          })
+        )
       )
     : [];
 

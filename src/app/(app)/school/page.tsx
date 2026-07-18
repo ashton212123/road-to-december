@@ -4,9 +4,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { AssignmentRow } from "@/components/school/AssignmentRow";
 import { CanvasRefreshButton } from "@/components/school/CanvasRefreshButton";
 import { getCanvasSummary } from "@/lib/canvas/sync";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function SchoolPage() {
-  const { configured, courses, assignments, syncedAt, error } = await getCanvasSummary();
+  const { configured, courses, assignments, syncedAt, error } = await withRetry(() => getCanvasSummary());
 
   if (!configured) {
     return (

@@ -25,6 +25,7 @@ import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
 import { computeTrainingStreak } from "@/lib/analytics/streak";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
+import { withRetry } from "@/lib/db/withRetry";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -45,9 +46,13 @@ export default async function HomePage() {
   // "Sync now" button) is where a human is expected to wait a moment.
   // Fetched once and shared with evaluateAlerts() below so a stale-cache
   // window can't trigger two concurrent live syncs racing each other.
-  const canvas = await getCanvasSummary({ sync: false });
-
-  const [
+  //
+  // The whole fetch is wrapped in withRetry because the DB connection has
+  // shown intermittent, total hangs (Vercel<->Supabase connection flakiness).
+  // Most failures are transient, so a bounded retry turns "hangs forever"
+  // into "takes an extra second or two" instead.
+  const {
+    canvas,
     allPhases,
     latestWeighIn,
     weighInHistory,
@@ -59,19 +64,50 @@ export default async function HomePage() {
     recentWorkoutLogs,
     recentSwimSessions,
     recentSleepLogs,
-  ] = await Promise.all([
-    getAllPhasesWithSessions(),
-    getLatestWeighIn(),
-    getWeighIns(10),
-    getFoodLogsForDate(today),
-    getWaterLogsForDate(today),
-    getSettingsRow(),
-    evaluateAlerts(canvas),
-    getUndoneBusinessTasks(5),
-    getWorkoutLogsSince(addDaysISO(today, -150)),
-    getSwimSessions(5),
-    getSleepLogs(1),
-  ]);
+  } = await withRetry(async () => {
+    const canvas = await getCanvasSummary({ sync: false });
+
+    const [
+      allPhases,
+      latestWeighIn,
+      weighInHistory,
+      todaysFood,
+      todaysWater,
+      settingsRow,
+      alerts,
+      undoneTasks,
+      recentWorkoutLogs,
+      recentSwimSessions,
+      recentSleepLogs,
+    ] = await Promise.all([
+      getAllPhasesWithSessions(),
+      getLatestWeighIn(),
+      getWeighIns(10),
+      getFoodLogsForDate(today),
+      getWaterLogsForDate(today),
+      getSettingsRow(),
+      evaluateAlerts(canvas),
+      getUndoneBusinessTasks(5),
+      getWorkoutLogsSince(addDaysISO(today, -150)),
+      getSwimSessions(5),
+      getSleepLogs(1),
+    ]);
+
+    return {
+      canvas,
+      allPhases,
+      latestWeighIn,
+      weighInHistory,
+      todaysFood,
+      todaysWater,
+      settingsRow,
+      alerts,
+      undoneTasks,
+      recentWorkoutLogs,
+      recentSwimSessions,
+      recentSleepLogs,
+    };
+  });
 
   // Anything within 48h is already a distinct, more severe "Coach" alert
   // (see rules/engine.ts) -- exclude it here so it doesn't show twice.

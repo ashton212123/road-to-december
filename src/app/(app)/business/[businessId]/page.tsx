@@ -8,20 +8,23 @@ import { NoteList } from "@/components/business/NoteList";
 import { BusinessSettings } from "@/components/business/BusinessSettings";
 import { getBusinessById, getBusinessTransactions, getBusinessTasks, getBusinessNotes } from "@/lib/db/queries";
 import { computeProfit, formatPhp } from "@/lib/business/profit";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function BusinessDetailPage({ params }: { params: Promise<{ businessId: string }> }) {
   const { businessId: businessIdParam } = await params;
   const businessId = Number(businessIdParam);
   if (!Number.isInteger(businessId)) notFound();
 
-  const business = await getBusinessById(businessId);
+  const business = await withRetry(() => getBusinessById(businessId));
   if (!business) notFound();
 
-  const [transactions, tasks, notes] = await Promise.all([
-    getBusinessTransactions(businessId),
-    getBusinessTasks(businessId),
-    getBusinessNotes(businessId),
-  ]);
+  const [transactions, tasks, notes] = await withRetry(() =>
+    Promise.all([
+      getBusinessTransactions(businessId),
+      getBusinessTasks(businessId),
+      getBusinessNotes(businessId),
+    ])
+  );
 
   const profit = computeProfit(transactions);
 

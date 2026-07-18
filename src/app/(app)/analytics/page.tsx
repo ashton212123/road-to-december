@@ -16,6 +16,7 @@ import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
 import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/tonnage";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
+import { withRetry } from "@/lib/db/withRetry";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
@@ -26,16 +27,18 @@ export default async function AnalyticsPage() {
   const today = todayManilaISO();
   const since = addDaysISO(today, -180);
 
-  const [mainLiftLogs, weighIns, cmjTests, broadJumps, swimTimes, timeTo15m, meetsWithEvents, swimSessions] = await Promise.all([
-    getWorkoutLogsWithExerciseSince(since),
-    getWeighIns(180),
-    getCmjTests(30),
-    getJumpTests("broad_jump", 30),
-    getSwimTimes(200),
-    getTimeTo15mLogs(30),
-    getAllMeetsWithEvents(),
-    getSwimSessions(60),
-  ]);
+  const [mainLiftLogs, weighIns, cmjTests, broadJumps, swimTimes, timeTo15m, meetsWithEvents, swimSessions] = await withRetry(() =>
+    Promise.all([
+      getWorkoutLogsWithExerciseSince(since),
+      getWeighIns(180),
+      getCmjTests(30),
+      getJumpTests("broad_jump", 30),
+      getSwimTimes(200),
+      getTimeTo15mLogs(30),
+      getAllMeetsWithEvents(),
+      getSwimSessions(60),
+    ])
+  );
 
   // Strength: best-set e1RM per main lift per date it was logged.
   const e1rmByLift = new Map<string, { date: string; e1rm: number }[]>();

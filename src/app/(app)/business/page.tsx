@@ -6,9 +6,12 @@ import { IconChevronRight } from "@/components/ui/icons";
 import { NewBusinessForm } from "@/components/business/NewBusinessForm";
 import { getBusinesses, getAllBusinessTransactions } from "@/lib/db/queries";
 import { computeProfit, formatPhp } from "@/lib/business/profit";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function BusinessPage() {
-  const [allBusinesses, allTransactions] = await Promise.all([getBusinesses(), getAllBusinessTransactions()]);
+  const [allBusinesses, allTransactions] = await withRetry(() =>
+    Promise.all([getBusinesses(), getAllBusinessTransactions()])
+  );
 
   const byBusiness = new Map<number, typeof allTransactions>();
   for (const t of allTransactions) {

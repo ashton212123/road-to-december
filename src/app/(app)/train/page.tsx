@@ -4,10 +4,11 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { IconChevronRight, IconBolt } from "@/components/ui/icons";
 import { getAllPhasesWithSessions, getCurrentPhase } from "@/lib/db/queries";
 import { todayManilaISO } from "@/lib/time";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function TrainPage() {
   const today = todayManilaISO();
-  const allPhases = await getAllPhasesWithSessions();
+  const allPhases = await withRetry(() => getAllPhasesWithSessions());
   const currentPhase = getCurrentPhase(allPhases, today);
 
   return (

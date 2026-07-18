@@ -17,19 +17,22 @@ import {
   getFoodLogsSince,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { withRetry } from "@/lib/db/withRetry";
 
 export default async function FuelPage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, weekFood] = await Promise.all([
-    getFoodLogsForDate(today),
-    getWaterLogsForDate(today),
-    getSettingsRow(),
-    getWeighIns(21),
-    getAllPhasesWithSessions(),
-    getFoodLogsSince(addDaysISO(today, -6)),
-  ]);
+  const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, weekFood] = await withRetry(() =>
+    Promise.all([
+      getFoodLogsForDate(today),
+      getWaterLogsForDate(today),
+      getSettingsRow(),
+      getWeighIns(21),
+      getAllPhasesWithSessions(),
+      getFoodLogsSince(addDaysISO(today, -6)),
+    ])
+  );
 
   const currentPhase = getCurrentPhase(allPhases, today);
   const kcalTarget = computeKcalTarget(today);
