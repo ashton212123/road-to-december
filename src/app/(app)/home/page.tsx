@@ -67,6 +67,13 @@ export default async function HomePage() {
   } = await withRetry(async () => {
     const canvas = await getCanvasSummary({ sync: false });
 
+    // settingsRow/todaysFood are needed both here and inside evaluateAlerts;
+    // fetched once and the same in-flight promise passed to both instead of
+    // querying twice -- one more redundant round-trip cut per page load on
+    // an already-strained DB (see DECISIONS.md).
+    const settingsRowPromise = getSettingsRow();
+    const todaysFoodPromise = getFoodLogsForDate(today);
+
     const [
       allPhases,
       latestWeighIn,
@@ -83,10 +90,12 @@ export default async function HomePage() {
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
       getWeighIns(10),
-      getFoodLogsForDate(today),
+      todaysFoodPromise,
       getWaterLogsForDate(today),
-      getSettingsRow(),
-      evaluateAlerts(canvas),
+      settingsRowPromise,
+      Promise.all([settingsRowPromise, todaysFoodPromise]).then(([settingsRow, todaysFood]) =>
+        evaluateAlerts(canvas, { settingsRow, todaysFood })
+      ),
       getUndoneBusinessTasks(5),
       getWorkoutLogsSince(addDaysISO(today, -150)),
       getSwimSessions(5),

@@ -45,8 +45,19 @@ function weekdayGroups<T extends { date: string }>(rows: T[]) {
 /** `canvasSummary`: pass a pre-fetched summary to avoid a duplicate fetch/sync
  * when the caller already has one (e.g. Home renders this alongside its own
  * Canvas read) -- omit to fetch internally (e.g. the MCP get_dashboard_summary
- * tool, which has nothing else to share it with). */
-export async function evaluateAlerts(canvasSummary?: CanvasSummary): Promise<RuleAlert[]> {
+ * tool, which has nothing else to share it with).
+ * `prefetched`: same idea for settingsRow/todaysFood -- Home already fetches
+ * both with identical args in its own Promise.all, so re-fetching here was
+ * two more redundant round-trips per page load on an already-strained DB
+ * (see DECISIONS.md, connection-pressure investigation). Pass them through
+ * when the caller has them; omit to fetch internally. */
+export async function evaluateAlerts(
+  canvasSummary?: CanvasSummary,
+  prefetched?: {
+    settingsRow?: Awaited<ReturnType<typeof getSettingsRow>>;
+    todaysFood?: Awaited<ReturnType<typeof getFoodLogsForDate>>;
+  }
+): Promise<RuleAlert[]> {
   const alerts: RuleAlert[] = [];
   const today = todayManilaISO();
   const todayKey = todayDayKey();
@@ -61,9 +72,9 @@ export async function evaluateAlerts(canvasSummary?: CanvasSummary): Promise<Rul
     getAllPhasesWithSessions(),
     getCmjTests(12),
     getWeighIns(21),
-    getSettingsRow(),
+    prefetched?.settingsRow ? Promise.resolve(prefetched.settingsRow) : getSettingsRow(),
     getWorkoutLogsSince(today),
-    getFoodLogsForDate(today),
+    prefetched?.todaysFood ? Promise.resolve(prefetched.todaysFood) : getFoodLogsForDate(today),
     canvasSummary ? Promise.resolve(canvasSummary) : getCanvasSummary(),
   ]);
   const currentPhase = getCurrentPhase(allPhases, today);

@@ -78,15 +78,22 @@ const handler = createMcpHandler(
       },
       async () => {
         const today = todayManilaISO();
+        // settingsRow/todaysFood needed both here and inside evaluateAlerts --
+        // fetched once, same in-flight promise passed to both (see Home page
+        // for the same pattern; cuts 2 redundant round-trips per call).
+        const settingsRowPromise = getSettingsRow();
+        const todaysFoodPromise = getFoodLogsForDate(today);
         const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts] =
           await Promise.all([
             getAllPhasesWithSessions(),
             getLatestWeighIn(),
             getWeighIns(10),
-            getFoodLogsForDate(today),
+            todaysFoodPromise,
             getWaterLogsForDate(today),
-            getSettingsRow(),
-            evaluateAlerts(),
+            settingsRowPromise,
+            Promise.all([settingsRowPromise, todaysFoodPromise]).then(([settingsRow, todaysFood]) =>
+              evaluateAlerts(undefined, { settingsRow, todaysFood })
+            ),
           ]);
         const currentPhase = getCurrentPhase(allPhases, today);
         const kcalTarget = computeKcalTarget(today);
