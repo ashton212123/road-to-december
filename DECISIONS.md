@@ -2,6 +2,12 @@
 
 Every judgment call made without asking, per your "don't block on questions" instruction. Review and correct anything you'd have called differently — nothing here is precious.
 
+## Performance investigation: closed, by your explicit decision
+
+Asked directly whether to upgrade Supabase's compute tier (the one remaining lever that would fully eliminate occasional hangs under load, ~$25/mo). **You said no, stay on free tier.** That's the actual final answer, not a fallback — accepting occasional hangs under concurrent load as the tradeoff for $0 ongoing cost.
+
+Everything free is shipped and stays live: connection recycling, retry protection on every page and MCP tool, program-structure caching, 4 deduped redundant queries per page load, and zombie-query cleanup. Confirmed via `pg_stat_statements` there's no slow query or missing index anywhere in the database — the remaining occasional-hang risk is purely the free-tier compute ceiling under concurrent load, which is now a known, accepted tradeoff rather than an open bug. If you change your mind later, just say so and I'll execute the upgrade immediately — no code changes needed on top of what's already live.
+
 ## Final status of the performance saga, for real this time
 
 **Chrome verification is structurally impossible right now, not a retry problem.** Checked via `list_connected_browsers` — zero Chrome extensions connected to your account, on any device, not just unreachable from this background session. I can't make a browser connect that isn't installed/running; that needs you to install the Claude Chrome extension and log in with the same account.
