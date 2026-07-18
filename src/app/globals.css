@@ -124,6 +124,14 @@ body {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.rtd-tab-icon {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rtd-tab-icon[data-active="true"] {
+  transform: scale(1.15);
+}
+
 .rtd-micro-label {
   font-size: 12px;
   font-weight: 600;

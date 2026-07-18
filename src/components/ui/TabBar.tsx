@@ -8,11 +8,12 @@ export type TabItem = {
   href: string;
   label: string;
   icon: ReactNode;
-  match?: (pathname: string) => boolean;
+  /** Extra path prefixes (besides `href`) that should also count as active — e.g. routes nested under a "More" tab. Plain strings, not a function, since this crosses the server/client boundary. */
+  matchPrefixes?: string[];
 };
 
 function isActive(item: TabItem, pathname: string) {
-  if (item.match) return item.match(pathname);
+  if (item.matchPrefixes?.some((p) => pathname.startsWith(p))) return true;
   if (item.href === "/home") return pathname === "/home" || pathname === "/";
   return pathname.startsWith(item.href);
 }
@@ -38,7 +39,8 @@ export function TabBar({ items }: { items: TabItem[] }) {
               className="flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-1 px-0.5 py-1 cursor-pointer rounded-xl transition-colors duration-150 ease-out hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             >
               <span
-                className="w-6 h-6 flex items-center justify-center"
+                className="rtd-tab-icon w-6 h-6 flex items-center justify-center"
+                data-active={active}
                 style={{ color: active ? "var(--rtd-blue)" : "var(--rtd-text-tertiary)" }}
               >
                 {item.icon}
