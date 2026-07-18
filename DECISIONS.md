@@ -2,6 +2,20 @@
 
 Every judgment call made without asking, per your "don't block on questions" instruction. Review and correct anything you'd have called differently — nothing here is precious.
 
+## Final status of the performance saga, for real this time
+
+**Chrome verification is structurally impossible right now, not a retry problem.** Checked via `list_connected_browsers` — zero Chrome extensions connected to your account, on any device, not just unreachable from this background session. I can't make a browser connect that isn't installed/running; that needs you to install the Claude Chrome extension and log in with the same account.
+
+**Every free fix I could find is shipped and verified**, in order:
+1. `idle_timeout`/`connect_timeout` tuning on the Postgres client — stale connections recycled instead of held forever.
+2. `withRetry()` on every page's data-fetch and every MCP tool handler — bounded retries so transient contention self-heals instead of hanging forever.
+3. Cached the 21-week program structure (`getAllPhasesWithSessions`, hit by 6+ call sites) for 5 minutes — verified 0.4s → 0.008s on repeat, correct data.
+4. Cut 2 more redundant queries per Home/dashboard load (`settingsRow`, today's food logs were being fetched twice — once by the caller, once again inside `evaluateAlerts`) — verified identical output before/after.
+
+**Verified against the live production site directly** (no browser access, so via repeated real requests through the same deployed backend the web pages use): 8+ sequential successful calls across two rounds tonight, correct data every time, connection count holding stable rather than climbing.
+
+**What's left that I structurally cannot close myself**: the database is on Supabase's smallest ("Micro") compute tier, and that ceiling is the one thing no amount of query optimization fully removes — just makes less likely to be hit. Closing it requires upgrading to a paid plan (~$25/mo Pro + compute add-on), which is your money and your call, not something I'll do without you explicitly saying yes.
+
 ## ✅ ACTUAL FINAL STATE (2026-07-18, late) — real root cause found: undersized free-tier compute, not a network mystery
 
 **Two corrections in one night — this one sticks, and it's backed by hard evidence, not another guess.** The Singapore↔Virginia mismatch and the "unexplained Vercel↔Supabase network flakiness" theories were both wrong turns. What actually happened: I built a local reproduction (ran the real production build against the real database on my own machine, bypassing Vercel entirely) and caught the database itself returning `error: canceling statement due to statement timeout` (Postgres error `57014`) — a real server-side query cancellation, not a network black hole. Checked the database directly:
