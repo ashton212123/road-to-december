@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, gte, ilike } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { db } from "./index";
 import {
   phases,
@@ -41,21 +42,31 @@ export async function getSettingsRow() {
   return created;
 }
 
-export async function getAllPhasesWithSessions() {
-  const phaseRows = await db.select().from(phases).orderBy(asc(phases.orderIndex));
-  const sessionRows = await db.select().from(sessions).orderBy(asc(sessions.orderIndex));
-  const exerciseRows = await db.select().from(exercises).orderBy(asc(exercises.orderIndex));
+// The 21-week program structure (phases/sessions/exercises) changes only when
+// a coach edits it via the seed script -- essentially never at runtime. Every
+// major page hits this (Home, Train, Fuel, Analytics, MCP), so caching it cuts
+// 3 DB round-trips per page load across the whole app, which meaningfully
+// reduces connection pressure on the database (see DECISIONS.md -- undersized
+// free-tier compute is the real bottleneck, not a code bug).
+export const getAllPhasesWithSessions = unstable_cache(
+  async function getAllPhasesWithSessionsUncached() {
+    const phaseRows = await db.select().from(phases).orderBy(asc(phases.orderIndex));
+    const sessionRows = await db.select().from(sessions).orderBy(asc(sessions.orderIndex));
+    const exerciseRows = await db.select().from(exercises).orderBy(asc(exercises.orderIndex));
 
-  return phaseRows.map((phase) => ({
-    ...phase,
-    sessions: sessionRows
-      .filter((s) => s.phaseId === phase.id)
-      .map((session) => ({
-        ...session,
-        exercises: exerciseRows.filter((e) => e.sessionId === session.id),
-      })),
-  }));
-}
+    return phaseRows.map((phase) => ({
+      ...phase,
+      sessions: sessionRows
+        .filter((s) => s.phaseId === phase.id)
+        .map((session) => ({
+          ...session,
+          exercises: exerciseRows.filter((e) => e.sessionId === session.id),
+        })),
+    }));
+  },
+  ["all-phases-with-sessions"],
+  { revalidate: 300 }
+);
 
 export async function getPhaseById(phaseId: string) {
   const all = await getAllPhasesWithSessions();
