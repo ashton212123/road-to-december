@@ -78,21 +78,26 @@ const handler = createMcpHandler(
       },
       async () => {
         const today = todayManilaISO();
-        // settingsRow/todaysFood needed both here and inside evaluateAlerts --
-        // fetched once, same in-flight promise passed to both (see Home page
-        // for the same pattern; cuts 2 redundant round-trips per call).
+        // settingsRow/todaysFood/weighIns needed both here and inside
+        // evaluateAlerts -- fetched once, same in-flight promise passed to
+        // both (see Home page for the same pattern; cuts redundant
+        // round-trips per call). weighIns widened to 21 (this handler only
+        // ever needed the most recent 2 rows for its own trend calc, which a
+        // 21-row query still gives).
         const settingsRowPromise = getSettingsRow();
         const todaysFoodPromise = getFoodLogsForDate(today);
+        const weighIns21Promise = getWeighIns(21);
         const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts] =
           await Promise.all([
             getAllPhasesWithSessions(),
             getLatestWeighIn(),
-            getWeighIns(10),
+            weighIns21Promise,
             todaysFoodPromise,
             getWaterLogsForDate(today),
             settingsRowPromise,
-            Promise.all([settingsRowPromise, todaysFoodPromise]).then(([settingsRow, todaysFood]) =>
-              evaluateAlerts(undefined, { settingsRow, todaysFood })
+            Promise.all([settingsRowPromise, todaysFoodPromise, weighIns21Promise]).then(
+              ([settingsRow, todaysFood, weighIns21]) =>
+                evaluateAlerts(undefined, { settingsRow, todaysFood, weighIns21 })
             ),
           ]);
         const currentPhase = getCurrentPhase(allPhases, today);

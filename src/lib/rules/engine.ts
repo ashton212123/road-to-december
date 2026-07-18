@@ -46,16 +46,21 @@ function weekdayGroups<T extends { date: string }>(rows: T[]) {
  * when the caller already has one (e.g. Home renders this alongside its own
  * Canvas read) -- omit to fetch internally (e.g. the MCP get_dashboard_summary
  * tool, which has nothing else to share it with).
- * `prefetched`: same idea for settingsRow/todaysFood -- Home already fetches
- * both with identical args in its own Promise.all, so re-fetching here was
- * two more redundant round-trips per page load on an already-strained DB
- * (see DECISIONS.md, connection-pressure investigation). Pass them through
- * when the caller has them; omit to fetch internally. */
+ * `prefetched`: same idea for the rest -- Home already fetches equivalent-or-
+ * wider data with its own Promise.all, so re-fetching here was redundant
+ * round-trips per page load on an already-strained DB (see DECISIONS.md,
+ * connection-pressure investigation). `weighIns21` must be the last 21 rows
+ * (same order/shape as `getWeighIns(21)`); `workoutLogsWide` must cover at
+ * least today (e.g. Home's -150-day window) -- filtered locally for today's
+ * rows instead of a fresh `getWorkoutLogsSince(today)` query. Omit any of
+ * these to fetch internally. */
 export async function evaluateAlerts(
   canvasSummary?: CanvasSummary,
   prefetched?: {
     settingsRow?: Awaited<ReturnType<typeof getSettingsRow>>;
     todaysFood?: Awaited<ReturnType<typeof getFoodLogsForDate>>;
+    weighIns21?: Awaited<ReturnType<typeof getWeighIns>>;
+    workoutLogsWide?: Awaited<ReturnType<typeof getWorkoutLogsSince>>;
   }
 ): Promise<RuleAlert[]> {
   const alerts: RuleAlert[] = [];
@@ -68,15 +73,16 @@ export async function evaluateAlerts(
   // independent queries -- allPhases, cmjRows, weighIns, settings, workout
   // logs, food logs, and Canvas all one-after-another -- which was the real
   // cause of Home feeling slow to load, not any single query being heavy).
-  const [allPhases, cmjRows, recentWeighIns, settingsRow, workoutLogsToday, todaysFood, canvas] = await Promise.all([
+  const [allPhases, cmjRows, recentWeighIns, settingsRow, workoutLogsWide, todaysFood, canvas] = await Promise.all([
     getAllPhasesWithSessions(),
     getCmjTests(12),
-    getWeighIns(21),
+    prefetched?.weighIns21 ? Promise.resolve(prefetched.weighIns21) : getWeighIns(21),
     prefetched?.settingsRow ? Promise.resolve(prefetched.settingsRow) : getSettingsRow(),
-    getWorkoutLogsSince(today),
+    prefetched?.workoutLogsWide ? Promise.resolve(prefetched.workoutLogsWide) : getWorkoutLogsSince(today),
     prefetched?.todaysFood ? Promise.resolve(prefetched.todaysFood) : getFoodLogsForDate(today),
     canvasSummary ? Promise.resolve(canvasSummary) : getCanvasSummary(),
   ]);
+  const workoutLogsToday = workoutLogsWide.filter((l) => l.date === today);
   const currentPhase = getCurrentPhase(allPhases, today);
 
   // Rule 1: double-swim day RPE drop.

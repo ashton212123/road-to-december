@@ -67,12 +67,18 @@ export default async function HomePage() {
   } = await withRetry(async () => {
     const canvas = await getCanvasSummary({ sync: false });
 
-    // settingsRow/todaysFood are needed both here and inside evaluateAlerts;
-    // fetched once and the same in-flight promise passed to both instead of
-    // querying twice -- one more redundant round-trip cut per page load on
-    // an already-strained DB (see DECISIONS.md).
+    // settingsRow/todaysFood/weighIns/workoutLogs are all needed both here and
+    // inside evaluateAlerts (which wants a wider or overlapping range in every
+    // case) -- fetched once each and the same in-flight promise passed to
+    // both, instead of querying twice per page load on an already-strained DB
+    // (see DECISIONS.md). weighIns is widened to 21 (Home only ever needed
+    // the most recent 2 rows for its own trend display, which a 21-row query
+    // still gives); workoutLogs uses Home's existing -150-day window, and
+    // evaluateAlerts filters that down to just today's rows locally.
     const settingsRowPromise = getSettingsRow();
     const todaysFoodPromise = getFoodLogsForDate(today);
+    const weighIns21Promise = getWeighIns(21);
+    const workoutLogsWidePromise = getWorkoutLogsSince(addDaysISO(today, -150));
 
     const [
       allPhases,
@@ -89,15 +95,16 @@ export default async function HomePage() {
     ] = await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
-      getWeighIns(10),
+      weighIns21Promise,
       todaysFoodPromise,
       getWaterLogsForDate(today),
       settingsRowPromise,
-      Promise.all([settingsRowPromise, todaysFoodPromise]).then(([settingsRow, todaysFood]) =>
-        evaluateAlerts(canvas, { settingsRow, todaysFood })
+      Promise.all([settingsRowPromise, todaysFoodPromise, weighIns21Promise, workoutLogsWidePromise]).then(
+        ([settingsRow, todaysFood, weighIns21, workoutLogsWide]) =>
+          evaluateAlerts(canvas, { settingsRow, todaysFood, weighIns21, workoutLogsWide })
       ),
       getUndoneBusinessTasks(5),
-      getWorkoutLogsSince(addDaysISO(today, -150)),
+      workoutLogsWidePromise,
       getSwimSessions(5),
       getSleepLogs(1),
     ]);
