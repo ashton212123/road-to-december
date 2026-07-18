@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AlertCard } from "@/components/ui/AlertCard";
+import { Button } from "@/components/ui/Button";
 import { chartTheme } from "./chart-theme";
 
 export function PowerSection({
@@ -22,20 +24,30 @@ export function PowerSection({
   const broadJumpPb = broadJumpSeries.length > 0 ? Math.max(...broadJumpSeries.map((b) => b.cm)) : null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
       {declining && (
-        <AlertCard
-          tone="danger"
-          title="CMJ down 2 weeks running"
-          body="Cut this week's gym volume 30% before it costs you in the pool."
-        />
+        <div className="md:col-span-2">
+          <AlertCard
+            tone="danger"
+            title="CMJ down 2 weeks running"
+            body="Cut this week's gym volume 30% before it costs you in the pool."
+          />
+        </div>
       )}
 
       <div>
         <SectionLabel>CMJ — weekly monitor (best of 3)</SectionLabel>
         <GlassCard>
           {cmjSeries.length === 0 ? (
-            <EmptyState title="No CMJ tests logged" body="Log 3 max countermovement jumps every Sunday." />
+            <EmptyState
+              title="No CMJ tests logged"
+              body="Log 3 max countermovement jumps every Sunday."
+              action={
+                <Link href="/more/recovery">
+                  <Button variant="secondary">Log a CMJ test</Button>
+                </Link>
+              }
+            />
           ) : (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={cmjSeries} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>

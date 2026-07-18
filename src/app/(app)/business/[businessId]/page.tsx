@@ -29,16 +29,16 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
   const profit = computeProfit(transactions);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>{business.name}</SectionLabel>
-      {business.description && <p className="text-xs text-[var(--rtd-text-tertiary)] -mt-2">{business.description}</p>}
+      {business.description && <p className="text-footnote text-[var(--rtd-text-tertiary)] -mt-2">{business.description}</p>}
 
       <GlassCard className="flex flex-col gap-1">
-        <div className="text-xs text-[var(--rtd-text-tertiary)]">Profit</div>
-        <div className="text-2xl font-bold" style={{ color: profit.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}>
+        <div className="text-footnote text-[var(--rtd-text-tertiary)]">Profit</div>
+        <div className="text-large-title" style={{ color: profit.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}>
           {formatPhp(profit.profit)}
         </div>
-        <div className="text-xs text-[var(--rtd-text-secondary)]">
+        <div className="text-footnote text-[var(--rtd-text-secondary)]">
           {formatPhp(profit.income)} in · {formatPhp(profit.expense)} out
         </div>
       </GlassCard>

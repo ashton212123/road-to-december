@@ -17,19 +17,19 @@ export function SwimSessionList({ sessions }: { sessions: Session[] }) {
   return (
     <GlassCard className="flex flex-col gap-2">
       {sessions.slice(0, 10).map((s) => (
-        <div key={s.id} className="flex items-center justify-between text-xs gap-2">
+        <div key={s.id} className="flex items-center justify-between text-footnote gap-2">
           <div className="min-w-0">
             <span className="text-[var(--rtd-text)]">{s.date}</span>{" "}
-            <span className="text-[var(--rtd-text-tertiary)]">
+            <span className="text-[var(--rtd-text-secondary)]">
               load {s.loadRating}/10{s.parsedDistanceM ? ` · ~${s.parsedDistanceM}m` : ""}
             </span>
-            {s.setsText && <div className="text-[10px] text-[var(--rtd-text-tertiary)] truncate">{s.setsText}</div>}
+            {s.setsText && <div className="text-caption text-[var(--rtd-text-secondary)] truncate">{s.setsText}</div>}
           </div>
           <button
             type="button"
             disabled={pending}
             onClick={() => startTransition(() => deleteSwimSessionAction(s.id))}
-            className="text-[var(--rtd-red)] shrink-0"
+            className="rtd-tap-target text-[var(--rtd-red)] shrink-0 cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             aria-label="Delete session"
           >
             ✕

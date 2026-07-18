@@ -7,7 +7,7 @@ export default async function SettingsPage() {
   const settingsRow = await withRetry(() => getSettingsRow());
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>Settings</SectionLabel>
       <SettingsForm
         initialAsean={settingsRow.aseanConfirmed}

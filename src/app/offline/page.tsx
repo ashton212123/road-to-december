@@ -7,8 +7,8 @@ export default function OfflinePage() {
         <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-2xl">
           📡
         </div>
-        <div className="rtd-display text-lg">You&apos;re offline</div>
-        <p className="text-sm text-[var(--rtd-text-secondary)]">
+        <div className="rtd-display text-title-3">You&apos;re offline</div>
+        <p className="text-subhead text-[var(--rtd-text-secondary)]">
           Road to December works offline for pages you&apos;ve already opened. Reconnect to sync new
           logs, or keep browsing what&apos;s cached.
         </p>

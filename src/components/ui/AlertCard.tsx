@@ -31,17 +31,19 @@ export function AlertCard({
       style={{ borderLeft: `3px solid ${color}` }}
     >
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold" style={{ color }}>
+        <div className="text-body font-semibold" style={{ color }}>
           {title}
         </div>
-        <div className="text-xs text-[var(--rtd-text-secondary)] mt-0.5 leading-snug">{body}</div>
+        <div className="text-subhead text-[var(--rtd-text-secondary)] mt-0.5 leading-snug">
+          {body}
+        </div>
         {action && <div className="mt-2">{action}</div>}
       </div>
       {onDismiss && (
         <button
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)] hover:bg-white/10 text-sm"
+          className="rtd-tap-target shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)] cursor-pointer transition-colors duration-150 ease-out hover:bg-white/10 hover:text-[var(--rtd-text)] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 text-subhead"
         >
           ✕
         </button>

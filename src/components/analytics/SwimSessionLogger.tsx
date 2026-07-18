@@ -25,7 +25,7 @@ export function SwimSessionLogger() {
 
   return (
     <GlassCard className="flex flex-col gap-2.5">
-      <div className="text-sm font-semibold">Log today&apos;s swim session</div>
+      <div className="text-title-3">Log today&apos;s swim session</div>
       <div className="grid grid-cols-5 gap-1.5">
         {LOADS.map((l) => (
           <button
@@ -34,7 +34,7 @@ export function SwimSessionLogger() {
               setLoad(l);
               setDone(false);
             }}
-            className="py-2 rounded-lg text-xs font-semibold"
+            className="rtd-tap-target py-2 rounded-lg text-subhead font-semibold cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{
               background: load === l ? "var(--rtd-cyan)" : "rgba(255,255,255,0.06)",
               color: load === l ? "#001a1f" : "var(--rtd-text-secondary)",
@@ -44,7 +44,7 @@ export function SwimSessionLogger() {
           </button>
         ))}
       </div>
-      <div className="text-[10px] text-[var(--rtd-text-tertiary)] -mt-1">Session load, 1 (easy) – 10 (max effort)</div>
+      <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">Session load, 1 (easy) – 10 (max effort)</div>
       <textarea
         placeholder="Sets (optional) — e.g. 10x100 BR @1:30, main set 6x200 IM"
         value={setsText}

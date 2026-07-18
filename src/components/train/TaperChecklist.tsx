@@ -34,7 +34,7 @@ export function TaperChecklist({ blocks }: { blocks: Block[] }) {
     <div className="flex flex-col gap-3">
       {blocks.map((block) => (
         <GlassCard key={block.id} className="flex flex-col gap-2">
-          <div className="text-sm font-semibold">{block.title}</div>
+          <div className="text-body font-semibold">{block.title}</div>
           {block.body.split("\n\n").map((line, i) => {
             const key = `${block.id}:${i}`;
             const isChecked = checked[key] ?? false;
@@ -42,10 +42,10 @@ export function TaperChecklist({ blocks }: { blocks: Block[] }) {
               <button
                 key={key}
                 onClick={() => toggle(block.id, i)}
-                className="flex items-start gap-2.5 text-left"
+                className="rtd-tap-target flex items-start gap-2.5 text-left rounded-lg cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
               >
                 <span
-                  className="w-4 h-4 rounded-md border shrink-0 mt-0.5 flex items-center justify-center text-[10px]"
+                  className="w-4 h-4 rounded-md border shrink-0 mt-0.5 flex items-center justify-center text-caption"
                   style={{
                     borderColor: isChecked ? "var(--rtd-green)" : "var(--rtd-hairline)",
                     background: isChecked ? "var(--rtd-green)" : "transparent",
@@ -54,7 +54,7 @@ export function TaperChecklist({ blocks }: { blocks: Block[] }) {
                   {isChecked && "✓"}
                 </span>
                 <span
-                  className="text-xs leading-snug"
+                  className="text-subhead leading-snug"
                   style={{
                     color: isChecked ? "var(--rtd-text-tertiary)" : "var(--rtd-text-secondary)",
                     textDecoration: isChecked ? "line-through" : "none",

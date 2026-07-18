@@ -68,17 +68,17 @@ export function MacroDonut({
           ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold text-[var(--rtd-text)]">{kcalLogged}</span>
-          <span className="text-[10px] text-[var(--rtd-text-tertiary)]">/ {kcalTarget} kcal</span>
+          <span className="text-title-1 text-[var(--rtd-text)]">{kcalLogged}</span>
+          <span className="text-caption text-[var(--rtd-text-secondary)]">/ {kcalTarget} kcal</span>
         </div>
       </div>
       <div className="flex flex-col gap-2">
         {rings.map((ring) => (
-          <div key={ring.label} className="flex items-center gap-2 text-xs">
+          <div key={ring.label} className="flex items-center gap-2 text-footnote">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ring.color }} />
             <span className="text-[var(--rtd-text-secondary)] w-14">{ring.label}</span>
             <span className="font-semibold text-[var(--rtd-text)]">
-              {Math.round(ring.loggedG)}g <span className="text-[var(--rtd-text-tertiary)] font-normal">/ {ring.targetG}g</span>
+              {Math.round(ring.loggedG)}g <span className="text-[var(--rtd-text-secondary)] font-normal">/ {ring.targetG}g</span>
             </span>
           </div>
         ))}

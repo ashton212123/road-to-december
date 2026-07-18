@@ -15,7 +15,7 @@ export function NewBusinessForm() {
 
   if (!open) {
     return (
-      <Button variant="secondary" onClick={() => setOpen(true)} className="w-full">
+      <Button variant="secondary" onClick={() => setOpen(true)} className="w-full md:w-auto md:self-start md:px-8">
         + New venture
       </Button>
     );

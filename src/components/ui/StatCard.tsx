@@ -24,12 +24,14 @@ export function StatCard({
         {icon}
       </div>
       <span
-        className="rtd-display text-2xl leading-tight truncate"
+        className="rtd-display text-title-1 leading-tight truncate"
         style={{ color: accent ?? "var(--rtd-text)" }}
       >
         {value}
       </span>
-      {sub && <span className="text-xs text-[var(--rtd-text-tertiary)] truncate">{sub}</span>}
+      {sub && (
+        <span className="text-footnote text-[var(--rtd-text-tertiary)] truncate">{sub}</span>
+      )}
     </GlassCard>
   );
 }

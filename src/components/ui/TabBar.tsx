@@ -35,7 +35,7 @@ export function TabBar({ items }: { items: TabItem[] }) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex-1 min-w-0 flex flex-col items-center gap-1 px-0.5 py-1"
+              className="flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-1 px-0.5 py-1 cursor-pointer rounded-xl transition-colors duration-150 ease-out hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             >
               <span
                 className="w-6 h-6 flex items-center justify-center"
@@ -44,7 +44,7 @@ export function TabBar({ items }: { items: TabItem[] }) {
                 {item.icon}
               </span>
               <span
-                className="text-[9px] font-medium truncate max-w-full"
+                className="text-caption font-medium truncate max-w-full"
                 style={{ color: active ? "var(--rtd-blue)" : "var(--rtd-text-tertiary)" }}
               >
                 {item.label}
@@ -69,9 +69,9 @@ export function SideBar({ items }: { items: TabItem[] }) {
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+            className="flex items-center gap-3 min-h-11 px-3 py-2.5 rounded-xl text-subhead font-medium cursor-pointer transition-colors duration-150 ease-out hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{
-              background: active ? "rgba(10,132,255,0.14)" : "transparent",
+              background: active ? "rgba(10,132,255,0.14)" : undefined,
               color: active ? "var(--rtd-blue)" : "var(--rtd-text-secondary)",
             }}
           >

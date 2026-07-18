@@ -13,9 +13,11 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import type { TonnageRow, HardSetRow } from "@/lib/analytics/tonnage";
 import { chartTheme, PATTERN_COLORS } from "./chart-theme";
 
@@ -33,9 +35,19 @@ export function StrengthSection({
   const lifts = Object.keys(e1rmByLift);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
       {lifts.length === 0 ? (
-        <EmptyState title="No strength logs yet" body="Log sets on main lifts in Train to see e1RM trends here." />
+        <div className="md:col-span-2">
+          <EmptyState
+            title="No strength logs yet"
+            body="Log sets on main lifts in Train to see e1RM trends here."
+            action={
+              <Link href="/train">
+                <Button variant="secondary">Log sets in Train</Button>
+              </Link>
+            }
+          />
+        </div>
       ) : (
         lifts.map((lift) => {
           const points = e1rmByLift[lift];
@@ -55,7 +67,7 @@ export function StrengthSection({
                         y={target.goalKg}
                         stroke="var(--rtd-green)"
                         strokeDasharray="4 4"
-                        label={{ value: `Goal ${target.goalKg}kg`, position: "insideTopRight", fill: "var(--rtd-green)", fontSize: 10 }}
+                        label={{ value: `Goal ${target.goalKg}kg`, position: "insideTopRight", fill: "var(--rtd-green)", fontSize: 11 }}
                       />
                     )}
                     <Line type="monotone" dataKey="e1rm" stroke="var(--rtd-blue)" strokeWidth={2} dot={{ r: 3 }} />
@@ -79,7 +91,7 @@ export function StrengthSection({
                 <XAxis dataKey="weekStart" {...chartTheme.axis} tickFormatter={(d) => d.slice(5)} />
                 <YAxis {...chartTheme.axis} />
                 <Tooltip {...chartTheme.tooltip} />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="squat" stackId="a" fill={PATTERN_COLORS.squat} />
                 <Bar dataKey="hinge" stackId="a" fill={PATTERN_COLORS.hinge} />
                 <Bar dataKey="press" stackId="a" fill={PATTERN_COLORS.press} />
@@ -102,7 +114,7 @@ export function StrengthSection({
                 <XAxis dataKey="weekStart" {...chartTheme.axis} tickFormatter={(d) => d.slice(5)} />
                 <YAxis {...chartTheme.axis} allowDecimals={false} />
                 <Tooltip {...chartTheme.tooltip} />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="squat" fill={PATTERN_COLORS.squat} />
                 <Bar dataKey="hinge" fill={PATTERN_COLORS.hinge} />
                 <Bar dataKey="press" fill={PATTERN_COLORS.press} />

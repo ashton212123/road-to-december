@@ -129,7 +129,7 @@ export function ExerciseCard({
           disabled={pending}
           aria-label={completed ? "Mark not completed" : "Mark completed"}
           aria-pressed={completed}
-          className="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-transform active:scale-90"
+          className="rtd-tap-target shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-transform active:scale-90 cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
           style={{
             background: completed ? "var(--rtd-green)" : "rgba(255,255,255,0.08)",
             border: completed ? "none" : "1.5px solid rgba(255,255,255,0.25)",
@@ -139,21 +139,25 @@ export function ExerciseCard({
           {completed && <IconCheck size={15} />}
         </button>
 
-        <button type="button" onClick={() => setExpanded((v) => !v)} className="min-w-0 flex-1 text-left">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="min-w-0 flex-1 text-left rounded-lg cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+        >
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold truncate">{exercise.name}</span>
+            <span className="text-body font-semibold truncate">{exercise.name}</span>
             {exercise.isExplosive && (
               <span className="text-[var(--rtd-orange)] shrink-0" title="Explosive intent">
                 <IconBolt />
               </span>
             )}
             {exercise.isMainLift && (
-              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--rtd-blue)]/20 text-[var(--rtd-blue)] shrink-0">
+              <span className="text-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--rtd-blue)]/20 text-[var(--rtd-blue)] shrink-0">
                 Main
               </span>
             )}
           </div>
-          <div className="text-xs text-[var(--rtd-text-secondary)]">{exercise.prescription || "—"}</div>
+          <div className="text-footnote text-[var(--rtd-text-secondary)]">{exercise.prescription || "—"}</div>
         </button>
 
         <span
@@ -166,19 +170,19 @@ export function ExerciseCard({
 
       {progression && (
         <div className="rounded-xl bg-[var(--rtd-green)]/10 border border-[var(--rtd-green)]/20 px-3 py-2">
-          <div className="text-xs font-semibold text-[var(--rtd-green)]">{progression.headline}</div>
-          <div className="text-[10px] text-[var(--rtd-text-tertiary)] mt-0.5">{progression.rationale}</div>
+          <div className="text-subhead font-semibold text-[var(--rtd-green)]">{progression.headline}</div>
+          <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-0.5">{progression.rationale}</div>
         </div>
       )}
 
       {!expanded && lastSessionSets.length > 0 && (
-        <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
+        <div className="text-footnote text-[var(--rtd-text-secondary)]">
           Last session: {lastSessionSets.map((s) => `${s.weightKg ?? "–"}×${s.reps ?? "–"}@${s.rpe ?? "–"}`).join("  ·  ")}
         </div>
       )}
 
       {completed && !expanded && (
-        <div className="text-[10px] text-[var(--rtd-green)]">
+        <div className="text-footnote text-[var(--rtd-green)]">
           {todaysSets.length} set{todaysSets.length === 1 ? "" : "s"} logged — tap to edit details
         </div>
       )}
@@ -186,7 +190,7 @@ export function ExerciseCard({
       {expanded && (
         <div className="flex flex-col gap-3 rtd-fade-in">
           {lastSessionSets.length > 0 && (
-            <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
+            <div className="text-footnote text-[var(--rtd-text-secondary)]">
               Last session: {lastSessionSets.map((s) => `${s.weightKg ?? "–"}×${s.reps ?? "–"}@${s.rpe ?? "–"}`).join("  ·  ")}
             </div>
           )}
@@ -201,7 +205,7 @@ export function ExerciseCard({
 
           {restElapsed !== null && (
             <div
-              className="text-center text-xs rounded-xl py-2"
+              className="text-center text-footnote rounded-xl py-2"
               style={{
                 background:
                   restCompare === "under"
@@ -224,7 +228,7 @@ export function ExerciseCard({
 
           <div className="grid grid-cols-4 gap-2 items-end">
             <label className="flex flex-col gap-1 col-span-1">
-              <span className="rtd-micro-label !text-[9px]">kg</span>
+              <span className="rtd-micro-label">kg</span>
               <input
                 inputMode="decimal"
                 value={weight}
@@ -233,7 +237,7 @@ export function ExerciseCard({
               />
             </label>
             <label className="flex flex-col gap-1 col-span-1">
-              <span className="rtd-micro-label !text-[9px]">reps</span>
+              <span className="rtd-micro-label">reps</span>
               <input
                 inputMode="numeric"
                 value={reps}
@@ -242,7 +246,7 @@ export function ExerciseCard({
               />
             </label>
             <label className="flex flex-col gap-1 col-span-1">
-              <span className="rtd-micro-label !text-[9px]">rpe</span>
+              <span className="rtd-micro-label">rpe</span>
               <input
                 inputMode="decimal"
                 value={rpe}
@@ -315,10 +319,10 @@ function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
           className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs outline-none"
         />
         <div className="flex gap-2">
-          <Button type="button" variant="secondary" disabled={pending} onClick={save} className="flex-1 !py-1.5 !text-xs">
+          <Button type="button" variant="secondary" disabled={pending} onClick={save} className="flex-1 !py-1.5">
             Save
           </Button>
-          <Button type="button" variant="ghost" disabled={pending} onClick={() => setEditing(false)} className="flex-1 !py-1.5 !text-xs">
+          <Button type="button" variant="ghost" disabled={pending} onClick={() => setEditing(false)} className="flex-1 !py-1.5">
             Cancel
           </Button>
         </div>
@@ -327,19 +331,23 @@ function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
   }
 
   return (
-    <div className="flex items-center justify-between text-xs bg-white/[0.04] rounded-lg px-2.5 py-1.5">
-      <button type="button" onClick={() => setEditing(true)} className="flex-1 text-left">
-        <span className="text-[var(--rtd-text-tertiary)]">Set {set.setNumber}</span>{" "}
+    <div className="flex items-center justify-between text-footnote bg-white/[0.04] rounded-lg px-2.5 py-1.5">
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="flex-1 text-left rounded-md cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+      >
+        <span className="text-[var(--rtd-text-secondary)]">Set {set.setNumber}</span>{" "}
         <span className="text-[var(--rtd-text)]">
           {set.weightKg ?? "–"}kg × {set.reps ?? "–"} @ RPE {set.rpe ?? "–"}
-          {set.restSeconds !== null && <span className="text-[var(--rtd-text-tertiary)]"> · rest {set.restSeconds}s</span>}
-          {set.notes && <span className="text-[var(--rtd-text-tertiary)]"> · {set.notes}</span>}
+          {set.restSeconds !== null && <span className="text-[var(--rtd-text-secondary)]"> · rest {set.restSeconds}s</span>}
+          {set.notes && <span className="text-[var(--rtd-text-secondary)]"> · {set.notes}</span>}
         </span>
       </button>
       <button
         type="button"
         onClick={() => startTransition(() => deleteSetAction(set.id, phaseId))}
-        className="text-[var(--rtd-red)] ml-2"
+        className="rtd-tap-target text-[var(--rtd-red)] ml-2 rounded-full cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         aria-label="Delete set"
       >
         ✕

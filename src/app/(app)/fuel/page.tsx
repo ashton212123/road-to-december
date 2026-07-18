@@ -80,41 +80,62 @@ export default async function FuelPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
-      <SectionLabel>Fuel</SectionLabel>
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:grid md:grid-cols-12 md:gap-6 md:items-start">
+      <div className="md:col-span-12 md:row-start-1">
+        <SectionLabel>Fuel</SectionLabel>
+      </div>
 
-      <GlassCard className="flex flex-col gap-4">
+      {/* Left column (desktop): rings, macros, weekly review */}
+      <GlassCard className="flex flex-col gap-4 md:col-start-1 md:col-span-5 md:row-start-2">
         <div className="grid grid-cols-3 gap-2">
           <div className="flex flex-col items-center gap-1.5">
-            <ProgressRing pct={(kcalToday / kcalTarget.mid) * 100} size={68} strokeWidth={7} color="var(--rtd-orange)" />
+            <ProgressRing
+              pct={(kcalToday / kcalTarget.mid) * 100}
+              size={68}
+              strokeWidth={7}
+              color="var(--rtd-orange)"
+              className="w-[68px] h-[68px] md:w-24 md:h-24"
+            />
             <div className="text-center">
-              <div className="text-xs font-semibold">{kcalToday}</div>
-              <div className="text-[9px] text-[var(--rtd-text-tertiary)]">/ {kcalTarget.min}-{kcalTarget.max}</div>
+              <div className="text-footnote font-semibold">{kcalToday}</div>
+              <div className="text-caption text-[var(--rtd-text-secondary)]">/ {kcalTarget.min}-{kcalTarget.max}</div>
             </div>
           </div>
           <div className="flex flex-col items-center gap-1.5">
-            <ProgressRing pct={(proteinToday / proteinTarget.mid) * 100} size={68} strokeWidth={7} color="var(--rtd-green)" />
+            <ProgressRing
+              pct={(proteinToday / proteinTarget.mid) * 100}
+              size={68}
+              strokeWidth={7}
+              color="var(--rtd-green)"
+              className="w-[68px] h-[68px] md:w-24 md:h-24"
+            />
             <div className="text-center">
-              <div className="text-xs font-semibold">{Math.round(proteinToday)}g</div>
-              <div className="text-[9px] text-[var(--rtd-text-tertiary)]">/ {proteinTarget.min}-{proteinTarget.max}g</div>
+              <div className="text-footnote font-semibold">{Math.round(proteinToday)}g</div>
+              <div className="text-caption text-[var(--rtd-text-secondary)]">/ {proteinTarget.min}-{proteinTarget.max}g</div>
             </div>
           </div>
           <div className="flex flex-col items-center gap-1.5">
-            <ProgressRing pct={(waterToday / settingsRow.waterTargetMl) * 100} size={68} strokeWidth={7} color="var(--rtd-cyan)" />
+            <ProgressRing
+              pct={(waterToday / settingsRow.waterTargetMl) * 100}
+              size={68}
+              strokeWidth={7}
+              color="var(--rtd-cyan)"
+              className="w-[68px] h-[68px] md:w-24 md:h-24"
+            />
             <div className="text-center">
-              <div className="text-xs font-semibold">{(waterToday / 1000).toFixed(1)}L</div>
-              <div className="text-[9px] text-[var(--rtd-text-tertiary)]">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
+              <div className="text-footnote font-semibold">{(waterToday / 1000).toFixed(1)}L</div>
+              <div className="text-caption text-[var(--rtd-text-secondary)]">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
             </div>
           </div>
         </div>
         {kcalTarget.needsConfirmation && (
-          <div className="text-[10px] text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
+          <div className="text-caption text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
             Bulk window ended — confirm a maintenance kcal target in Settings.
           </div>
         )}
       </GlassCard>
 
-      <div>
+      <div className="md:col-start-1 md:col-span-5 md:row-start-3">
         <SectionLabel>Macros</SectionLabel>
         <GlassCard>
           <MacroDonut
@@ -130,29 +151,30 @@ export default async function FuelPage() {
         </GlassCard>
       </div>
 
-      <div>
+      {/* Right column (desktop): quick log, banners, water, meal timeline */}
+      <div className="md:col-start-6 md:col-span-7 md:row-start-2">
         <SectionLabel>Quick log</SectionLabel>
         <MealQuickLog />
       </div>
 
       {banners.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 md:col-start-6 md:col-span-7 md:row-start-3">
           {banners.map((b, i) => (
-            <div key={i} className="rtd-glass px-3.5 py-2.5 text-xs text-[var(--rtd-text-secondary)]">
+            <div key={i} className="rtd-glass px-3.5 py-2.5 text-footnote text-[var(--rtd-text-secondary)]">
               {b}
             </div>
           ))}
         </div>
       )}
 
-      <div>
+      <div className="md:col-start-6 md:col-span-7 md:row-start-4">
         <SectionLabel>Water</SectionLabel>
         <GlassCard>
           <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} />
         </GlassCard>
       </div>
 
-      <div>
+      <div className="md:col-start-6 md:col-span-7 md:row-start-5">
         <SectionLabel>Meal timeline</SectionLabel>
         <div className="flex flex-col gap-3">
           {mealsWithLogs.map(({ meal, logged }) => (
@@ -167,25 +189,25 @@ export default async function FuelPage() {
         </div>
       </div>
 
-      <div>
+      <div className="md:col-start-1 md:col-span-5 md:row-start-4">
         <SectionLabel>Weekly review</SectionLabel>
         <GlassCard className="grid grid-cols-2 gap-3">
           <div>
             <div className="rtd-micro-label">Adherence</div>
-            <div className="text-lg font-semibold">{adherencePct}%</div>
+            <div className="text-title-3">{adherencePct}%</div>
           </div>
           <div>
             <div className="rtd-micro-label">Avg kcal/day</div>
-            <div className="text-lg font-semibold">{avgKcalWeek}</div>
+            <div className="text-title-3">{avgKcalWeek}</div>
           </div>
           <div>
             <div className="rtd-micro-label">Avg protein/day</div>
-            <div className="text-lg font-semibold">{avgProteinWeek}g</div>
+            <div className="text-title-3">{avgProteinWeek}g</div>
           </div>
           <div>
             <div className="rtd-micro-label">Weight response</div>
             <div
-              className="text-lg font-semibold"
+              className="text-title-3"
               style={{
                 color:
                   weightDelta === null
@@ -197,13 +219,13 @@ export default async function FuelPage() {
             >
               {weightDelta === null ? "—" : `${weightDelta >= 0 ? "+" : ""}${weightDelta.toFixed(2)} kg`}
             </div>
-            <div className="text-[9px] text-[var(--rtd-text-tertiary)]">target +0.25–0.3 kg/wk</div>
+            <div className="text-caption text-[var(--rtd-text-secondary)]">target +0.25–0.3 kg/wk</div>
           </div>
         </GlassCard>
       </div>
 
       {currentPhase && (
-        <p className="text-[10px] text-[var(--rtd-text-tertiary)] text-center pb-2">
+        <p className="text-caption text-[var(--rtd-text-secondary)] text-center pb-2 md:col-span-12 md:row-start-6">
           {currentPhase.tag} · {currentPhase.name}
         </p>
       )}

@@ -50,21 +50,21 @@ export default async function RecoveryPage() {
       : "green";
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>Recovery</SectionLabel>
 
       <GlassCard className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <span className="w-4 h-4 rounded-full shrink-0" style={{ background: LIGHT_COLOR[overall] }} />
-          <div className="text-sm font-semibold">Readiness — three transparent inputs, no invented score</div>
+          <div className="text-body font-semibold">Readiness — three transparent inputs, no invented score</div>
         </div>
         <div className="flex flex-col gap-2">
           {signals.map((s) => (
             <div key={s.label} className="flex items-start gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-1" style={{ background: LIGHT_COLOR[s.light] }} />
               <div>
-                <div className="text-xs font-medium">{s.label}</div>
-                <div className="text-[10px] text-[var(--rtd-text-tertiary)]">{s.detail}</div>
+                <div className="text-footnote font-medium">{s.label}</div>
+                <div className="text-footnote text-[var(--rtd-text-tertiary)]">{s.detail}</div>
               </div>
             </div>
           ))}
@@ -80,9 +80,9 @@ export default async function RecoveryPage() {
           <SectionLabel>Recent soreness</SectionLabel>
           <GlassCard className="flex flex-col gap-1.5">
             {sorenessLogs.map((s) => (
-              <div key={s.id} className="flex items-center justify-between text-xs">
+              <div key={s.id} className="flex items-center justify-between text-footnote">
                 <span className="text-[var(--rtd-text-secondary)]">{s.area}</span>
-                <span className="text-[var(--rtd-text-tertiary)]">
+                <span className="text-[var(--rtd-text-secondary)]">
                   {s.date} · {s.rating1to5}/5
                 </span>
               </div>

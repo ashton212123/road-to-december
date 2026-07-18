@@ -11,7 +11,7 @@ export default async function SchoolPage() {
 
   if (!configured) {
     return (
-      <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+      <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
         <SectionLabel>School</SectionLabel>
         <EmptyState
           icon="🎓"
@@ -26,13 +26,13 @@ export default async function SchoolPage() {
   const submitted = assignments.filter((a) => a.submitted);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>School</SectionLabel>
 
       {error && (
         <GlassCard className="border border-[var(--rtd-red)]/30">
-          <div className="text-xs font-semibold text-[var(--rtd-red)] mb-1">Canvas sync issue</div>
-          <div className="text-xs text-[var(--rtd-text-secondary)]">{error}</div>
+          <div className="text-body font-semibold text-[var(--rtd-red)] mb-1">Canvas sync issue</div>
+          <div className="text-subhead text-[var(--rtd-text-secondary)]">{error}</div>
         </GlassCard>
       )}
 
@@ -46,7 +46,7 @@ export default async function SchoolPage() {
             <SectionLabel>Courses</SectionLabel>
             <GlassCard className="flex flex-col gap-2">
               {courses.map((c) => (
-                <div key={c.id} className="flex items-center justify-between text-xs">
+                <div key={c.id} className="flex items-center justify-between text-body">
                   <span className="text-[var(--rtd-text)]">{c.name}</span>
                   <span className="text-[var(--rtd-text-secondary)]">{c.currentGrade ?? "—"}</span>
                 </div>

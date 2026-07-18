@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid, BarChart, Bar } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AlertCard } from "@/components/ui/AlertCard";
+import { Button } from "@/components/ui/Button";
 import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
 import { chartTheme } from "./chart-theme";
 
@@ -13,20 +15,29 @@ export function LoadSection({ dailyLoads, acwr }: { dailyLoads: DailySessionLoad
   const flagged = latestRatio !== null && latestRatio > 1.5;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
       {flagged && (
-        <AlertCard
-          tone="danger"
-          title="Acute:chronic ratio elevated"
-          body={`Current ratio ${latestRatio!.toFixed(2)} is above 1.5 — trim this week's volume before it compounds.`}
-        />
+        <div className="md:col-span-2">
+          <AlertCard
+            tone="danger"
+            title="Acute:chronic ratio elevated"
+            body={`Current ratio ${latestRatio!.toFixed(2)} is above 1.5 — trim this week's volume before it compounds.`}
+          />
+        </div>
       )}
 
       <div>
         <SectionLabel>Daily session load (RPE × time-on-task)</SectionLabel>
         <GlassCard>
           {dailyLoads.length === 0 ? (
-            <EmptyState title="No sessions logged yet" />
+            <EmptyState
+              title="No sessions logged yet"
+              action={
+                <Link href="/train">
+                  <Button variant="secondary">Log sets in Train</Button>
+                </Link>
+              }
+            />
           ) : (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={dailyLoads} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -53,7 +64,7 @@ export function LoadSection({ dailyLoads, acwr }: { dailyLoads: DailySessionLoad
                 <XAxis dataKey="date" {...chartTheme.axis} tickFormatter={(d) => d.slice(5)} />
                 <YAxis {...chartTheme.axis} domain={[0, "dataMax + 0.5"]} />
                 <Tooltip {...chartTheme.tooltip} />
-                <ReferenceLine y={1.5} stroke="var(--rtd-red)" strokeDasharray="4 4" label={{ value: "1.5 — trim volume", position: "insideTopRight", fill: "var(--rtd-red)", fontSize: 10 }} />
+                <ReferenceLine y={1.5} stroke="var(--rtd-red)" strokeDasharray="4 4" label={{ value: "1.5 — trim volume", position: "insideTopRight", fill: "var(--rtd-red)", fontSize: 11 }} />
                 <Area type="monotone" dataKey="ratio" stroke="var(--rtd-orange)" fill="var(--rtd-orange)" fillOpacity={0.15} strokeWidth={2} connectNulls />
               </AreaChart>
             </ResponsiveContainer>

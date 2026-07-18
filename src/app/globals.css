@@ -21,8 +21,8 @@
   --rtd-purple: #bf5af2;
 
   --rtd-text: #f5f5f7;
-  --rtd-text-secondary: rgba(235, 235, 245, 0.65);
-  --rtd-text-tertiary: rgba(235, 235, 245, 0.45);
+  --rtd-text-secondary: rgba(235, 235, 245, 0.78);
+  --rtd-text-tertiary: rgba(235, 235, 245, 0.58);
 
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue",
@@ -43,6 +43,31 @@
   --color-rtd-text-tertiary: var(--rtd-text-tertiary);
   --color-rtd-glass: var(--rtd-glass-base);
   --font-sans: var(--font-sans);
+
+  /* Apple HIG type scale */
+  --text-caption: 11px;
+  --text-caption--line-height: 1.35;
+  --text-footnote: 13px;
+  --text-footnote--line-height: 1.4;
+  --text-subhead: 15px;
+  --text-subhead--line-height: 1.4;
+  --text-body: 17px;
+  --text-body--line-height: 1.45;
+  --text-headline: 17px;
+  --text-headline--line-height: 1.4;
+  --text-headline--font-weight: 600;
+  --text-title-3: 20px;
+  --text-title-3--line-height: 1.3;
+  --text-title-3--font-weight: 600;
+  --text-title-2: 22px;
+  --text-title-2--line-height: 1.25;
+  --text-title-2--font-weight: 700;
+  --text-title-1: 28px;
+  --text-title-1--line-height: 1.2;
+  --text-title-1--font-weight: 700;
+  --text-large-title: clamp(28px, 24px + 2vw, 34px);
+  --text-large-title--line-height: 1.1;
+  --text-large-title--font-weight: 800;
 }
 
 * {
@@ -80,8 +105,27 @@ body {
   backdrop-filter: blur(var(--rtd-blur));
 }
 
+/* .rtd-glass sets background-color/-image directly, which beats Tailwind's
+   layered bg-* utilities in the cascade — lighten via this unlayered hover rule instead. */
+.rtd-glass-interactive {
+  transition: background-image 150ms ease-out;
+}
+
+.rtd-glass-interactive:hover {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.055));
+}
+
+.rtd-segmented-btn[data-active="true"] {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.rtd-segmented-btn:hover:not([data-active="true"]) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .rtd-micro-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -91,6 +135,49 @@ body {
 .rtd-display {
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+
+/* Interaction affordances */
+a,
+button,
+select,
+summary,
+[role="button"],
+[role="tab"],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--rtd-blue);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* iOS Safari auto-zooms any focused input under 16px; this is the floor. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Minimum 44x44 tap target for small icon/chip controls; opt in via this class. */
+.rtd-tap-target {
+  position: relative;
+}
+
+.rtd-tap-target::after {
+  content: "";
+  position: absolute;
+  inset: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
 }
 
 @keyframes rtd-fade-in {

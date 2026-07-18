@@ -17,8 +17,8 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-[var(--rtd-blue)]/15 flex items-center justify-center text-2xl">
             🏊
           </div>
-          <h1 className="rtd-display text-xl">Road to December</h1>
-          <p className="text-xs text-[var(--rtd-text-tertiary)]">Personal athlete command center</p>
+          <h1 className="rtd-display text-title-2">Road to December</h1>
+          <p className="text-subhead text-[var(--rtd-text-tertiary)]">Personal athlete command center</p>
         </div>
 
         <form action={formAction} className="flex flex-col gap-3">
@@ -34,7 +34,7 @@ export default function LoginPage() {
             />
           </label>
           {state.error && (
-            <p className="text-xs text-[var(--rtd-red)]" role="alert">
+            <p className="text-footnote text-[var(--rtd-red)]" role="alert">
               {state.error}
             </p>
           )}

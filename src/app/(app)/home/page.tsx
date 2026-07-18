@@ -188,22 +188,22 @@ export default async function HomePage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
-      <GlassCard className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:grid md:grid-cols-12 md:gap-6 md:items-start">
+      <GlassCard className="flex flex-col gap-3 md:col-span-7 md:order-1">
         <div className="flex items-start justify-between">
           <div>
             <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
-            <div className="rtd-display text-4xl mt-1">{daysToNcaa}</div>
+            <div className="rtd-display text-large-title mt-1">{daysToNcaa}</div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span
-              className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              className="text-footnote font-semibold px-2.5 py-1 rounded-full"
               style={{ background: `${currentPhase.color}26`, color: currentPhase.color }}
             >
               {currentPhase.tag} · {currentPhase.name}
             </span>
             {trainingStreak > 0 && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--rtd-orange)]/15 text-[var(--rtd-orange)]">
+              <span className="text-footnote font-semibold px-2.5 py-1 rounded-full bg-[var(--rtd-orange)]/15 text-[var(--rtd-orange)]">
                 🔥 {trainingStreak} day{trainingStreak === 1 ? "" : "s"}
               </span>
             )}
@@ -211,14 +211,14 @@ export default async function HomePage() {
         </div>
         {settingsRow.aseanConfirmed !== false ? (
           <div className="flex items-baseline gap-1.5">
-            <span className="rtd-display text-lg">{daysToAsean}</span>
-            <span className="text-xs text-[var(--rtd-text-secondary)]">
+            <span className="rtd-display text-title-1">{daysToAsean}</span>
+            <span className="text-subhead text-[var(--rtd-text-secondary)]">
               days to ASEAN · {aseanDateLabel}
               {settingsRow.aseanConfirmed === null && " (unconfirmed)"}
             </span>
           </div>
         ) : (
-          <div className="text-xs text-[var(--rtd-text-secondary)]">{aseanLabel}</div>
+          <div className="text-subhead text-[var(--rtd-text-secondary)]">{aseanLabel}</div>
         )}
         <div>
           <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
@@ -227,56 +227,56 @@ export default async function HomePage() {
               style={{ width: `${seasonPct}%`, background: "var(--rtd-blue)" }}
             />
           </div>
-          <div className="text-[10px] text-[var(--rtd-text-tertiary)] mt-1">
+          <div className="text-caption text-[var(--rtd-text-secondary)] mt-1">
             {seasonPct}% through the 21-week season
           </div>
         </div>
       </GlassCard>
 
       {alerts.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 md:col-span-6 md:order-3">
           <SectionLabel>Coach</SectionLabel>
           <AlertCardList alerts={alerts} />
         </div>
       )}
 
       {needsAttention.length > 0 && (
-        <div>
+        <div className="md:col-span-6 md:order-4">
           <SectionLabel>Needs attention</SectionLabel>
           <NeedsAttentionList items={needsAttention} />
         </div>
       )}
 
-      <div>
+      <div className="md:col-span-12 md:order-5">
         <SectionLabel>Today · {weekDay.full}</SectionLabel>
         <GlassCard className="flex flex-col gap-3">
           <div>
-            <div className="text-xs text-[var(--rtd-text-tertiary)]">Swim</div>
-            <div className="text-sm text-[var(--rtd-text)]">{weekDay.swim ?? "Rest"}</div>
+            <div className="text-footnote text-[var(--rtd-text-secondary)]">Swim</div>
+            <div className="text-subhead text-[var(--rtd-text)]">{weekDay.swim ?? "Rest"}</div>
           </div>
           {todaySession ? (
             <Link
               href={`/train/${currentPhase.id}?day=${todayKey}`}
-              className="flex items-center justify-between rounded-2xl bg-white/[0.05] px-3.5 py-3"
+              className="flex items-center justify-between rounded-2xl bg-white/[0.05] px-3.5 py-3 cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
             >
               <div>
-                <div className="text-xs text-[var(--rtd-text-tertiary)]">Gym</div>
-                <div className="text-sm font-medium text-[var(--rtd-text)]">{todaySession.title}</div>
+                <div className="text-footnote text-[var(--rtd-text-secondary)]">Gym</div>
+                <div className="text-body font-medium text-[var(--rtd-text)]">{todaySession.title}</div>
               </div>
-              <span className="text-[var(--rtd-blue)] text-sm font-medium">Open →</span>
+              <span className="text-[var(--rtd-blue)] text-subhead font-medium">Open →</span>
             </Link>
           ) : (
             <div>
-              <div className="text-xs text-[var(--rtd-text-tertiary)]">Gym</div>
-              <div className="text-sm text-[var(--rtd-text)]">{weekDay.gym ?? "Off — full rest"}</div>
+              <div className="text-footnote text-[var(--rtd-text-secondary)]">Gym</div>
+              <div className="text-subhead text-[var(--rtd-text)]">{weekDay.gym ?? "Off — full rest"}</div>
             </div>
           )}
         </GlassCard>
       </div>
 
-      <div>
+      <div className="md:col-span-5 md:order-2">
         <SectionLabel>Quick stats</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:gap-2">
           <StatCard
             label="Weight"
             value={latestWeighIn ? `${Number(latestWeighIn.kg).toFixed(1)} kg` : "—"}
@@ -308,7 +308,7 @@ export default async function HomePage() {
             />
             <div className="min-w-0">
               <div className="rtd-micro-label">Water</div>
-              <div className="text-sm font-semibold truncate">
+              <div className="text-body font-semibold truncate">
                 {(waterToday / 1000).toFixed(1)}L / {(waterTarget / 1000).toFixed(1)}L
               </div>
             </div>

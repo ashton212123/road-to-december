@@ -18,10 +18,10 @@ export function TransactionList({ businessId, transactions }: { businessId: numb
   return (
     <GlassCard className="flex flex-col gap-2">
       {transactions.map((t) => (
-        <div key={t.id} className="flex items-center justify-between text-xs">
+        <div key={t.id} className="flex items-center justify-between text-footnote">
           <div className="min-w-0">
             <span className="text-[var(--rtd-text)]">{t.description}</span>
-            <div className="text-[10px] text-[var(--rtd-text-tertiary)]">{t.date}</div>
+            <div className="text-caption text-[var(--rtd-text-tertiary)]">{t.date}</div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span
@@ -35,7 +35,7 @@ export function TransactionList({ businessId, transactions }: { businessId: numb
               type="button"
               disabled={pending}
               onClick={() => startTransition(() => deleteTransactionAction(t.id, businessId))}
-              className="text-[var(--rtd-red)]"
+              className="text-[var(--rtd-red)] cursor-pointer hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target"
               aria-label="Delete transaction"
             >
               ✕

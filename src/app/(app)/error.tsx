@@ -10,8 +10,8 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
         <div className="w-12 h-12 rounded-full bg-[var(--rtd-red)]/15 flex items-center justify-center text-2xl">
           ⚠️
         </div>
-        <div className="rtd-display text-lg">Something went wrong</div>
-        <p className="text-sm text-[var(--rtd-text-secondary)]">
+        <div className="rtd-display text-title-3">Something went wrong</div>
+        <p className="text-subhead text-[var(--rtd-text-secondary)]">
           Couldn&apos;t load this screen — usually a database connection hiccup. Your logged data is
           safe either way.
         </p>

@@ -22,8 +22,8 @@ export function CmjQuickLog() {
   return (
     <GlassCard className="flex items-center gap-3">
       <div className="flex-1">
-        <div className="text-sm font-semibold">CMJ — best of 3</div>
-        <div className="text-[10px] text-[var(--rtd-text-tertiary)]">Weekly fatigue monitor, every Sunday.</div>
+        <div className="text-body font-semibold">CMJ — best of 3</div>
+        <div className="text-footnote text-[var(--rtd-text-tertiary)]">Weekly fatigue monitor, every Sunday.</div>
       </div>
       <input
         inputMode="decimal"

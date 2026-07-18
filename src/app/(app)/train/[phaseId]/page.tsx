@@ -39,7 +39,7 @@ export default async function PhaseSessionPage({
         <SectionLabel>
           {phase.tag} · {phase.name}
         </SectionLabel>
-        <GlassCard className="text-xs text-[var(--rtd-text-secondary)]">{phase.note}</GlassCard>
+        <GlassCard className="text-subhead text-[var(--rtd-text-secondary)]">{phase.note}</GlassCard>
         <TaperChecklist blocks={blocks} />
       </div>
     );
@@ -80,12 +80,12 @@ export default async function PhaseSessionPage({
       <SectionLabel>
         {phase.tag} · {phase.name}
       </SectionLabel>
-      {phase.note && <p className="text-xs text-[var(--rtd-text-tertiary)] -mt-2">{phase.note}</p>}
+      {phase.note && <p className="text-subhead text-[var(--rtd-text-secondary)] -mt-2">{phase.note}</p>}
       <DaySelector phaseId={phase.id} days={availableDays} current={selectedDay} />
 
       {session ? (
         <>
-          <div className="text-sm font-semibold">{session.title}</div>
+          <div className="text-body font-semibold">{session.title}</div>
           <div className="flex flex-col gap-3">
             {exerciseData.map(({ exercise, lastSessionSets, todaysSets, progression }) => (
               <ExerciseCard

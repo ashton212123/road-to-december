@@ -64,7 +64,7 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
 
   return (
     <GlassCard className="flex flex-col gap-3">
-      <div className="text-sm font-semibold">Add meet</div>
+      <div className="text-title-3">Add meet</div>
       <div className="grid grid-cols-2 gap-2">
         <input
           placeholder="Meet name"
@@ -83,7 +83,7 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
       <div className="flex flex-col gap-1.5">
         {rows.map((row, i) => (
           <div key={row.event} className="grid grid-cols-3 gap-2 items-center">
-            <span className="text-xs text-[var(--rtd-text-secondary)] truncate">{row.event}</span>
+            <span className="text-footnote text-[var(--rtd-text-secondary)] truncate">{row.event}</span>
             <input
               placeholder="target"
               inputMode="decimal"
@@ -102,7 +102,7 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
         ))}
       </div>
 
-      {error && <div className="text-[11px] text-[var(--rtd-red)]">{error}</div>}
+      {error && <div className="text-footnote text-[var(--rtd-red)]">{error}</div>}
 
       <div className="flex gap-2">
         <Button variant="secondary" disabled={pending} onClick={submit} className="flex-1">

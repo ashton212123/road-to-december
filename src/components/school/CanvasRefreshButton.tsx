@@ -19,14 +19,14 @@ export function CanvasRefreshButton({ syncedAt }: { syncedAt: string | null }) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-[var(--rtd-text-tertiary)]">
+        <span className="text-caption text-[var(--rtd-text-secondary)]">
           {syncedAt ? `Synced ${new Date(syncedAt).toLocaleTimeString()}` : "Not synced yet"}
         </span>
-        <Button variant="ghost" disabled={pending} onClick={refresh} className="!py-1 !px-2 !text-xs">
+        <Button variant="ghost" disabled={pending} onClick={refresh} className="!py-1 !px-2 !text-footnote">
           {pending ? "Syncing…" : "Sync now"}
         </Button>
       </div>
-      {error && <div className="text-[11px] text-[var(--rtd-red)]">{error}</div>}
+      {error && <div className="text-footnote text-[var(--rtd-red)]">{error}</div>}
     </div>
   );
 }

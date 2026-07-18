@@ -18,8 +18,10 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      <div className="text-sm font-semibold text-[var(--rtd-text)]">{title}</div>
-      {body && <div className="text-xs text-[var(--rtd-text-tertiary)] max-w-[26ch]">{body}</div>}
+      <div className="text-body font-semibold text-[var(--rtd-text)]">{title}</div>
+      {body && (
+        <div className="text-subhead text-[var(--rtd-text-tertiary)] max-w-[26ch]">{body}</div>
+      )}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );

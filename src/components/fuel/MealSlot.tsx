@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import clsx from "clsx";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { logFoodAction, deleteFoodLogAction } from "@/app/(app)/fuel/actions";
@@ -69,12 +70,12 @@ export function MealSlot({
     <GlassCard className="flex flex-col gap-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-[var(--rtd-text)]">{time}</div>
-          <div className="text-[11px] text-[var(--rtd-text-tertiary)] leading-snug">{desc}</div>
+          <div className="text-body font-semibold text-[var(--rtd-text)]">{time}</div>
+          <div className="text-footnote text-[var(--rtd-text-secondary)] leading-snug">{desc}</div>
         </div>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="shrink-0 w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-sm text-[var(--rtd-blue)]"
+          className="shrink-0 w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-sm text-[var(--rtd-blue)] cursor-pointer rtd-tap-target hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
           aria-label="Log food"
         >
           {open ? "–" : "+"}
@@ -82,7 +83,7 @@ export function MealSlot({
       </div>
 
       {banner && (
-        <div className="text-[10px] text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
+        <div className="text-caption text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
           {banner}
         </div>
       )}
@@ -90,13 +91,13 @@ export function MealSlot({
       {loggedItems.length > 0 && (
         <div className="flex flex-col gap-1">
           {loggedItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-xs bg-white/[0.04] rounded-lg px-2.5 py-1.5">
+            <div key={item.id} className="flex items-center justify-between text-footnote bg-white/[0.04] rounded-lg px-2.5 py-1.5">
               <span className="truncate text-[var(--rtd-text-secondary)]">{item.description}</span>
-              <span className="shrink-0 ml-2 text-[var(--rtd-text-tertiary)]">
+              <span className="shrink-0 ml-2 text-[var(--rtd-text-secondary)]">
                 {item.kcal} kcal
                 <button
                   onClick={() => startTransition(() => deleteFoodLogAction(item.id))}
-                  className="text-[var(--rtd-red)] ml-2"
+                  className="text-[var(--rtd-red)] ml-2 cursor-pointer rtd-tap-target hover:bg-white/[0.04] rounded-full focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
                   aria-label="Delete"
                 >
                   ✕
@@ -104,22 +105,28 @@ export function MealSlot({
               </span>
             </div>
           ))}
-          <div className="text-[10px] text-[var(--rtd-text-tertiary)] text-right">{totalKcal} kcal logged</div>
+          <div className="text-caption text-[var(--rtd-text-secondary)] text-right">{totalKcal} kcal logged</div>
         </div>
       )}
 
       {open && (
         <div className="flex flex-col gap-2 pt-1 border-t border-[var(--rtd-hairline)]">
-          <div className="flex gap-2 text-[10px]">
+          <div className="flex gap-2 text-caption">
             <button
               onClick={() => setMode("quick")}
-              className={mode === "quick" ? "text-[var(--rtd-blue)] font-semibold" : "text-[var(--rtd-text-tertiary)]"}
+              className={clsx(
+                "rounded-md px-1 cursor-pointer rtd-tap-target hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out",
+                mode === "quick" ? "text-[var(--rtd-blue)] font-semibold" : "text-[var(--rtd-text-secondary)]"
+              )}
             >
               Quick add
             </button>
             <button
               onClick={() => setMode("manual")}
-              className={mode === "manual" ? "text-[var(--rtd-blue)] font-semibold" : "text-[var(--rtd-text-tertiary)]"}
+              className={clsx(
+                "rounded-md px-1 cursor-pointer rtd-tap-target hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out",
+                mode === "manual" ? "text-[var(--rtd-blue)] font-semibold" : "text-[var(--rtd-text-secondary)]"
+              )}
             >
               Manual
             </button>
@@ -132,7 +139,7 @@ export function MealSlot({
                   key={food.id}
                   disabled={pending}
                   onClick={() => quickAdd(food.id)}
-                  className="text-[10px] px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] disabled:opacity-40"
+                  className="text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] disabled:opacity-40 cursor-pointer rtd-tap-target hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
                 >
                   {food.name} · {food.kcal}kcal
                 </button>

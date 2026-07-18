@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { ResponsiveContainer, ComposedChart, Line, Scatter, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatCard } from "@/components/ui/StatCard";
+import { Button } from "@/components/ui/Button";
 import { seasonData } from "@/lib/data/season-data";
 import { daysBetween } from "@/lib/time";
 import { chartTheme } from "./chart-theme";
@@ -17,7 +19,15 @@ export function BodyweightSection({ weightSeries }: { weightSeries: { date: stri
       <div>
         <SectionLabel>Bodyweight</SectionLabel>
         <GlassCard>
-          <EmptyState title="No weigh-ins logged" body="Weigh in every Monday morning, same conditions." />
+          <EmptyState
+            title="No weigh-ins logged"
+            body="Weigh in every Monday morning, same conditions — log it via Coach AI."
+            action={
+              <Link href="/more/coach-ai">
+                <Button variant="secondary">Open Coach AI</Button>
+              </Link>
+            }
+          />
         </GlassCard>
       </div>
     );
@@ -63,7 +73,7 @@ export function BodyweightSection({ weightSeries }: { weightSeries: { date: stri
               <Line type="monotone" dataKey="avg7" stroke="var(--rtd-blue)" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
-          <div className="flex items-center gap-4 mt-2 text-[10px] text-[var(--rtd-text-tertiary)]">
+          <div className="flex items-center gap-4 mt-2 text-caption text-[var(--rtd-text-tertiary)]">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[rgba(235,235,245,0.5)]" /> Raw weigh-ins</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--rtd-blue)]" /> 7-day avg</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--rtd-green)]" /> Target band</span>

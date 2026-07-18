@@ -21,12 +21,12 @@ export function NoteList({ businessId, notes }: { businessId: number; notes: Not
 
   return (
     <GlassCard className="flex flex-col gap-2">
-      {notes.length === 0 && <div className="text-xs text-[var(--rtd-text-tertiary)]">No notes yet.</div>}
+      {notes.length === 0 && <div className="text-footnote text-[var(--rtd-text-tertiary)]">No notes yet.</div>}
       {notes.map((note) => (
         <div key={note.id} className="flex items-start justify-between gap-2 bg-white/[0.04] rounded-lg px-3 py-2">
           <div className="min-w-0">
-            <div className="text-xs text-[var(--rtd-text)] whitespace-pre-wrap">{note.body}</div>
-            <div className="text-[10px] text-[var(--rtd-text-tertiary)] mt-0.5">
+            <div className="text-subhead text-[var(--rtd-text)] whitespace-pre-wrap">{note.body}</div>
+            <div className="text-caption text-[var(--rtd-text-tertiary)] mt-0.5">
               {new Date(note.createdAt).toLocaleDateString()}
             </div>
           </div>
@@ -34,7 +34,7 @@ export function NoteList({ businessId, notes }: { businessId: number; notes: Not
             type="button"
             disabled={pending}
             onClick={() => startTransition(() => deleteNoteAction(note.id, businessId))}
-            className="text-[var(--rtd-red)] text-xs shrink-0"
+            className="text-[var(--rtd-red)] text-footnote shrink-0 cursor-pointer hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target"
             aria-label="Delete note"
           >
             ✕

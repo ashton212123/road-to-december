@@ -3,20 +3,20 @@ import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function CoachAiPage() {
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>Coach AI</SectionLabel>
       <GlassCard className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[var(--rtd-green)]" />
-          <span className="text-sm font-semibold">MCP server live at /api/mcp</span>
+          <span className="text-body font-semibold">MCP server live at /api/mcp</span>
         </div>
-        <p className="text-xs text-[var(--rtd-text-secondary)] leading-relaxed">
+        <p className="text-subhead text-[var(--rtd-text-secondary)] leading-relaxed">
           This app exposes a remote MCP server so your own Claude subscription can act as its AI
           layer — no API key lives in this codebase. Add it to claude.ai as a custom connector to
           let Claude read your dashboard, log food/water/sleep/weigh-ins/sets, and log swim times
           or CMJ tests, all in chat.
         </p>
-        <ol className="text-xs text-[var(--rtd-text-secondary)] flex flex-col gap-1.5 list-decimal list-inside">
+        <ol className="text-subhead text-[var(--rtd-text-secondary)] flex flex-col gap-1.5 list-decimal list-inside">
           <li>In claude.ai, go to Settings → Connectors → Add custom connector.</li>
           <li>
             URL: <code className="text-[var(--rtd-cyan)]">https://your-deployment.vercel.app/api/mcp</code>
@@ -27,7 +27,7 @@ export default function CoachAiPage() {
           </li>
           <li>Save, then ask Claude to check your dashboard or log something.</li>
         </ol>
-        <p className="text-[10px] text-[var(--rtd-text-tertiary)]">
+        <p className="text-footnote text-[var(--rtd-text-tertiary)]">
           Full setup steps, including how to generate the bearer token, are in DEPLOY.md.
         </p>
       </GlassCard>

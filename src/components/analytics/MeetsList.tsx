@@ -15,7 +15,7 @@ type Meet = {
 };
 
 const CONFIDENCE_COLOR: Record<ReadinessResult["confidence"], string> = {
-  none: "var(--rtd-text-tertiary)",
+  none: "var(--rtd-text-secondary)",
   low: "var(--rtd-orange)",
   medium: "var(--rtd-cyan)",
   high: "var(--rtd-green)",
@@ -35,8 +35,8 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
           <GlassCard key={meet.id} className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-semibold">{meet.name}</div>
-                <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
+                <div className="text-body font-semibold">{meet.name}</div>
+                <div className="text-caption text-[var(--rtd-text-secondary)]">
                   {meet.date} · {daysOut >= 0 ? `${daysOut}d out` : `${Math.abs(daysOut)}d ago`}
                 </div>
               </div>
@@ -44,7 +44,7 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
                 type="button"
                 disabled={pending}
                 onClick={() => startTransition(() => deleteMeetAction(meet.id))}
-                className="text-[var(--rtd-red)] text-xs"
+                className="rtd-tap-target text-[var(--rtd-red)] text-footnote cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
                 aria-label="Delete meet"
               >
                 ✕
@@ -52,10 +52,10 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
             </div>
             <div className="flex flex-col gap-1.5">
               {meet.events.map((ev) => (
-                <div key={ev.id} className="flex items-center justify-between text-xs">
+                <div key={ev.id} className="flex items-center justify-between text-footnote">
                   <span className="text-[var(--rtd-text-secondary)]">{ev.event}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[var(--rtd-text-tertiary)]">target {formatSwimTime(ev.targetTimeMs)}</span>
+                    <span className="text-[var(--rtd-text-secondary)]">target {formatSwimTime(ev.targetTimeMs)}</span>
                     {ev.readiness.projectedMs !== null && (
                       <span
                         className="font-semibold"

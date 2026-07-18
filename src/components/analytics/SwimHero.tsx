@@ -16,7 +16,7 @@ type MeetEventWithReadiness = {
 };
 
 const CONFIDENCE_COLOR: Record<ReadinessResult["confidence"], string> = {
-  none: "var(--rtd-text-tertiary)",
+  none: "var(--rtd-text-secondary)",
   low: "var(--rtd-orange)",
   medium: "var(--rtd-cyan)",
   high: "var(--rtd-green)",
@@ -45,7 +45,7 @@ export function SwimHero({
           <button
             key={ev}
             onClick={() => setEvent(ev)}
-            className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+            className="shrink-0 px-3 py-1.5 rounded-full text-subhead font-semibold transition-all duration-150 ease-out cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{
               background: event === ev ? "var(--rtd-blue)" : "rgba(255,255,255,0.06)",
               color: event === ev ? "#fff" : "var(--rtd-text-secondary)",
@@ -59,7 +59,7 @@ export function SwimHero({
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="rtd-micro-label">Current best</div>
-          <div className="rtd-display text-4xl mt-1 transition-all duration-500">
+          <div className="rtd-display text-large-title mt-1 transition-all duration-500">
             {currentBest !== null ? formatSwimTime(currentBest) : "—"}
           </div>
         </div>
@@ -67,7 +67,7 @@ export function SwimHero({
           <div className="text-right">
             <div className="rtd-micro-label">Projected · {nearestMeetEvent.meetName}</div>
             <div
-              className="text-2xl font-bold mt-1 transition-colors duration-500"
+              className="text-title-1 mt-1 transition-colors duration-500"
               style={{ color: CONFIDENCE_COLOR[nearestMeetEvent.readiness.confidence] }}
             >
               {nearestMeetEvent.readiness.projectedMs !== null ? formatSwimTime(nearestMeetEvent.readiness.projectedMs) : "—"}
@@ -77,7 +77,7 @@ export function SwimHero({
       </div>
 
       {nearestMeetEvent && (
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-footnote">
           <span className="text-[var(--rtd-text-secondary)]">
             Target {formatSwimTime(nearestMeetEvent.targetTimeMs)}
             {nearestMeetEvent.readiness.gapToTargetMs !== null && (
@@ -89,7 +89,7 @@ export function SwimHero({
             )}
           </span>
           <span
-            className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
+            className="text-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
             style={{
               background: `${CONFIDENCE_COLOR[nearestMeetEvent.readiness.confidence]}22`,
               color: CONFIDENCE_COLOR[nearestMeetEvent.readiness.confidence],
@@ -101,7 +101,7 @@ export function SwimHero({
       )}
 
       {!nearestMeetEvent && times.length === 0 && (
-        <div className="text-xs text-[var(--rtd-text-tertiary)]">Log a time for {event} to see your trend here.</div>
+        <div className="text-subhead text-[var(--rtd-text-tertiary)]">Log a time for {event} to see your trend here.</div>
       )}
     </GlassCard>
   );

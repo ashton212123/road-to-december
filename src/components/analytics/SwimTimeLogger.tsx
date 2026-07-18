@@ -56,7 +56,7 @@ export function SwimTimeLogger() {
 
   return (
     <GlassCard className="flex flex-col gap-3">
-      <div className="text-sm font-semibold">Log a swim time</div>
+      <div className="text-title-3">Log a swim time</div>
 
       <div className="grid grid-cols-2 gap-2">
         <select
@@ -95,12 +95,12 @@ export function SwimTimeLogger() {
         />
       )}
 
-      {error && <div className="text-[11px] text-[var(--rtd-red)]">{error}</div>}
+      {error && <div className="text-footnote text-[var(--rtd-red)]">{error}</div>}
 
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1 text-[11px] text-[var(--rtd-text-tertiary)] self-start"
+        className="flex items-center gap-1 text-footnote text-[var(--rtd-text-secondary)] self-start cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
       >
         Meet name &amp; splits (optional)
         <span className="transition-transform" style={{ transform: expanded ? "rotate(180deg)" : "none" }}>

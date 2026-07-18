@@ -24,15 +24,15 @@ export function SleepLogger() {
 
   return (
     <GlassCard className="flex flex-col gap-3">
-      <div className="text-sm font-semibold">Sleep</div>
+      <div className="text-body font-semibold">Sleep</div>
       {isBedtimeCheckDay && (
-        <div className="text-[10px] text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
+        <div className="text-subhead text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
           Tue/Thu rule: lights out by 9:30 PM — a 5 AM alarm follows.
         </div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1">
-          <span className="rtd-micro-label !text-[9px]">Hours</span>
+          <span className="rtd-micro-label">Hours</span>
           <input
             inputMode="decimal"
             value={hours}
@@ -41,7 +41,7 @@ export function SleepLogger() {
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="rtd-micro-label !text-[9px]">Bedtime</span>
+          <span className="rtd-micro-label">Bedtime</span>
           <input
             type="time"
             value={bedtime}

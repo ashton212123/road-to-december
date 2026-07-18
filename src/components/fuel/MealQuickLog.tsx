@@ -96,7 +96,7 @@ export function MealQuickLog() {
 
   return (
     <GlassCard className="flex flex-col gap-3">
-      <div className="text-sm font-semibold">Quick log — describe your day</div>
+      <div className="text-title-3">Quick log — describe your day</div>
       {!rows && (
         <>
           <textarea
@@ -109,7 +109,7 @@ export function MealQuickLog() {
           <Button variant="secondary" disabled={pending || !text.trim()} onClick={parse}>
             {done ? "Logged ✓ — parse another" : "Parse"}
           </Button>
-          <div className="text-[10px] text-[var(--rtd-text-tertiary)]">
+          <div className="text-caption text-[var(--rtd-text-tertiary)]">
             Macros are fuzzy-matched from USDA FoodData Central — review and edit before saving, nothing logs automatically.
           </div>
         </>
@@ -117,7 +117,7 @@ export function MealQuickLog() {
 
       {rows && (
         <div className="flex flex-col gap-3 rtd-fade-in">
-          {rows.length === 0 && <div className="text-xs text-[var(--rtd-text-tertiary)]">Nothing parsed — try rephrasing.</div>}
+          {rows.length === 0 && <div className="text-footnote text-[var(--rtd-text-secondary)]">Nothing parsed — try rephrasing.</div>}
           {rows.map((row, i) => (
             <div key={i} className="flex flex-col gap-2 bg-white/[0.04] rounded-xl p-2.5">
               <div className="flex items-center gap-2">
@@ -137,7 +137,12 @@ export function MealQuickLog() {
                   onChange={(e) => updateRow(i, { description: e.target.value })}
                   className="flex-1 rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs outline-none"
                 />
-                <button type="button" onClick={() => removeRow(i)} className="text-[var(--rtd-red)] text-xs shrink-0" aria-label="Remove item">
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  className="text-[var(--rtd-red)] text-footnote shrink-0 rounded-full cursor-pointer rtd-tap-target hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+                  aria-label="Remove item"
+                >
                   ✕
                 </button>
               </div>
@@ -148,7 +153,7 @@ export function MealQuickLog() {
                     <button
                       key={c.fdcId}
                       onClick={() => selectCandidate(i, c.fdcId)}
-                      className="shrink-0 text-[10px] px-2 py-1 rounded-full whitespace-nowrap"
+                      className="shrink-0 text-caption px-2 py-1 rounded-full whitespace-nowrap cursor-pointer rtd-tap-target hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
                       style={{
                         background: row.selectedFdcId === c.fdcId ? "var(--rtd-blue)" : "rgba(255,255,255,0.06)",
                         color: row.selectedFdcId === c.fdcId ? "#fff" : "var(--rtd-text-secondary)",
@@ -161,7 +166,7 @@ export function MealQuickLog() {
                 </div>
               )}
               {row.candidates.length === 0 && (
-                <div className="text-[10px] text-[var(--rtd-orange)]">No USDA match — enter macros manually.</div>
+                <div className="text-caption text-[var(--rtd-orange)]">No USDA match — enter macros manually.</div>
               )}
 
               <div className="grid grid-cols-4 gap-1.5">

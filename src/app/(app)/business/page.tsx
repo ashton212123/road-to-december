@@ -24,19 +24,19 @@ export default async function BusinessPage() {
   const archived = allBusinesses.filter((b) => b.archived);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>Business</SectionLabel>
 
       {allBusinesses.length > 0 && (
         <GlassCard className="flex flex-col gap-1">
-          <div className="text-xs text-[var(--rtd-text-tertiary)]">Overall profit</div>
+          <div className="text-footnote text-[var(--rtd-text-tertiary)]">Overall profit</div>
           <div
-            className="text-2xl font-bold"
+            className="text-large-title"
             style={{ color: overall.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}
           >
             {formatPhp(overall.profit)}
           </div>
-          <div className="text-xs text-[var(--rtd-text-secondary)]">
+          <div className="text-footnote text-[var(--rtd-text-secondary)]">
             {formatPhp(overall.income)} in · {formatPhp(overall.expense)} out
           </div>
         </GlassCard>
@@ -54,15 +54,15 @@ export default async function BusinessPage() {
             const profit = computeProfit(byBusiness.get(b.id) ?? []);
             return (
               <Link key={b.id} href={`/business/${b.id}`}>
-                <GlassCard className="flex items-center gap-3">
+                <GlassCard interactive className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{b.name}</div>
+                    <div className="text-body font-semibold truncate">{b.name}</div>
                     {b.description && (
-                      <div className="text-xs text-[var(--rtd-text-tertiary)] truncate">{b.description}</div>
+                      <div className="text-footnote text-[var(--rtd-text-tertiary)] truncate">{b.description}</div>
                     )}
                   </div>
                   <div
-                    className="text-sm font-semibold shrink-0"
+                    className="text-headline shrink-0"
                     style={{ color: profit.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}
                   >
                     {formatPhp(profit.profit)}
@@ -83,9 +83,9 @@ export default async function BusinessPage() {
           <div className="flex flex-col gap-3">
             {archived.map((b) => (
               <Link key={b.id} href={`/business/${b.id}`}>
-                <GlassCard className="flex items-center gap-3 opacity-60">
+                <GlassCard interactive className="flex items-center gap-3 opacity-60">
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{b.name}</div>
+                    <div className="text-body font-semibold truncate">{b.name}</div>
                   </div>
                   <IconChevronRight />
                 </GlassCard>

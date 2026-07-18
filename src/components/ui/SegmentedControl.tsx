@@ -23,13 +23,10 @@ export function SegmentedControl<T extends string>({
             key={opt.value}
             role="tab"
             aria-selected={active}
+            data-active={active}
             onClick={() => onChange(opt.value)}
-            className="flex-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
-            style={{
-              background: active ? "rgba(255,255,255,0.16)" : "transparent",
-              color: active ? "#fff" : "var(--rtd-text-secondary)",
-              boxShadow: active ? "0 2px 6px rgba(0,0,0,0.35)" : "none",
-            }}
+            className="rtd-segmented-btn flex-1 min-h-11 px-3 py-1.5 rounded-full text-subhead font-medium cursor-pointer transition-[background-color,transform] duration-200 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+            style={{ color: active ? "#fff" : "var(--rtd-text-secondary)" }}
           >
             {opt.label}
           </button>
