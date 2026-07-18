@@ -56,9 +56,19 @@ import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
+import { withRetry } from "@/lib/db/withRetry";
 
 const handler = createMcpHandler(
   (server) => {
+    // Every tool below goes through this DB connection, which has shown
+    // intermittent, total hangs (Vercel<->Supabase connection flakiness).
+    // Wrapping registerTool once here retries every tool's handler instead
+    // of touching each of the ~25 registrations individually.
+    const registerTool = server.registerTool.bind(server);
+    server.registerTool = ((name: string, meta: unknown, tool: (...args: unknown[]) => Promise<unknown>) =>
+      registerTool(name, meta as never, ((...args: unknown[]) =>
+        withRetry(() => tool(...args))) as never)) as typeof server.registerTool;
+
     server.registerTool(
       "get_dashboard_summary",
       {
