@@ -10,7 +10,8 @@ if (!connectionString) {
 const globalForDb = globalThis as unknown as { rtdQueryClient?: ReturnType<typeof postgres> };
 
 const queryClient =
-  globalForDb.rtdQueryClient ?? postgres(connectionString, { prepare: false });
+  globalForDb.rtdQueryClient ??
+  postgres(connectionString, { prepare: false, idle_timeout: 20 });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.rtdQueryClient = queryClient;
