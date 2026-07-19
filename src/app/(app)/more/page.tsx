@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { GroupedList, GroupedListRow } from "@/components/ui/GroupedList";
 import { IconChevronRight } from "@/components/ui/icons";
 import { LogoutButton } from "@/components/more/LogoutButton";
 
@@ -19,22 +18,18 @@ export default function MorePage() {
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
       <SectionLabel>More</SectionLabel>
-      <div className="flex flex-col gap-3">
+      <GroupedList>
         {LINKS.map((link) => (
-          <Link key={link.href} href={link.href}>
-            <GlassCard interactive className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-[8px] bg-white/[0.06] flex items-center justify-center text-lg shrink-0">
-                {link.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-body font-semibold">{link.label}</div>
-                <div className="text-footnote text-[var(--rtd-text-tertiary)] truncate">{link.desc}</div>
-              </div>
-              <IconChevronRight />
-            </GlassCard>
-          </Link>
+          <GroupedListRow
+            key={link.href}
+            href={link.href}
+            label={link.label}
+            desc={link.desc}
+            icon={<span className="text-lg">{link.icon}</span>}
+            trailing={<IconChevronRight className="text-[var(--rtd-text-tertiary)] shrink-0" />}
+          />
         ))}
-      </div>
+      </GroupedList>
       <LogoutButton />
     </div>
   );

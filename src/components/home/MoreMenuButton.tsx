@@ -38,24 +38,20 @@ export function MoreMenuButton() {
         👤
       </button>
       {open && (
-        <div
-          role="menu"
-          className="rtd-glass rtd-fade-in absolute right-0 top-11 z-30 w-52 p-1.5 flex flex-col gap-0.5"
-        >
+        <div role="menu" className="rtd-glass rtd-fade-in absolute right-0 top-11 z-30 w-52 p-1.5 flex flex-col gap-0.5 overflow-hidden">
           {ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-subhead text-[var(--rtd-text)] cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out"
+              className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-subhead text-[var(--rtd-text)] cursor-pointer hover:bg-white/[0.04] transition-colors duration-150 ease-out"
             >
               <span>{item.icon}</span>
               {item.label}
             </Link>
           ))}
-          <div className="border-t border-white/[0.06] mt-1 pt-1">
-            <LogoutButton />
-          </div>
+          <div className="rtd-divider mt-1 mb-1" />
+          <LogoutButton />
         </div>
       )}
     </div>

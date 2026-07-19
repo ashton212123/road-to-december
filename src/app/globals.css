@@ -240,15 +240,6 @@ body {
   background: radial-gradient(50% 100% at 50% 50%, rgba(255, 255, 255, 0.2), transparent);
 }
 
-.rtd-segmented-btn[data-active="true"] {
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-}
-
-.rtd-segmented-btn:hover:not([data-active="true"]) {
-  background: rgba(255, 255, 255, 0.06);
-}
-
 .rtd-tab-icon {
   transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
