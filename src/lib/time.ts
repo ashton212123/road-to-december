@@ -43,3 +43,11 @@ export function addDaysISO(isoDate: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/** Monday (ISO) of the week containing `dateISO`. */
+export function mondayOf(dateISO: string): string {
+  const d = new Date(`${dateISO}T12:00:00Z`);
+  const day = (d.getUTCDay() + 6) % 7; // Mon=0
+  d.setUTCDate(d.getUTCDate() - day);
+  return d.toISOString().slice(0, 10);
+}

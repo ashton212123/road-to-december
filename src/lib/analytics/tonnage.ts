@@ -1,3 +1,5 @@
+import { mondayOf } from "@/lib/time";
+
 const HARD_SET_RPE_THRESHOLD = 8;
 
 export type TonnageRow = {
@@ -9,13 +11,6 @@ export type TonnageRow = {
 };
 
 export type HardSetRow = TonnageRow;
-
-function mondayOf(dateISO: string): string {
-  const d = new Date(`${dateISO}T12:00:00Z`);
-  const day = (d.getUTCDay() + 6) % 7; // Mon=0
-  d.setUTCDate(d.getUTCDate() - day);
-  return d.toISOString().slice(0, 10);
-}
 
 type LogWithPattern = {
   date: string;

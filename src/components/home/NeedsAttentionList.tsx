@@ -1,14 +1,15 @@
 import Link from "next/link";
+import clsx from "clsx";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { DOMAIN_META, sortAttentionItems, type AttentionItem } from "@/lib/dashboard/needsAttention";
 
-export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
+export function NeedsAttentionList({ items, className }: { items: AttentionItem[]; className?: string }) {
   if (items.length === 0) return null;
   const sorted = sortAttentionItems(items);
   const domainsPresent = [...new Set(sorted.map((i) => i.domain))];
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <GlassCard className={clsx("flex flex-col gap-3", className)}>
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {domainsPresent.map((d) => (
           <div key={d} className="flex items-center gap-1.5 text-caption text-[var(--rtd-text-secondary)]">
@@ -18,7 +19,7 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
         ))}
       </div>
 
-      <div className="flex flex-col divide-y divide-white/[0.06] rtd-stagger">
+      <div className="flex flex-col divide-y divide-white/[0.06] rtd-stagger overflow-y-auto min-h-0">
         {sorted.map((item) => (
           <Link
             key={item.id}

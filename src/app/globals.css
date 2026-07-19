@@ -212,11 +212,20 @@ body {
 /* The 12-col bento grid -- every desktop page body is this. Cards declare
    col-span-N row-span-N and must fill their area (h-full) so rows always
    end flush with no orphan gaps. */
+/* Desktop-only by construction -- callers render a separate mobile stack, so
+   this stays display:none below md rather than fighting Tailwind's hidden/
+   md:grid utilities over display specificity. */
 .rtd-bento-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
-  grid-auto-rows: 96px;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .rtd-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+    grid-auto-rows: 96px;
+  }
 }
 
 .rtd-bento-card {

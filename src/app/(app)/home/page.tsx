@@ -1,33 +1,45 @@
-import Link from "next/link";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { StatCard } from "@/components/ui/StatCard";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { ProgressRing } from "@/components/ui/ProgressRing";
-import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
+import { CountdownHero } from "@/components/home/CountdownHero";
+import { ReadinessCard } from "@/components/home/ReadinessCard";
+import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
+import { CoachBriefCard } from "@/components/home/CoachBriefCard";
+import { WeekMapCard } from "@/components/home/WeekMapCard";
+import { TrainingLoadCard } from "@/components/home/TrainingLoadCard";
+import { RecentPRsCard } from "@/components/home/RecentPRsCard";
+import { StatCard } from "@/components/ui/StatCard";
+import { IconFuel, IconTrain } from "@/components/ui/icons";
 import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, todayDayKey, daysBetween, addDaysISO, manilaHourNow } from "@/lib/time";
+import { todayManilaISO, todayDayKey, daysBetween, addDaysISO, manilaHourNow, mondayOf } from "@/lib/time";
 import {
   getAllPhasesWithSessions,
   getCurrentPhase,
   getLatestWeighIn,
   getWeighIns,
   getFoodLogsForDate,
-  getWaterLogsForDate,
+  getFoodLogsSince,
   getSettingsRow,
   getUndoneBusinessTasks,
   getWorkoutLogsSince,
   getSwimSessions,
   getSleepLogs,
+  getCmjTests,
+  getSwimTimes,
+  getMainLiftLogHistory,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
 import { computeTrainingStreak } from "@/lib/analytics/streak";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
+import { buildWeekMap } from "@/lib/dashboard/weekMap";
+import { findRecentPRs } from "@/lib/dashboard/recentPRs";
 import { withRetry } from "@/lib/db/withRetry";
 import { getDailyBrief } from "@/lib/coach/dailyBrief";
+import { computeReadinessSignals } from "@/lib/rules/readiness";
+import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
+import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
+import { loadTakeaway } from "@/lib/analytics/takeaways";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -42,41 +54,30 @@ const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
 export default async function HomePage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
+  const weekStart = mondayOf(today);
 
-  // Cache-only read (no live Canvas API call) so Home never blocks on
-  // Canvas's response time -- the School page's live sync (with its own
-  // "Sync now" button) is where a human is expected to wait a moment.
-  // Fetched once and shared with evaluateAlerts() below so a stale-cache
-  // window can't trigger two concurrent live syncs racing each other.
-  //
-  // The whole fetch is wrapped in withRetry because the DB connection has
-  // shown intermittent, total hangs (Vercel<->Supabase connection flakiness).
-  // Most failures are transient, so a bounded retry turns "hangs forever"
-  // into "takes an extra second or two" instead.
+  // Everything Home needs in one batched round trip -- see DECISIONS.md for
+  // why this DB connection is worth being careful about. Canvas is
+  // cache-only (no live sync call) so Home never blocks on it.
   const {
     canvas,
     allPhases,
     latestWeighIn,
     weighInHistory,
     todaysFood,
-    todaysWater,
     settingsRow,
     alerts,
     undoneTasks,
     recentWorkoutLogs,
     recentSwimSessions,
     recentSleepLogs,
+    cmjTests,
+    swimTimes,
+    mainLiftLogs,
+    weekFoodLogs,
   } = await withRetry(async () => {
     const canvas = await getCanvasSummary({ sync: false });
 
-    // settingsRow/todaysFood/weighIns/workoutLogs are all needed both here and
-    // inside evaluateAlerts (which wants a wider or overlapping range in every
-    // case) -- fetched once each and the same in-flight promise passed to
-    // both, instead of querying twice per page load on an already-strained DB
-    // (see DECISIONS.md). weighIns is widened to 21 (Home only ever needed
-    // the most recent 2 rows for its own trend display, which a 21-row query
-    // still gives); workoutLogs uses Home's existing -150-day window, and
-    // evaluateAlerts filters that down to just today's rows locally.
     const settingsRowPromise = getSettingsRow();
     const todaysFoodPromise = getFoodLogsForDate(today);
     const weighIns21Promise = getWeighIns(21);
@@ -87,19 +88,21 @@ export default async function HomePage() {
       latestWeighIn,
       weighInHistory,
       todaysFood,
-      todaysWater,
       settingsRow,
       alerts,
       undoneTasks,
       recentWorkoutLogs,
       recentSwimSessions,
       recentSleepLogs,
+      cmjTests,
+      swimTimes,
+      mainLiftLogs,
+      weekFoodLogs,
     ] = await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
       weighIns21Promise,
       todaysFoodPromise,
-      getWaterLogsForDate(today),
       settingsRowPromise,
       Promise.all([settingsRowPromise, todaysFoodPromise, weighIns21Promise, workoutLogsWidePromise]).then(
         ([settingsRow, todaysFood, weighIns21, workoutLogsWide]) =>
@@ -107,8 +110,12 @@ export default async function HomePage() {
       ),
       getUndoneBusinessTasks(5),
       workoutLogsWidePromise,
-      getSwimSessions(5),
-      getSleepLogs(1),
+      getSwimSessions(60),
+      getSleepLogs(30),
+      getCmjTests(20),
+      getSwimTimes(200),
+      getMainLiftLogHistory(),
+      getFoodLogsSince(weekStart),
     ]);
 
     return {
@@ -117,18 +124,19 @@ export default async function HomePage() {
       latestWeighIn,
       weighInHistory,
       todaysFood,
-      todaysWater,
       settingsRow,
       alerts,
       undoneTasks,
       recentWorkoutLogs,
       recentSwimSessions,
       recentSleepLogs,
+      cmjTests,
+      swimTimes,
+      mainLiftLogs,
+      weekFoodLogs,
     };
   });
 
-  // Anything within 48h is already a distinct, more severe "Coach" alert
-  // (see rules/engine.ts) -- exclude it here so it doesn't show twice.
   const criticalIds = new Set(getCriticalAssignments(canvas.assignments).map((a) => a.id));
   const urgentAssignments = getUrgentAssignments(canvas.assignments)
     .filter((a) => !criticalIds.has(a.id))
@@ -146,10 +154,10 @@ export default async function HomePage() {
     100,
     Math.max(0, Math.round((daysBetween(seasonStart, today) / daysBetween(seasonStart, seasonEnd)) * 100))
   );
+  const weekNumber = Math.max(1, Math.floor(daysBetween(seasonStart, today) / 7) + 1);
   const daysToNcaa = Math.max(0, daysBetween(today, seasonData.meta.targets.ncaaDate));
   const daysToAsean = Math.max(0, daysBetween(today, seasonData.meta.targets.aseanDate));
   const aseanDateLabel = new Date(seasonData.meta.targets.aseanDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
   const aseanLabel =
     settingsRow.aseanConfirmed === true
       ? `ASEAN confirmed — ~${aseanDateLabel}`
@@ -165,15 +173,15 @@ export default async function HomePage() {
   const proteinTarget = computeProteinTargetG(proteinAvgWeight);
   const kcalToday = todaysFood.reduce((sum, f) => sum + f.kcal, 0);
   const proteinToday = todaysFood.reduce((sum, f) => sum + Number(f.proteinG), 0);
-  const waterToday = todaysWater.reduce((sum, w) => sum + w.ml, 0);
-  const waterTarget = settingsRow.waterTargetMl;
 
+  const weightSeries = [...weighInHistory].sort((a, b) => (a.date < b.date ? -1 : 1));
   const weightTrend =
-    weighInHistory.length >= 2
-      ? Number(weighInHistory[0].kg) - Number(weighInHistory[1].kg)
-      : null;
+    weighInHistory.length >= 2 ? Number(weighInHistory[0].kg) - Number(weighInHistory[1].kg) : null;
+  const weightTrendPct = weightTrend !== null && weighInHistory[1] ? (weightTrend / Number(weighInHistory[1].kg)) * 100 : null;
 
   const hour = manilaHourNow();
+  const loggedWorkoutToday = recentWorkoutLogs.some((l) => l.date === today);
+  const loggedSwimToday = recentSwimSessions.some((s) => s.date === today);
   const needsAttention = buildAttentionItems({
     today,
     todayKey,
@@ -181,8 +189,8 @@ export default async function HomePage() {
     currentPhaseId: currentPhase.id,
     todaySession,
     weekDay,
-    loggedWorkoutToday: recentWorkoutLogs.some((l) => l.date === today),
-    loggedSwimSessionToday: recentSwimSessions.some((s) => s.date === today),
+    loggedWorkoutToday,
+    loggedSwimSessionToday: loggedSwimToday,
     foodLoggedTodayCount: todaysFood.length,
     sleepLoggedToday: recentSleepLogs.some((s) => s.date === today),
     undoneBusinessTasks: undoneTasks,
@@ -206,151 +214,222 @@ export default async function HomePage() {
       daysToAsean: settingsRow.aseanConfirmed === false ? null : daysToAsean,
       phaseTag: currentPhase.tag,
       phaseName: currentPhase.name,
-      loggedWorkoutToday: recentWorkoutLogs.some((l) => l.date === today),
-      loggedSwimToday: recentSwimSessions.some((s) => s.date === today),
+      loggedWorkoutToday,
+      loggedSwimToday,
       activeAlertHeadlines: alerts.map((a) => a.title),
     })
   );
 
+  // Readiness -- same three transparent inputs as the Recovery page.
+  const lastSleep = recentSleepLogs[0] ? Number(recentSleepLogs[0].hours) : null;
+  const cmjSorted = [...cmjTests].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const cmjTrend: "up" | "flat" | "down" | "insufficient-data" =
+    cmjSorted.length < 2
+      ? "insufficient-data"
+      : Number(cmjSorted[cmjSorted.length - 1].bestOf3Cm) > Number(cmjSorted[cmjSorted.length - 2].bestOf3Cm)
+        ? "up"
+        : Number(cmjSorted[cmjSorted.length - 1].bestOf3Cm) < Number(cmjSorted[cmjSorted.length - 2].bestOf3Cm)
+          ? "down"
+          : "flat";
+  const dailyLoads = computeDailySessionLoads(recentWorkoutLogs);
+  const acwr = computeAcwr(dailyLoads);
+  const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
+  const readinessSignals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio });
+  const readinessOverall = readinessSignals.some((s) => s.light === "red")
+    ? "red"
+    : readinessSignals.some((s) => s.light === "yellow")
+      ? "yellow"
+      : ("green" as const);
+
+  // Today's plan rows -- status reflects real logged state, never fabricated.
+  const planRows = [];
+  if (weekDay.swim) {
+    planRows.push({
+      key: "swim",
+      time: weekDay.swim,
+      title: "Swim",
+      done: loggedSwimToday,
+      href: "/analytics?tab=swim",
+      color: "var(--rtd-domain-swim)",
+    });
+  }
+  if (todaySession) {
+    planRows.push({
+      key: "gym",
+      time: null,
+      title: todaySession.title,
+      done: loggedWorkoutToday,
+      href: `/train/${currentPhase.id}?day=${todayKey}`,
+      color: "var(--rtd-domain-train)",
+    });
+  }
+  const startHref = todaySession && !loggedWorkoutToday ? `/train/${currentPhase.id}?day=${todayKey}` : null;
+
+  // Week map: Mon..Sun of the current week across Swim/Gym/Fuel/Sleep.
+  const scheduledSwimDays = new Set(
+    [0, 1, 2, 3, 4, 5, 6]
+      .filter((i) => seasonData.WEEK[i].swim)
+      .map((i) => addDaysISO(weekStart, i))
+  );
+  const scheduledGymDays = new Set(
+    currentPhase.sessions.map((s) => addDaysISO(weekStart, DAY_KEY_TO_WEEK_INDEX[s.dayKey]))
+  );
+  const weekMap = buildWeekMap({
+    today,
+    weekStartISO: weekStart,
+    scheduledSwimDays,
+    scheduledGymDays,
+    loggedSwimDates: new Set(recentSwimSessions.map((s) => s.date)),
+    loggedGymDates: new Set(recentWorkoutLogs.map((l) => l.date)),
+    loggedFoodDates: new Set(weekFoodLogs.map((f) => f.date)),
+    loggedSleepDates: new Set(recentSleepLogs.map((s) => s.date)),
+  });
+
+  // Training load: last 8 weeks of tonnage + the same ACWR takeaway Analytics uses.
+  const weeklyTonnage = computeWeeklyTonnage(mainLiftLogs).slice(-8);
+  const weeklyTotals = weeklyTonnage.map((w) => ({ weekStart: w.weekStart, total: w.squat + w.hinge + w.press + w.pull }));
+  const trainingLoadTakeaway = loadTakeaway(acwr);
+
+  const recentPRs = findRecentPRs({ mainLiftLogs, swimTimes, cmjTests });
+
+  const weekSessionsPlanned = currentPhase.sessions.length;
+  const weekSessionsDone = new Set(
+    [...recentWorkoutLogs.map((l) => l.date)].filter((d) => d >= weekStart && d <= today)
+  ).size;
+
+  const followUps = [
+    todaySession ? `What should I focus on in ${todaySession.title}?` : "How's my training this week?",
+    "How's my nutrition looking today?",
+  ];
+
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:grid md:grid-cols-12 md:gap-6 md:items-start">
-      <GlassCard className="flex flex-col gap-3 md:col-span-7 md:order-1">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
-            <div className="rtd-display text-large-title mt-1">
-              <AnimatedNumber value={daysToNcaa} />
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <span
-              className="text-footnote font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: `${currentPhase.color}26`, color: currentPhase.color }}
-            >
-              {currentPhase.tag} · {currentPhase.name}
-            </span>
-            {trainingStreak > 0 && (
-              <span className="text-footnote font-semibold px-2.5 py-1 rounded-full bg-[var(--rtd-orange)]/15 text-[var(--rtd-orange)]">
-                🔥 {trainingStreak} day{trainingStreak === 1 ? "" : "s"}
-              </span>
-            )}
-          </div>
-        </div>
-        {settingsRow.aseanConfirmed !== false ? (
-          <div className="flex items-baseline gap-1.5">
-            <span className="rtd-display text-title-1">
-              <AnimatedNumber value={daysToAsean} />
-            </span>
-            <span className="text-subhead text-[var(--rtd-text-secondary)]">
-              days to ASEAN · {aseanDateLabel}
-              {settingsRow.aseanConfirmed === null && " (unconfirmed)"}
-            </span>
-          </div>
+    <div className="flex flex-col gap-3 rtd-fade-in pt-1">
+      <AlertCardList alerts={alerts} />
+
+      <div className="rtd-bento-grid">
+        <CountdownHero
+          daysToNcaa={daysToNcaa}
+          daysToAsean={daysToAsean}
+          aseanLabel={aseanLabel}
+          aseanDateLabel={aseanDateLabel}
+          aseanConfirmed={settingsRow.aseanConfirmed}
+          seasonPct={seasonPct}
+          phaseTag={currentPhase.tag}
+          phaseName={currentPhase.name}
+          weekNumber={weekNumber}
+          trainingStreak={trainingStreak}
+        />
+        <ReadinessCard overall={readinessOverall} signals={readinessSignals} />
+
+        <StatCard
+          label="Kcal today"
+          numericValue={kcalToday}
+          domainColor="var(--rtd-domain-fuel)"
+          icon={<IconFuel />}
+          sub={`of ${kcalTarget.min}–${kcalTarget.max}`}
+          deltaPct={kcalTarget.min > 0 ? ((kcalToday - kcalTarget.min) / kcalTarget.min) * 100 : null}
+          className="col-span-3 row-span-2"
+        />
+        <StatCard
+          label="Protein today"
+          numericValue={Math.round(proteinToday)}
+          suffix="g"
+          domainColor="var(--rtd-green)"
+          sub={`of ${proteinTarget.min}–${proteinTarget.max}g`}
+          deltaPct={proteinTarget.min > 0 ? ((proteinToday - proteinTarget.min) / proteinTarget.min) * 100 : null}
+          className="col-span-3 row-span-2"
+        />
+        <StatCard
+          label="Bodyweight (7d)"
+          numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
+          decimals={1}
+          suffix=" kg"
+          domainColor="var(--rtd-cyan)"
+          deltaPct={weightTrendPct}
+          goodDirection="up"
+          sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
+          className="col-span-3 row-span-2"
+        />
+        <StatCard
+          label="Week completion"
+          value={`${weekSessionsDone}/${weekSessionsPlanned}`}
+          domainColor="var(--rtd-blue)"
+          icon={<IconTrain />}
+          sub={`${trainingStreak} day streak`}
+          className="col-span-3 row-span-2"
+        />
+
+        <TodaysPlanCard rows={planRows} startHref={startHref} />
+        <CoachBriefCard brief={dailyBrief} followUps={followUps} />
+        {needsAttention.length > 0 ? (
+          <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full" />
         ) : (
-          <div className="text-subhead text-[var(--rtd-text-secondary)]">{aseanLabel}</div>
+          <div className="rtd-glass rtd-bento-card flex items-center justify-center p-5" style={{ gridColumn: "span 3 / span 3", gridRow: "span 3 / span 3" }}>
+            <span className="text-caption text-[var(--rtd-text-tertiary)] text-center">Nothing needs attention right now</span>
+          </div>
         )}
-        <div>
-          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${seasonPct}%`, background: "var(--rtd-blue)" }}
-            />
-          </div>
-          <div className="text-caption text-[var(--rtd-text-secondary)] mt-1">
-            {seasonPct}% through the 21-week season
-          </div>
-        </div>
-      </GlassCard>
 
-      {dailyBrief && (
-        <div className="md:col-span-12 md:order-3">
-          <SectionLabel>Today&apos;s brief</SectionLabel>
-          <GlassCard className="text-subhead text-[var(--rtd-text)] leading-snug">{dailyBrief}</GlassCard>
-        </div>
-      )}
-
-      {alerts.length > 0 && (
-        <div className="flex flex-col gap-2 md:col-span-6 md:order-4">
-          <SectionLabel>Coach</SectionLabel>
-          <AlertCardList alerts={alerts} />
-        </div>
-      )}
-
-      {needsAttention.length > 0 && (
-        <div className="md:col-span-6 md:order-5">
-          <SectionLabel>Needs attention</SectionLabel>
-          <NeedsAttentionList items={needsAttention} />
-        </div>
-      )}
-
-      <div className="md:col-span-12 md:order-6">
-        <SectionLabel>Today · {weekDay.full}</SectionLabel>
-        <GlassCard className="flex flex-col gap-3">
-          <div>
-            <div className="text-footnote text-[var(--rtd-text-secondary)]">Swim</div>
-            <div className="text-subhead text-[var(--rtd-text)]">{weekDay.swim ?? "Rest"}</div>
-          </div>
-          {todaySession ? (
-            <Link
-              href={`/train/${currentPhase.id}?day=${todayKey}`}
-              className="flex items-center justify-between rounded-2xl bg-white/[0.05] px-3.5 py-3 cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
-            >
-              <div>
-                <div className="text-footnote text-[var(--rtd-text-secondary)]">Gym</div>
-                <div className="text-body font-medium text-[var(--rtd-text)]">{todaySession.title}</div>
-              </div>
-              <span className="text-[var(--rtd-blue)] text-subhead font-medium">Open →</span>
-            </Link>
-          ) : (
-            <div>
-              <div className="text-footnote text-[var(--rtd-text-secondary)]">Gym</div>
-              <div className="text-subhead text-[var(--rtd-text)]">{weekDay.gym ?? "Off — full rest"}</div>
-            </div>
-          )}
-        </GlassCard>
+        <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
+        <TrainingLoadCard weeks={weeklyTotals} takeaway={trainingLoadTakeaway} />
+        <RecentPRsCard prs={recentPRs} />
       </div>
 
-      <div className="md:col-span-5 md:order-2">
-        <SectionLabel>Quick stats</SectionLabel>
-        <div className="grid grid-cols-2 gap-3 md:gap-2">
-          <StatCard
-            label="Weight"
-            value={latestWeighIn ? `${Number(latestWeighIn.kg).toFixed(1)} kg` : "—"}
-            sub={
-              weightTrend !== null
-                ? `${weightTrend >= 0 ? "+" : ""}${weightTrend.toFixed(1)} kg vs last`
-                : "No trend yet"
-            }
-            accent={weightTrend !== null && weightTrend > 0 ? "var(--rtd-green)" : undefined}
-          />
+      {/* Mobile: single-column stack, same modules, spec's priority order. */}
+      <div className="flex flex-col gap-3 md:hidden">
+        <CountdownHero
+          daysToNcaa={daysToNcaa}
+          daysToAsean={daysToAsean}
+          aseanLabel={aseanLabel}
+          aseanDateLabel={aseanDateLabel}
+          aseanConfirmed={settingsRow.aseanConfirmed}
+          seasonPct={seasonPct}
+          phaseTag={currentPhase.tag}
+          phaseName={currentPhase.name}
+          weekNumber={weekNumber}
+          trainingStreak={trainingStreak}
+        />
+        <ReadinessCard overall={readinessOverall} signals={readinessSignals} />
+        <TodaysPlanCard rows={planRows} startHref={startHref} />
+        <CoachBriefCard brief={dailyBrief} followUps={followUps} />
+        <div className="grid grid-cols-2 gap-3">
           <StatCard
             label="Kcal today"
-            value={`${kcalToday}`}
+            numericValue={kcalToday}
+            domainColor="var(--rtd-domain-fuel)"
+            icon={<IconFuel />}
             sub={`of ${kcalTarget.min}–${kcalTarget.max}`}
-            accent={kcalToday >= kcalTarget.min ? "var(--rtd-green)" : "var(--rtd-orange)"}
+            deltaPct={kcalTarget.min > 0 ? ((kcalToday - kcalTarget.min) / kcalTarget.min) * 100 : null}
           />
           <StatCard
             label="Protein today"
-            value={`${Math.round(proteinToday)}g`}
+            numericValue={Math.round(proteinToday)}
+            suffix="g"
+            domainColor="var(--rtd-green)"
             sub={`of ${proteinTarget.min}–${proteinTarget.max}g`}
-            accent={proteinToday >= proteinTarget.min ? "var(--rtd-green)" : "var(--rtd-orange)"}
+            deltaPct={proteinTarget.min > 0 ? ((proteinToday - proteinTarget.min) / proteinTarget.min) * 100 : null}
           />
-          <GlassCard className="flex items-center gap-3">
-            <ProgressRing
-              pct={(waterToday / waterTarget) * 100}
-              size={52}
-              strokeWidth={6}
-              color="var(--rtd-cyan)"
-              ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(waterTarget / 1000).toFixed(1)} liters`}
-            />
-            <div className="min-w-0">
-              <div className="rtd-micro-label">Water</div>
-              <div className="text-body font-semibold truncate">
-                {(waterToday / 1000).toFixed(1)}L / {(waterTarget / 1000).toFixed(1)}L
-              </div>
-            </div>
-          </GlassCard>
+          <StatCard
+            label="Bodyweight (7d)"
+            numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
+            decimals={1}
+            suffix=" kg"
+            domainColor="var(--rtd-cyan)"
+            deltaPct={weightTrendPct}
+            goodDirection="up"
+            sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
+          />
+          <StatCard
+            label="Week completion"
+            value={`${weekSessionsDone}/${weekSessionsPlanned}`}
+            domainColor="var(--rtd-blue)"
+            icon={<IconTrain />}
+            sub={`${trainingStreak} day streak`}
+          />
         </div>
+        {needsAttention.length > 0 && <NeedsAttentionList items={needsAttention} />}
+        <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
+        <TrainingLoadCard weeks={weeklyTotals} takeaway={trainingLoadTakeaway} />
+        <RecentPRsCard prs={recentPRs} />
       </div>
     </div>
   );
