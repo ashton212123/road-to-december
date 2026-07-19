@@ -1,0 +1,1 @@
+ALTER TABLE "exercises" ADD COLUMN "default_weight_kg" numeric(6, 2);

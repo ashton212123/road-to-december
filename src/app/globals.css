@@ -146,6 +146,21 @@ body {
   animation: rtd-pulse 1.2s ease-in-out infinite;
 }
 
+@keyframes rtd-session-complete {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.rtd-session-complete {
+  animation: rtd-session-complete 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Staggered entrance for card lists — each direct child fades/slides in
    30ms after the previous one. Items past the 12th share the last delay. */
 .rtd-stagger > * {

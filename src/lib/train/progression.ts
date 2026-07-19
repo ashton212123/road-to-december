@@ -5,6 +5,11 @@ export type LoggedSet = { weightKg: number | null; reps: number | null; rpe: num
 export type ProgressionSuggestion = {
   headline: string;
   rationale: string;
+  /** Single numeric working weight for checkbox-complete's default, when the
+   * suggestion implies one. Wave phases collapse their per-set % range to the
+   * first wave's midpoint -- a reasonable single default; exact per-set
+   * weights are still visible in the headline and editable per set. */
+  suggestedWeightKg: number | null;
 };
 
 /**
@@ -28,24 +33,27 @@ export function suggestNextLoad(params: {
   const maxRpeLogged = lastRpes.length > 0 ? Math.max(...lastRpes) : null;
   const exceededTarget = rpeTargetMax !== null && maxRpeLogged !== null && maxRpeLogged > rpeTargetMax;
 
+  const lastTopSet = lastSessionSets.reduce<LoggedSet | null>((best, s) => {
+    if (!s.weightKg) return best;
+    if (!best || (best.weightKg ?? 0) < s.weightKg) return s;
+    return best;
+  }, null);
+
   if (phaseId === "p2") {
     if (exceededTarget) {
       return {
         headline: "Hold or reduce load",
         rationale: `Last session's RPE (${maxRpeLogged}) exceeded the target (${rpeTargetMax}) — repeat the same weight or drop slightly this week.`,
+        suggestedWeightKg: lastTopSet?.weightKg ?? null,
       };
     }
-    const lastTopSet = lastSessionSets.reduce<LoggedSet | null>((best, s) => {
-      if (!s.weightKg) return best;
-      if (!best || (best.weightKg ?? 0) < s.weightKg) return s;
-      return best;
-    }, null);
     const nextWeight = lastTopSet?.weightKg ? lastTopSet.weightKg + 2.5 : null;
     return {
       headline: nextWeight
         ? `Try ${nextWeight}–${(lastTopSet!.weightKg! + 5).toFixed(1)} kg, or +1 rep/set`
         : "Add 2.5–5 kg or +1 rep/set vs last week",
       rationale: "RPE was on target last session — the gain window calls for a small weekly bump.",
+      suggestedWeightKg: nextWeight,
     };
   }
 
@@ -57,9 +65,13 @@ export function suggestNextLoad(params: {
       const max = Math.round((e1rm * w.pctMax) / 100 / 2.5) * 2.5;
       return `${w.sets}×${w.reps} @ ${min === max ? `${min}kg` : `${min}–${max}kg`}`;
     });
+    const first = waveScheme[0];
+    const firstMin = Math.round((e1rm * first.pctMin) / 100 / 2.5) * 2.5;
+    const firstMax = Math.round((e1rm * first.pctMax) / 100 / 2.5) * 2.5;
     return {
       headline: lines.join(" → "),
       rationale: `Wave % computed from your current e1RM (${e1rm.toFixed(1)} kg, Epley from last logged top set).`,
+      suggestedWeightKg: Math.round(((firstMin + firstMax) / 2) / 2.5) * 2.5,
     };
   }
 

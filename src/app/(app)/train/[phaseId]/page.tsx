@@ -3,17 +3,19 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DaySelector } from "@/components/train/DaySelector";
-import { ExerciseCard } from "@/components/train/ExerciseCard";
+import { WorkoutSession } from "@/components/train/WorkoutSession";
 import { TaperChecklist } from "@/components/train/TaperChecklist";
 import {
   getPhaseById,
-  getLastSessionSetsForExercise,
-  getTodaysSetsForExercise,
+  getSessionWorkoutData,
   getSettingsRow,
 } from "@/lib/db/queries";
 import { todayManilaISO, todayDayKey } from "@/lib/time";
 import { suggestNextLoad } from "@/lib/train/progression";
 import { withRetry } from "@/lib/db/withRetry";
+import type { workoutLogs } from "@/lib/db/schema";
+
+type WorkoutLogRow = typeof workoutLogs.$inferSelect;
 
 export default async function PhaseSessionPage({
   params,
@@ -51,29 +53,42 @@ export default async function PhaseSessionPage({
   const session = phase.sessions.find((s) => s.dayKey === selectedDay);
   const today = todayManilaISO();
 
-  const exerciseData = session
-    ? await withRetry(() =>
-        Promise.all(
-          session.exercises.map(async (ex) => {
-            const [lastSessionSets, todaysSets] = await Promise.all([
-              getLastSessionSetsForExercise(ex.id),
-              getTodaysSetsForExercise(ex.id, today),
-            ]);
-          const progression = suggestNextLoad({
-            phaseId: phase.id,
-            lastSessionSets: lastSessionSets.map((s) => ({
-              weightKg: s.weightKg ? Number(s.weightKg) : null,
-              reps: s.reps,
-              rpe: s.rpe ? Number(s.rpe) : null,
-            })),
-            rpeTargetMax: ex.rpeMax ? Number(ex.rpeMax) : null,
-            waveScheme: phase.waveScheme,
-          });
-            return { exercise: ex, lastSessionSets, todaysSets, progression };
-          })
-        )
-      )
-    : [];
+  // Two queries total for the whole session, not two per exercise.
+  const { todaysByExercise, lastSessionByExercise } = session
+    ? await withRetry(() => getSessionWorkoutData(session.exercises.map((e) => e.id), today))
+    : { todaysByExercise: new Map<number, WorkoutLogRow[]>(), lastSessionByExercise: new Map<number, WorkoutLogRow[]>() };
+
+  const exerciseData = (session?.exercises ?? []).map((ex) => {
+    const lastSessionSetsRaw = lastSessionByExercise.get(ex.id) ?? [];
+    const todaysSets = todaysByExercise.get(ex.id) ?? [];
+    const lastSessionSets = lastSessionSetsRaw.map((s) => ({
+      weightKg: s.weightKg,
+      reps: s.reps,
+      rpe: s.rpe,
+    }));
+    const lastSessionSetsNum = lastSessionSets.map((s) => ({
+      weightKg: s.weightKg ? Number(s.weightKg) : null,
+      reps: s.reps,
+      rpe: s.rpe ? Number(s.rpe) : null,
+    }));
+    const progression = suggestNextLoad({
+      phaseId: phase.id,
+      lastSessionSets: lastSessionSetsNum,
+      rpeTargetMax: ex.rpeMax ? Number(ex.rpeMax) : null,
+      waveScheme: phase.waveScheme,
+    });
+    const lastSessionTopWeight = lastSessionSetsNum.reduce<number | null>((best, s) => {
+      if (s.weightKg === null) return best;
+      return best === null || s.weightKg > best ? s.weightKg : best;
+    }, null);
+    // Fallback chain: stored default -> progression suggestion -> last
+    // session's top weight -> null (never fabricated, never nagged about).
+    const resolvedDefaultWeightKg =
+      (ex.defaultWeightKg !== null && ex.defaultWeightKg !== undefined ? Number(ex.defaultWeightKg) : null) ??
+      progression?.suggestedWeightKg ??
+      lastSessionTopWeight;
+    return { exercise: ex, lastSessionSets, todaysSets, progression, resolvedDefaultWeightKg };
+  });
 
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
@@ -86,18 +101,7 @@ export default async function PhaseSessionPage({
       {session ? (
         <>
           <div className="text-body font-semibold">{session.title}</div>
-          <div className="flex flex-col gap-3">
-            {exerciseData.map(({ exercise, lastSessionSets, todaysSets, progression }) => (
-              <ExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                phaseId={phase.id}
-                lastSessionSets={lastSessionSets}
-                todaysSets={todaysSets}
-                progression={progression}
-              />
-            ))}
-          </div>
+          <WorkoutSession phaseId={phase.id} sessionTitle={session.title} exercises={exerciseData} />
         </>
       ) : (
         <EmptyState title="No session for this day" body="Pick another day above." />

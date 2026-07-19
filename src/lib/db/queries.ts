@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "./index";
 import {
@@ -145,27 +145,54 @@ export async function getWorkoutLogsSince(dateISO: string) {
   return db.select().from(workoutLogs).where(gte(workoutLogs.date, dateISO)).orderBy(desc(workoutLogs.date));
 }
 
-export async function getWorkoutLogsForExercise(exerciseId: number, limit = 30) {
-  return db
-    .select()
-    .from(workoutLogs)
-    .where(eq(workoutLogs.exerciseId, exerciseId))
-    .orderBy(desc(workoutLogs.date))
-    .limit(limit);
-}
 
-/** All sets from the most recent date this exercise was logged (empty if never). */
-export async function getLastSessionSetsForExercise(exerciseId: number) {
-  const rows = await getWorkoutLogsForExercise(exerciseId, 60);
-  if (rows.length === 0) return [];
-  const latestDate = rows[0].date;
-  return rows.filter((r) => r.date === latestDate).sort((a, b) => a.setNumber - b.setNumber);
-}
+/**
+ * Today's sets + each exercise's last-logged-session sets, for every exercise
+ * in a session, in exactly 2 queries total regardless of exercise count --
+ * replaces the old per-exercise N+1 loop (was 2 queries × N exercises).
+ */
+export async function getSessionWorkoutData(exerciseIds: number[], todayISO: string) {
+  type Row = typeof workoutLogs.$inferSelect;
+  const empty = { todaysByExercise: new Map<number, Row[]>(), lastSessionByExercise: new Map<number, Row[]>() };
+  if (exerciseIds.length === 0) return empty;
 
-/** Today's logged sets for an exercise, in set order. */
-export async function getTodaysSetsForExercise(exerciseId: number, todayISO: string) {
-  const rows = await getWorkoutLogsForExercise(exerciseId, 30);
-  return rows.filter((r) => r.date === todayISO).sort((a, b) => a.setNumber - b.setNumber);
+  const [todaysRows, recentRows] = await Promise.all([
+    db
+      .select()
+      .from(workoutLogs)
+      .where(and(inArray(workoutLogs.exerciseId, exerciseIds), eq(workoutLogs.date, todayISO)))
+      .orderBy(asc(workoutLogs.setNumber)),
+    // Bounded window across all exercises in one query -- last-session lookup
+    // just needs each exercise's most recent logged date, not full history.
+    db
+      .select()
+      .from(workoutLogs)
+      .where(inArray(workoutLogs.exerciseId, exerciseIds))
+      .orderBy(desc(workoutLogs.date))
+      .limit(exerciseIds.length * 20),
+  ]);
+
+  const todaysByExercise = new Map<number, Row[]>();
+  for (const row of todaysRows) {
+    if (!todaysByExercise.has(row.exerciseId)) todaysByExercise.set(row.exerciseId, []);
+    todaysByExercise.get(row.exerciseId)!.push(row);
+  }
+
+  const latestDateByExercise = new Map<number, string>();
+  for (const row of recentRows) {
+    if (row.date === todayISO) continue;
+    const cur = latestDateByExercise.get(row.exerciseId);
+    if (!cur || row.date > cur) latestDateByExercise.set(row.exerciseId, row.date);
+  }
+  const lastSessionByExercise = new Map<number, Row[]>();
+  for (const row of recentRows) {
+    if (row.date !== latestDateByExercise.get(row.exerciseId)) continue;
+    if (!lastSessionByExercise.has(row.exerciseId)) lastSessionByExercise.set(row.exerciseId, []);
+    lastSessionByExercise.get(row.exerciseId)!.push(row);
+  }
+  for (const rows of lastSessionByExercise.values()) rows.sort((a, b) => a.setNumber - b.setNumber);
+
+  return { todaysByExercise, lastSessionByExercise };
 }
 
 export async function getSwimTimes(limit = 100) {

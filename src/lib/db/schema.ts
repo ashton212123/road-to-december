@@ -67,6 +67,10 @@ export const exercises = pgTable(
     rpeMin: numeric("rpe_min", { precision: 4, scale: 2 }),
     rpeMax: numeric("rpe_max", { precision: 4, scale: 2 }),
     restSecondsPrescribed: integer("rest_seconds_prescribed"),
+    // Learned/seeded working weight -- the checkbox-complete default. Starts
+    // null (no fake weight ever fabricated); backfilled from history where it
+    // exists, then kept current by progression suggestions over time.
+    defaultWeightKg: numeric("default_weight_kg", { precision: 6, scale: 2 }),
     isExplosive: boolean("is_explosive").notNull().default(false),
     isMainLift: boolean("is_main_lift").notNull().default(false),
     isMonitor: boolean("is_monitor").notNull().default(false),

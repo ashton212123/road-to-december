@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { workoutLogs } from "@/lib/db/schema";
+import { workoutLogs, exercises } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
 
 export async function logSetAction(input: {
@@ -56,8 +56,11 @@ export async function updateSetAction(input: {
 }
 
 /** Checkbox-first logging: marks an exercise done in one tap by logging every
- * prescribed set with sensible defaults (prescribed reps, last session's top
- * weight). Weight/reps/notes stay editable afterward via the detail view. */
+ * prescribed set with sensible defaults (prescribed reps, resolved default
+ * weight from the fallback chain computed by the caller). Weight/reps/notes
+ * stay editable afterward via the detail view. Never fabricates a weight --
+ * `defaultWeightKg` is null exactly when there's truly no signal yet, and
+ * that's a legitimate, silent outcome, not an error state. */
 export async function completeExerciseAction(input: {
   exerciseId: number;
   phaseId: string;
@@ -79,6 +82,14 @@ export async function completeExerciseAction(input: {
       notes: null,
     }))
   );
+  // Learn this as the exercise's new working default so next time's
+  // checkbox-complete starts from here instead of re-deriving from history.
+  if (input.defaultWeightKg !== null) {
+    await db
+      .update(exercises)
+      .set({ defaultWeightKg: String(input.defaultWeightKg) })
+      .where(eq(exercises.id, input.exerciseId));
+  }
   revalidatePath(`/train/${input.phaseId}`);
   revalidatePath("/home");
 }

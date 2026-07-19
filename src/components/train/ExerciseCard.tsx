@@ -4,16 +4,10 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { IconBolt, IconCheck, IconChevronDown } from "@/components/ui/icons";
-import {
-  logSetAction,
-  deleteSetAction,
-  updateSetAction,
-  completeExerciseAction,
-  uncompleteExerciseAction,
-} from "@/app/(app)/train/actions";
+import { logSetAction, deleteSetAction, updateSetAction } from "@/app/(app)/train/actions";
 import type { ProgressionSuggestion } from "@/lib/train/progression";
 
-type LoggedSet = {
+export type LoggedSet = {
   id: number;
   setNumber: number;
   weightKg: string | null;
@@ -23,7 +17,19 @@ type LoggedSet = {
   notes: string | null;
 };
 
-type PastSet = { weightKg: string | null; reps: number | null; rpe: string | null };
+export type PastSet = { weightKg: string | null; reps: number | null; rpe: string | null };
+
+export type ExerciseSummary = {
+  id: number;
+  name: string;
+  prescription: string;
+  targetSets: number | null;
+  targetRepsMin: number | null;
+  targetRepsMax: number | null;
+  restSecondsPrescribed: number | null;
+  isExplosive: boolean;
+  isMainLift: boolean;
+};
 
 export function ExerciseCard({
   exercise,
@@ -31,22 +37,19 @@ export function ExerciseCard({
   lastSessionSets,
   todaysSets,
   progression,
+  completed,
+  onToggleCompleted,
+  togglePending,
 }: {
-  exercise: {
-    id: number;
-    name: string;
-    prescription: string;
-    targetSets: number | null;
-    targetRepsMin: number | null;
-    targetRepsMax: number | null;
-    restSecondsPrescribed: number | null;
-    isExplosive: boolean;
-    isMainLift: boolean;
-  };
+  exercise: ExerciseSummary;
   phaseId: string;
   lastSessionSets: PastSet[];
   todaysSets: LoggedSet[];
   progression: ProgressionSuggestion | null;
+  /** Owned by the parent WorkoutSession so it can detect "all done" and show the completion summary. */
+  completed: boolean;
+  onToggleCompleted: () => void;
+  togglePending: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
@@ -55,8 +58,6 @@ export function ExerciseCard({
   const [rpe, setRpe] = useState("");
   const [restElapsed, setRestElapsed] = useState<number | null>(null);
   const lastLogAt = useRef<number | null>(null);
-
-  const completed = todaysSets.length > 0;
 
   useEffect(() => {
     if (restElapsed === null) return;
@@ -67,27 +68,6 @@ export function ExerciseCard({
     }, 1000);
     return () => clearInterval(interval);
   }, [restElapsed]);
-
-  function toggleCompleted() {
-    if (completed) {
-      startTransition(() => uncompleteExerciseAction(exercise.id, phaseId));
-      return;
-    }
-    const lastTopWeight = lastSessionSets.reduce<number | null>((best, s) => {
-      const w = s.weightKg ? Number(s.weightKg) : null;
-      if (w === null) return best;
-      return best === null || w > best ? w : best;
-    }, null);
-    startTransition(() =>
-      completeExerciseAction({
-        exerciseId: exercise.id,
-        phaseId,
-        setCount: exercise.targetSets ?? 1,
-        defaultReps: exercise.targetRepsMax ?? exercise.targetRepsMin ?? null,
-        defaultWeightKg: lastTopWeight,
-      })
-    );
-  }
 
   function handleAddSet() {
     const restSeconds = lastLogAt.current ? Math.floor((Date.now() - lastLogAt.current) / 1000) : null;
@@ -125,8 +105,8 @@ export function ExerciseCard({
       <div className="flex items-start gap-3">
         <button
           type="button"
-          onClick={toggleCompleted}
-          disabled={pending}
+          onClick={onToggleCompleted}
+          disabled={togglePending}
           aria-label={completed ? "Mark not completed" : "Mark completed"}
           aria-pressed={completed}
           className="rtd-tap-target shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-transform active:scale-90 cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
@@ -134,6 +114,7 @@ export function ExerciseCard({
             background: completed ? "var(--rtd-green)" : "rgba(255,255,255,0.08)",
             border: completed ? "none" : "1.5px solid rgba(255,255,255,0.25)",
             color: "#fff",
+            transition: "background-color 150ms ease-out, transform 150ms ease-out",
           }}
         >
           {completed && <IconCheck size={15} />}
@@ -183,7 +164,7 @@ export function ExerciseCard({
 
       {completed && !expanded && (
         <div className="text-footnote text-[var(--rtd-green)]">
-          {todaysSets.length} set{todaysSets.length === 1 ? "" : "s"} logged — tap to edit details
+          {todaysSets.length > 0 ? `${todaysSets.length} set${todaysSets.length === 1 ? "" : "s"} logged` : "Done"} — tap to edit details
         </div>
       )}
 
