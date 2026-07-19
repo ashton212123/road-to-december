@@ -99,11 +99,20 @@ body {
 }
 
 body {
-  background: #000;
+  /* Transparent, not a solid fill -- .rtd-wallpaper (a fixed z-index:-1
+     layer, first child of body) is the actual background now. A solid
+     body background here would paint over it and hide the glows entirely. */
+  background: transparent;
   color: var(--rtd-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+  /* .rtd-hero-glow's ::before bleeds -10px past its card on purpose (a
+     soft, uncropped glow edge) -- on a full-width mobile card that pushes
+     past the viewport's right edge and would otherwise create a real
+     horizontal scrollbar. This clips the decorative bleed without
+     affecting normal vertical scrolling. */
+  overflow-x: hidden;
 }
 
 /* Superseded by .rtd-wallpaper (a single fixed layer in the root layout,
