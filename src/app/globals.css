@@ -19,6 +19,18 @@
   --rtd-orange: #ff9f0a;
   --rtd-red: #ff453a;
   --rtd-purple: #bf5af2;
+  --rtd-yellow: #ffd60a;
+  --rtd-teal: #66d4cf;
+
+  /* Domain colors -- used consistently everywhere a module's identity shows
+     (icon tiles, rings, chart strokes, dots), so the mapping is learned once. */
+  --rtd-domain-train: var(--rtd-blue);
+  --rtd-domain-fuel: var(--rtd-orange);
+  --rtd-domain-swim: var(--rtd-cyan);
+  --rtd-domain-recovery: var(--rtd-green);
+  --rtd-domain-sleep: var(--rtd-purple);
+  --rtd-domain-school: var(--rtd-yellow);
+  --rtd-domain-business: var(--rtd-teal);
 
   --rtd-text: #f5f5f7;
   --rtd-text-secondary: rgba(235, 235, 245, 0.78);
@@ -191,6 +203,65 @@ body {
 .rtd-display {
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+
+.rtd-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The 12-col bento grid -- every desktop page body is this. Cards declare
+   col-span-N row-span-N and must fill their area (h-full) so rows always
+   end flush with no orphan gaps. */
+.rtd-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  grid-auto-rows: 96px;
+}
+
+.rtd-bento-card {
+  transition: transform 150ms ease-out, border-color 150ms ease-out;
+}
+
+@media (min-width: 768px) {
+  .rtd-bento-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* Slim inline notice strip -- replaces standalone floating banner cards. */
+.rtd-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+@keyframes rtd-draw-in {
+  from {
+    stroke-dashoffset: var(--rtd-dash, 1);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.rtd-sparkline-path {
+  stroke-dasharray: var(--rtd-dash, 1);
+  stroke-dashoffset: var(--rtd-dash, 1);
+  animation: rtd-draw-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtd-sparkline-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Interaction affordances */
