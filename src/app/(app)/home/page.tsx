@@ -60,6 +60,14 @@ const MORE_ROW_ITEMS = [
   { href: "/more/settings", label: "Settings", icon: "⚙️" },
 ];
 
+/** % of target for an intraday metric (kcal/protein so far today) -- never
+ * vs-yesterday. Null (not -100%) when nothing's logged yet: zero logged
+ * isn't "100% under target", it's "no signal yet, don't show a chip." */
+function intradayDeltaPct(current: number, targetMin: number): number | null {
+  if (current <= 0 || targetMin <= 0) return null;
+  return ((current - targetMin) / targetMin) * 100;
+}
+
 export default async function HomePage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
@@ -348,7 +356,7 @@ export default async function HomePage() {
           domainColor="var(--rtd-domain-fuel)"
           icon={<IconFuel />}
           sub={`of ${kcalTarget.min}–${kcalTarget.max}`}
-          deltaPct={kcalTarget.min > 0 ? ((kcalToday - kcalTarget.min) / kcalTarget.min) * 100 : null}
+          deltaPct={intradayDeltaPct(kcalToday, kcalTarget.min)}
           className="col-span-3 row-span-2"
         />
         <StatCard
@@ -357,7 +365,7 @@ export default async function HomePage() {
           suffix="g"
           domainColor="var(--rtd-green)"
           sub={`of ${proteinTarget.min}–${proteinTarget.max}g`}
-          deltaPct={proteinTarget.min > 0 ? ((proteinToday - proteinTarget.min) / proteinTarget.min) * 100 : null}
+          deltaPct={intradayDeltaPct(proteinToday, proteinTarget.min)}
           className="col-span-3 row-span-2"
         />
         <StatCard
@@ -419,7 +427,7 @@ export default async function HomePage() {
             domainColor="var(--rtd-domain-fuel)"
             icon={<IconFuel />}
             sub={`of ${kcalTarget.min}–${kcalTarget.max}`}
-            deltaPct={kcalTarget.min > 0 ? ((kcalToday - kcalTarget.min) / kcalTarget.min) * 100 : null}
+            deltaPct={intradayDeltaPct(kcalToday, kcalTarget.min)}
           />
           <StatCard
             label="Protein today"
@@ -427,7 +435,7 @@ export default async function HomePage() {
             suffix="g"
             domainColor="var(--rtd-green)"
             sub={`of ${proteinTarget.min}–${proteinTarget.max}g`}
-            deltaPct={proteinTarget.min > 0 ? ((proteinToday - proteinTarget.min) / proteinTarget.min) * 100 : null}
+            deltaPct={intradayDeltaPct(proteinToday, proteinTarget.min)}
           />
           <StatCard
             label="Bodyweight (7d)"

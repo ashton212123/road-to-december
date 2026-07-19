@@ -9,7 +9,7 @@ export function DeltaChip({
 }) {
   if (pct === null || Math.abs(pct) < 0.1) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] rtd-nums">
+      <span className="inline-flex items-center gap-0.5 font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] rtd-nums" style={{ fontSize: "12px" }}>
         —
       </span>
     );
@@ -22,10 +22,10 @@ export function DeltaChip({
 
   return (
     <span
-      className="inline-flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full rtd-nums"
-      style={{ color, backgroundColor: bg }}
+      className="inline-flex items-center gap-0.5 font-semibold px-1.5 py-0.5 rounded-full rtd-nums"
+      style={{ color, backgroundColor: bg, fontSize: "12px" }}
     >
-      {isUp ? "▲" : "▼"} {isUp ? "+" : ""}
+      {isUp ? "↗" : "↘"} {isUp ? "+" : ""}
       {pct.toFixed(1)}%
     </span>
   );
