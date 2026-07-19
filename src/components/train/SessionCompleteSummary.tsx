@@ -16,13 +16,16 @@ export function SessionCompleteSummary({
 }) {
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="rtd-glass-blur fixed inset-0 z-40 flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.4)" }}
       role="dialog"
       aria-modal="true"
       aria-label="Session complete"
     >
-      <GlassCard className="rtd-session-complete flex flex-col items-center gap-3 text-center max-w-sm w-full py-8">
+      <GlassCard
+        className="rtd-glass-blur rtd-session-complete flex flex-col items-center gap-3 text-center max-w-sm w-full py-8"
+        style={{ backgroundColor: "rgba(28,28,30,0.72)" }}
+      >
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center text-title-1"
           style={{ background: "rgba(48,209,88,0.15)" }}
