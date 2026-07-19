@@ -14,7 +14,7 @@ export default async function TrainPage() {
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
       <SectionLabel>Train — 21-week program</SectionLabel>
-      <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4">
+      <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 rtd-stagger">
         {allPhases.map((phase) => {
           const isCurrent = phase.id === currentPhase?.id;
           const hasExplosive = phase.sessions.some((s) => s.exercises.some((e) => e.isExplosive));

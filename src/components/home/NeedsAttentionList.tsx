@@ -18,7 +18,7 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
         ))}
       </div>
 
-      <div className="flex flex-col divide-y divide-white/[0.06]">
+      <div className="flex flex-col divide-y divide-white/[0.06] rtd-stagger">
         {sorted.map((item) => (
           <Link
             key={item.id}

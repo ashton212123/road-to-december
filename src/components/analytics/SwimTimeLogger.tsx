@@ -65,7 +65,7 @@ export function SwimTimeLogger() {
             setEvent(e.target.value);
             setDone(false);
           }}
-          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-sm outline-none"
+          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none"
         >
           {KNOWN_EVENTS.map((ev) => (
             <option key={ev} value={ev}>
@@ -82,7 +82,7 @@ export function SwimTimeLogger() {
             setTime(e.target.value);
             setDone(false);
           }}
-          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-sm text-center outline-none"
+          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead text-center outline-none"
         />
       </div>
 
@@ -91,7 +91,7 @@ export function SwimTimeLogger() {
           placeholder="Event name (e.g. 100 Free)"
           value={customEvent}
           onChange={(e) => setCustomEvent(e.target.value)}
-          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-sm outline-none"
+          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none"
         />
       )}
 
@@ -114,7 +114,7 @@ export function SwimTimeLogger() {
             placeholder="Meet name"
             value={meetName}
             onChange={(e) => setMeetName(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-xs outline-none"
+            className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none"
           />
           <div className="grid grid-cols-4 gap-1.5">
             {splits.map((v, i) => (
@@ -124,7 +124,7 @@ export function SwimTimeLogger() {
                 placeholder={`50#${i + 1}`}
                 value={v}
                 onChange={(e) => setSplits((prev) => prev.map((p, j) => (j === i ? e.target.value : p)))}
-                className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-xs text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-subhead text-center outline-none"
               />
             ))}
           </div>
@@ -136,7 +136,7 @@ export function SwimTimeLogger() {
                 placeholder={`strokes#${i + 1}`}
                 value={v}
                 onChange={(e) => setStrokeCounts((prev) => prev.map((p, j) => (j === i ? e.target.value : p)))}
-                className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-xs text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-subhead text-center outline-none"
               />
             ))}
           </div>

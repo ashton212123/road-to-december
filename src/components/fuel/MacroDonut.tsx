@@ -1,5 +1,7 @@
 "use client";
 
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+
 type Macro = { label: string; loggedG: number; targetG: number; color: string; strokeWidth: number };
 
 /** Concentric animated rings (protein outer/thickest, carbs middle, fat inner/thinnest —
@@ -68,7 +70,9 @@ export function MacroDonut({
           ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-title-1 text-[var(--rtd-text)]">{kcalLogged}</span>
+          <span className="text-title-1 text-[var(--rtd-text)]">
+            <AnimatedNumber value={kcalLogged} />
+          </span>
           <span className="text-caption text-[var(--rtd-text-secondary)]">/ {kcalTarget} kcal</span>
         </div>
       </div>

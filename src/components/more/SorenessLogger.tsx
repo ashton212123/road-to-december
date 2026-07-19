@@ -45,7 +45,7 @@ export function SorenessLogger() {
         placeholder="Area (e.g. shins, shoulders)"
         value={area}
         onChange={(e) => setArea(e.target.value)}
-        className="rounded-lg bg-white/[0.06] px-3 py-2 text-xs outline-none"
+        className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none"
       />
       <Button variant="secondary" onClick={submit} disabled={pending || !rating || !area}>
         {done ? "Logged ✓" : "Log soreness"}

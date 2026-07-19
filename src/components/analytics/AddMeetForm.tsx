@@ -70,13 +70,13 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
           placeholder="Meet name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-sm outline-none col-span-2"
+          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none col-span-2"
         />
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-sm outline-none col-span-2"
+          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none col-span-2"
         />
       </div>
 
@@ -89,14 +89,14 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
               inputMode="decimal"
               value={row.targetTime}
               onChange={(e) => updateRow(i, "targetTime", e.target.value)}
-              className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
+              className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
             />
             <input
               placeholder={latestTimeByEvent[row.event] ? "auto" : "current"}
               inputMode="decimal"
               value={row.currentTime}
               onChange={(e) => updateRow(i, "currentTime", e.target.value)}
-              className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
+              className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
             />
           </div>
         ))}

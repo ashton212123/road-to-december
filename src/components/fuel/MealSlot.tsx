@@ -20,12 +20,15 @@ export function MealSlot({
   tag,
   loggedItems,
   banner,
+  readOnly = false,
 }: {
   time: string;
   desc: string;
   tag: string;
   loggedItems: LoggedFood[];
   banner?: string;
+  /** Viewing a past day — logging and deleting are disabled, everything else still shows. */
+  readOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"quick" | "manual">("quick");
@@ -73,13 +76,15 @@ export function MealSlot({
           <div className="text-body font-semibold text-[var(--rtd-text)]">{time}</div>
           <div className="text-footnote text-[var(--rtd-text-secondary)] leading-snug">{desc}</div>
         </div>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="shrink-0 w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-sm text-[var(--rtd-blue)] cursor-pointer rtd-tap-target hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
-          aria-label="Log food"
-        >
-          {open ? "–" : "+"}
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="shrink-0 w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-subhead text-[var(--rtd-blue)] cursor-pointer rtd-tap-target hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+            aria-label="Log food"
+          >
+            {open ? "–" : "+"}
+          </button>
+        )}
       </div>
 
       {banner && (
@@ -95,13 +100,15 @@ export function MealSlot({
               <span className="truncate text-[var(--rtd-text-secondary)]">{item.description}</span>
               <span className="shrink-0 ml-2 text-[var(--rtd-text-secondary)]">
                 {item.kcal} kcal
-                <button
-                  onClick={() => startTransition(() => deleteFoodLogAction(item.id))}
-                  className="text-[var(--rtd-red)] ml-2 cursor-pointer rtd-tap-target hover:bg-white/[0.04] rounded-full focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
-                  aria-label="Delete"
-                >
-                  ✕
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={() => startTransition(() => deleteFoodLogAction(item.id))}
+                    className="text-[var(--rtd-red)] ml-2 cursor-pointer rtd-tap-target hover:bg-white/[0.04] rounded-full focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+                    aria-label="Delete"
+                  >
+                    ✕
+                  </button>
+                )}
               </span>
             </div>
           ))}
@@ -151,7 +158,7 @@ export function MealSlot({
                 placeholder="Description"
                 value={manual.description}
                 onChange={(e) => setManual((m) => ({ ...m, description: e.target.value }))}
-                className="rounded-lg bg-white/[0.06] px-3 py-2 text-xs outline-none"
+                className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none"
               />
               <div className="grid grid-cols-4 gap-1.5">
                 {(["kcal", "protein", "carbs", "fat"] as const).map((field) => (
@@ -161,7 +168,7 @@ export function MealSlot({
                     placeholder={field}
                     value={manual[field]}
                     onChange={(e) => setManual((m) => ({ ...m, [field]: e.target.value }))}
-                    className="rounded-lg bg-white/[0.06] px-2 py-2 text-xs text-center outline-none"
+                    className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
                   />
                 ))}
               </div>

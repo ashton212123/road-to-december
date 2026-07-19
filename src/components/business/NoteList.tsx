@@ -20,7 +20,7 @@ export function NoteList({ businessId, notes }: { businessId: number; notes: Not
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2">
+    <GlassCard className="flex flex-col gap-2 rtd-stagger">
       {notes.length === 0 && <div className="text-footnote text-[var(--rtd-text-tertiary)]">No notes yet.</div>}
       {notes.map((note) => (
         <div key={note.id} className="flex items-start justify-between gap-2 bg-white/[0.04] rounded-lg px-3 py-2">
@@ -47,7 +47,7 @@ export function NoteList({ businessId, notes }: { businessId: number; notes: Not
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={2}
-          className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none resize-none"
+          className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none resize-none"
         />
         <Button variant="secondary" disabled={pending || !body.trim()} onClick={addNote} className="!px-3 self-end">
           Add

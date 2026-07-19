@@ -3,6 +3,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { StatCard } from "@/components/ui/StatCard";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { seasonData } from "@/lib/data/season-data";
@@ -193,7 +194,9 @@ export default async function HomePage() {
         <div className="flex items-start justify-between">
           <div>
             <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
-            <div className="rtd-display text-large-title mt-1">{daysToNcaa}</div>
+            <div className="rtd-display text-large-title mt-1">
+              <AnimatedNumber value={daysToNcaa} />
+            </div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span
@@ -211,7 +214,9 @@ export default async function HomePage() {
         </div>
         {settingsRow.aseanConfirmed !== false ? (
           <div className="flex items-baseline gap-1.5">
-            <span className="rtd-display text-title-1">{daysToAsean}</span>
+            <span className="rtd-display text-title-1">
+              <AnimatedNumber value={daysToAsean} />
+            </span>
             <span className="text-subhead text-[var(--rtd-text-secondary)]">
               days to ASEAN · {aseanDateLabel}
               {settingsRow.aseanConfirmed === null && " (unconfirmed)"}
@@ -305,6 +310,7 @@ export default async function HomePage() {
               size={52}
               strokeWidth={6}
               color="var(--rtd-cyan)"
+              ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(waterTarget / 1000).toFixed(1)} liters`}
             />
             <div className="min-w-0">
               <div className="rtd-micro-label">Water</div>

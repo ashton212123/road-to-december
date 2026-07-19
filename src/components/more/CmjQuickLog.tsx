@@ -30,7 +30,7 @@ export function CmjQuickLog() {
         placeholder="cm"
         value={cm}
         onChange={(e) => setCm(e.target.value)}
-        className="w-16 rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+        className="w-16 rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
       />
       <Button variant="secondary" onClick={submit} disabled={pending || !cm}>
         {done ? "✓" : "Log"}

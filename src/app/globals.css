@@ -146,6 +146,25 @@ body {
   animation: rtd-pulse 1.2s ease-in-out infinite;
 }
 
+/* Staggered entrance for card lists — each direct child fades/slides in
+   30ms after the previous one. Items past the 12th share the last delay. */
+.rtd-stagger > * {
+  opacity: 0;
+  animation: rtd-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.rtd-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.rtd-stagger > *:nth-child(2) { animation-delay: 30ms; }
+.rtd-stagger > *:nth-child(3) { animation-delay: 60ms; }
+.rtd-stagger > *:nth-child(4) { animation-delay: 90ms; }
+.rtd-stagger > *:nth-child(5) { animation-delay: 120ms; }
+.rtd-stagger > *:nth-child(6) { animation-delay: 150ms; }
+.rtd-stagger > *:nth-child(7) { animation-delay: 180ms; }
+.rtd-stagger > *:nth-child(8) { animation-delay: 210ms; }
+.rtd-stagger > *:nth-child(9) { animation-delay: 240ms; }
+.rtd-stagger > *:nth-child(10) { animation-delay: 270ms; }
+.rtd-stagger > *:nth-child(11) { animation-delay: 300ms; }
+.rtd-stagger > *:nth-child(n + 12) { animation-delay: 330ms; }
+
 .rtd-micro-label {
   font-size: 12px;
   font-weight: 600;

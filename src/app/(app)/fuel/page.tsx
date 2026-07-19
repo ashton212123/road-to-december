@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { MealSlot } from "@/components/fuel/MealSlot";
 import { WaterLogger } from "@/components/fuel/WaterLogger";
 import { MacroDonut } from "@/components/fuel/MacroDonut";
@@ -20,14 +22,30 @@ import {
 import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { withRetry } from "@/lib/db/withRetry";
 
-export default async function FuelPage() {
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function formatDateLabel(dateISO: string, today: string): string {
+  if (dateISO === today) return "Today";
+  if (dateISO === addDaysISO(today, -1)) return "Yesterday";
+  const d = new Date(`${dateISO}T12:00:00Z`);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+export default async function FuelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const { date: dateParam } = await searchParams;
   const today = todayManilaISO();
   const todayKey = todayDayKey();
+  const viewDate = dateParam && DATE_RE.test(dateParam) && daysBetween(dateParam, today) >= 0 ? dateParam : today;
+  const isToday = viewDate === today;
 
   const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, weekFood, recentFoodRows] = await withRetry(() =>
     Promise.all([
-      getFoodLogsForDate(today),
-      getWaterLogsForDate(today),
+      getFoodLogsForDate(viewDate),
+      getWaterLogsForDate(viewDate),
       getSettingsRow(),
       getWeighIns(21),
       getAllPhasesWithSessions(),
@@ -37,7 +55,7 @@ export default async function FuelPage() {
   );
 
   const currentPhase = getCurrentPhase(allPhases, today);
-  const kcalTarget = computeKcalTarget(today);
+  const kcalTarget = computeKcalTarget(viewDate);
   const avgWeight = sevenDayAverage(weighInHistory) ?? 63;
   const proteinTarget = computeProteinTargetG(avgWeight);
 
@@ -51,14 +69,16 @@ export default async function FuelPage() {
   const daysToBulkEnd = daysBetween(today, seasonData.meta.bulkWindowEnd);
 
   const banners: string[] = [];
-  if (kcalTarget.isBulkWindow && daysToBulkEnd >= 0) {
-    banners.push(`Bulk window: ${daysToBulkEnd} day${daysToBulkEnd === 1 ? "" : "s"} left until Aug 30.`);
-  }
-  if (todayKey === "wed" || todayKey === "fri") {
-    banners.push("Race-pace tomorrow-morning reminder: banana or bread + water before 5 AM — never swim empty.");
-  }
-  if (todayKey === "tue" || todayKey === "thu" || todayKey === "sun") {
-    banners.push("Post-gym: biggest meal of the day. Don't skip dinner protein tonight.");
+  if (isToday) {
+    if (kcalTarget.isBulkWindow && daysToBulkEnd >= 0) {
+      banners.push(`Bulk window: ${daysToBulkEnd} day${daysToBulkEnd === 1 ? "" : "s"} left until Aug 30.`);
+    }
+    if (todayKey === "wed" || todayKey === "fri") {
+      banners.push("Race-pace tomorrow-morning reminder: banana or bread + water before 5 AM — never swim empty.");
+    }
+    if (todayKey === "tue" || todayKey === "thu" || todayKey === "sun") {
+      banners.push("Post-gym: biggest meal of the day. Don't skip dinner protein tonight.");
+    }
   }
 
   // Weekly review
@@ -84,7 +104,42 @@ export default async function FuelPage() {
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:grid md:grid-cols-12 md:gap-6 md:items-start">
       <div className="md:col-span-12 md:row-start-1">
-        <SectionLabel>Fuel</SectionLabel>
+        <SectionLabel
+          right={
+            <div className="flex items-center gap-1">
+              <Link
+                href={`/fuel?date=${addDaysISO(viewDate, -1)}`}
+                aria-label="Previous day"
+                className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-secondary)] cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+              >
+                ‹
+              </Link>
+              <span className="text-footnote font-medium text-[var(--rtd-text-secondary)] min-w-[64px] text-center">
+                {formatDateLabel(viewDate, today)}
+              </span>
+              {isToday ? (
+                <span className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)]" aria-hidden="true">
+                  ›
+                </span>
+              ) : (
+                <Link
+                  href={`/fuel?date=${addDaysISO(viewDate, 1)}`}
+                  aria-label="Next day"
+                  className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-secondary)] cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+                >
+                  ›
+                </Link>
+              )}
+            </div>
+          }
+        >
+          Fuel
+        </SectionLabel>
+        {!isToday && (
+          <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">
+            Viewing a past day — read-only. Logging is only available for today.
+          </div>
+        )}
       </div>
 
       {/* Left column (desktop): rings, macros, weekly review */}
@@ -97,9 +152,12 @@ export default async function FuelPage() {
               strokeWidth={7}
               color="var(--rtd-orange)"
               className="w-[68px] h-[68px] md:w-24 md:h-24"
+              ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`}
             />
             <div className="text-center">
-              <div className="text-footnote font-semibold">{kcalToday}</div>
+              <div className="text-footnote font-semibold">
+                <AnimatedNumber value={kcalToday} />
+              </div>
               <div className="text-caption text-[var(--rtd-text-secondary)]">/ {kcalTarget.min}-{kcalTarget.max}</div>
             </div>
           </div>
@@ -110,9 +168,12 @@ export default async function FuelPage() {
               strokeWidth={7}
               color="var(--rtd-green)"
               className="w-[68px] h-[68px] md:w-24 md:h-24"
+              ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`}
             />
             <div className="text-center">
-              <div className="text-footnote font-semibold">{Math.round(proteinToday)}g</div>
+              <div className="text-footnote font-semibold">
+                <AnimatedNumber value={Math.round(proteinToday)} />g
+              </div>
               <div className="text-caption text-[var(--rtd-text-secondary)]">/ {proteinTarget.min}-{proteinTarget.max}g</div>
             </div>
           </div>
@@ -123,9 +184,12 @@ export default async function FuelPage() {
               strokeWidth={7}
               color="var(--rtd-cyan)"
               className="w-[68px] h-[68px] md:w-24 md:h-24"
+              ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`}
             />
             <div className="text-center">
-              <div className="text-footnote font-semibold">{(waterToday / 1000).toFixed(1)}L</div>
+              <div className="text-footnote font-semibold">
+                <AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" />
+              </div>
               <div className="text-caption text-[var(--rtd-text-secondary)]">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
             </div>
           </div>
@@ -154,19 +218,21 @@ export default async function FuelPage() {
       </div>
 
       {/* Right column (desktop): quick log, banners, water, meal timeline */}
-      <div className="md:col-start-6 md:col-span-7 md:row-start-2">
-        <SectionLabel>Quick log</SectionLabel>
-        <MealQuickLog
-          recentFoods={recentFoodRows.map((r) => ({
-            description: r.description,
-            timeSlot: r.timeSlot,
-            kcal: r.kcal,
-            proteinG: Number(r.proteinG),
-            carbsG: r.carbsG !== null ? Number(r.carbsG) : 0,
-            fatG: r.fatG !== null ? Number(r.fatG) : 0,
-          }))}
-        />
-      </div>
+      {isToday && (
+        <div className="md:col-start-6 md:col-span-7 md:row-start-2">
+          <SectionLabel>Quick log</SectionLabel>
+          <MealQuickLog
+            recentFoods={recentFoodRows.map((r) => ({
+              description: r.description,
+              timeSlot: r.timeSlot,
+              kcal: r.kcal,
+              proteinG: Number(r.proteinG),
+              carbsG: r.carbsG !== null ? Number(r.carbsG) : 0,
+              fatG: r.fatG !== null ? Number(r.fatG) : 0,
+            }))}
+          />
+        </div>
+      )}
 
       {banners.length > 0 && (
         <div className="flex flex-col gap-2 md:col-start-6 md:col-span-7 md:row-start-3">
@@ -181,7 +247,7 @@ export default async function FuelPage() {
       <div className="md:col-start-6 md:col-span-7 md:row-start-4">
         <SectionLabel>Water</SectionLabel>
         <GlassCard>
-          <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} />
+          <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} readOnly={!isToday} />
         </GlassCard>
       </div>
 
@@ -195,6 +261,7 @@ export default async function FuelPage() {
               desc={meal.desc}
               tag={meal.tag}
               loggedItems={logged}
+              readOnly={!isToday}
             />
           ))}
         </div>

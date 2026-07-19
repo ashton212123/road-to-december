@@ -233,7 +233,7 @@ export function ExerciseCard({
                 inputMode="decimal"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
               />
             </label>
             <label className="flex flex-col gap-1 col-span-1">
@@ -242,7 +242,7 @@ export function ExerciseCard({
                 inputMode="numeric"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
               />
             </label>
             <label className="flex flex-col gap-1 col-span-1">
@@ -251,7 +251,7 @@ export function ExerciseCard({
                 inputMode="decimal"
                 value={rpe}
                 onChange={(e) => setRpe(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-sm text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
               />
             </label>
             <Button type="button" variant="secondary" disabled={pending} onClick={handleAddSet} className="col-span-1 !px-2">
@@ -295,28 +295,28 @@ function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
             placeholder="kg"
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
           />
           <input
             inputMode="numeric"
             placeholder="reps"
             value={reps}
             onChange={(e) => setReps(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
           />
           <input
             inputMode="decimal"
             placeholder="rpe"
             value={rpe}
             onChange={(e) => setRpe(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
           />
         </div>
         <input
           placeholder="Notes (optional)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs outline-none"
+          className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead outline-none"
         />
         <div className="flex gap-2">
           <Button type="button" variant="secondary" disabled={pending} onClick={save} className="flex-1 !py-1.5">

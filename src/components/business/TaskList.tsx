@@ -21,7 +21,7 @@ export function TaskList({ businessId, tasks }: { businessId: number; tasks: Tas
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2">
+    <GlassCard className="flex flex-col gap-2 rtd-stagger">
       {tasks.length === 0 && <div className="text-footnote text-[var(--rtd-text-tertiary)]">No tasks yet.</div>}
       {tasks.map((task) => (
         <div key={task.id} className="flex items-center gap-2.5">
@@ -66,7 +66,7 @@ export function TaskList({ businessId, tasks }: { businessId: number; tasks: Tas
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTask()}
-          className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none"
+          className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none"
         />
         <Button variant="secondary" disabled={pending || !title.trim()} onClick={addTask} className="!px-3">
           Add

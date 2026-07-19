@@ -39,13 +39,13 @@ export function NewBusinessForm() {
         placeholder="Venture name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none"
+        className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none"
       />
       <input
         placeholder="Description (optional)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none"
+        className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none"
       />
       <div className="flex gap-2">
         <Button variant="secondary" disabled={pending || !name.trim()} onClick={submit} className="flex-1">

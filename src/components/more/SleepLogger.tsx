@@ -37,7 +37,7 @@ export function SleepLogger() {
             inputMode="decimal"
             value={hours}
             onChange={(e) => setHours(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead text-center outline-none"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -46,7 +46,7 @@ export function SleepLogger() {
             type="time"
             value={bedtime}
             onChange={(e) => setBedtime(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm text-center outline-none"
+            className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead text-center outline-none"
           />
         </label>
       </div>

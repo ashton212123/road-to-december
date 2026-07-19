@@ -16,7 +16,7 @@ export function TransactionList({ businessId, transactions }: { businessId: numb
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2">
+    <GlassCard className="flex flex-col gap-2 rtd-stagger">
       {transactions.map((t) => (
         <div key={t.id} className="flex items-center justify-between text-footnote">
           <div className="min-w-0">

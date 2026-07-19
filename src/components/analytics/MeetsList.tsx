@@ -28,7 +28,7 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
   if (meets.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 rtd-stagger">
       {meets.map((meet) => {
         const daysOut = daysBetween(today, meet.date);
         return (

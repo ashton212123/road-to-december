@@ -30,7 +30,7 @@ export default function LoginPage() {
               autoFocus
               autoComplete="current-password"
               required
-              className="rtd-glass px-4 py-3 bg-white/[0.04] text-[var(--rtd-text)] text-sm outline-none focus:ring-2 focus:ring-[var(--rtd-blue)]/50"
+              className="rtd-glass px-4 py-3 bg-white/[0.04] text-[var(--rtd-text)] text-subhead outline-none focus:ring-2 focus:ring-[var(--rtd-blue)]/50"
             />
           </label>
           {state.error && (

@@ -50,7 +50,7 @@ export function SwimSessionLogger() {
         value={setsText}
         onChange={(e) => setSetsText(e.target.value)}
         rows={2}
-        className="rounded-lg bg-white/[0.06] px-3 py-2 text-xs outline-none resize-none"
+        className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none resize-none"
       />
       <Button variant="secondary" disabled={pending || !load} onClick={submit}>
         {done ? "Logged ✓" : "Log session"}

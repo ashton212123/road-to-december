@@ -38,13 +38,13 @@ export function TransactionLogger({ businessId }: { businessId: number }) {
           placeholder="₱ amount"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm text-center outline-none col-span-1"
+          className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead text-center outline-none col-span-1"
         />
         <input
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none col-span-2"
+          className="rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none col-span-2"
         />
       </div>
       <Button

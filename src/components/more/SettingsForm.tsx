@@ -65,7 +65,7 @@ export function SettingsForm({
             inputMode="numeric"
             value={waterTarget}
             onChange={(e) => setWaterTarget(e.target.value)}
-            className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none"
+            className="flex-1 rounded-lg bg-white/[0.06] px-3 py-2 text-subhead outline-none"
           />
           <span className="text-footnote text-[var(--rtd-text-secondary)]">ml</span>
         </div>
