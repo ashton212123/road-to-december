@@ -61,6 +61,8 @@ export async function evaluateAlerts(
     todaysFood?: Awaited<ReturnType<typeof getFoodLogsForDate>>;
     weighIns21?: Awaited<ReturnType<typeof getWeighIns>>;
     workoutLogsWide?: Awaited<ReturnType<typeof getWorkoutLogsSince>>;
+    allPhases?: Awaited<ReturnType<typeof getAllPhasesWithSessions>>;
+    cmjRows12?: Awaited<ReturnType<typeof getCmjTests>>;
   }
 ): Promise<RuleAlert[]> {
   const alerts: RuleAlert[] = [];
@@ -73,9 +75,13 @@ export async function evaluateAlerts(
   // independent queries -- allPhases, cmjRows, weighIns, settings, workout
   // logs, food logs, and Canvas all one-after-another -- which was the real
   // cause of Home feeling slow to load, not any single query being heavy).
+  // allPhases/cmjRows12 are prefetchable too now -- Home already has both
+  // (a wider cmjRows superset covers the 12-row need here), and every
+  // avoided round-trip matters given how tight the free-tier connection
+  // pool is (see lib/db/index.ts's `max` comment).
   const [allPhases, cmjRows, recentWeighIns, settingsRow, workoutLogsWide, todaysFood, canvas] = await Promise.all([
-    getAllPhasesWithSessions(),
-    getCmjTests(12),
+    prefetched?.allPhases ? Promise.resolve(prefetched.allPhases) : getAllPhasesWithSessions(),
+    prefetched?.cmjRows12 ? Promise.resolve(prefetched.cmjRows12.slice(0, 12)) : getCmjTests(12),
     prefetched?.weighIns21 ? Promise.resolve(prefetched.weighIns21) : getWeighIns(21),
     prefetched?.settingsRow ? Promise.resolve(prefetched.settingsRow) : getSettingsRow(),
     prefetched?.workoutLogsWide ? Promise.resolve(prefetched.workoutLogsWide) : getWorkoutLogsSince(today),

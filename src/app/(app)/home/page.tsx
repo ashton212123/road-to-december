@@ -91,6 +91,8 @@ export default async function HomePage() {
     const todaysFoodPromise = getFoodLogsForDate(today);
     const weighIns21Promise = getWeighIns(21);
     const workoutLogsWidePromise = getWorkoutLogsSince(addDaysISO(today, -150));
+    const allPhasesPromise = getAllPhasesWithSessions();
+    const cmjTestsPromise = getCmjTests(20);
 
     const [
       allPhases,
@@ -108,20 +110,20 @@ export default async function HomePage() {
       mainLiftLogs,
       weekFoodLogs,
     ] = await Promise.all([
-      getAllPhasesWithSessions(),
+      allPhasesPromise,
       getLatestWeighIn(),
       weighIns21Promise,
       todaysFoodPromise,
       settingsRowPromise,
-      Promise.all([settingsRowPromise, todaysFoodPromise, weighIns21Promise, workoutLogsWidePromise]).then(
-        ([settingsRow, todaysFood, weighIns21, workoutLogsWide]) =>
-          evaluateAlerts(canvas, { settingsRow, todaysFood, weighIns21, workoutLogsWide })
+      Promise.all([settingsRowPromise, todaysFoodPromise, weighIns21Promise, workoutLogsWidePromise, allPhasesPromise, cmjTestsPromise]).then(
+        ([settingsRow, todaysFood, weighIns21, workoutLogsWide, allPhases, cmjRows12]) =>
+          evaluateAlerts(canvas, { settingsRow, todaysFood, weighIns21, workoutLogsWide, allPhases, cmjRows12 })
       ),
       getUndoneBusinessTasks(5),
       workoutLogsWidePromise,
       getSwimSessions(60),
       getSleepLogs(30),
-      getCmjTests(20),
+      cmjTestsPromise,
       getSwimTimes(200),
       getMainLiftLogHistory(),
       getFoodLogsSince(weekStart),

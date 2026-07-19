@@ -232,9 +232,13 @@ export async function getWorkoutLogsWithExerciseSince(dateISO: string) {
   return rows;
 }
 
-/** Best-set e1RM history per named main lift (for the strength trend chart). */
+/** Best-set e1RM history per named main lift (for Home's training-load chart
+ * and PR detection). Bounded to ~13 months, not truly unbounded -- an
+ * unbounded join here was a real slow-query risk as workout_logs grows, and
+ * neither training load (needs ~8 weeks) nor PR detection (meaningfully
+ * "recent") benefit from scanning further back than that. */
 export async function getMainLiftLogHistory() {
-  return getWorkoutLogsWithExerciseSince("2000-01-01").then((rows) => rows.filter((r) => r.isMainLift));
+  return getWorkoutLogsWithExerciseSince(addDaysISO(todayManilaISO(), -400)).then((rows) => rows.filter((r) => r.isMainLift));
 }
 
 export async function getBusinesses() {
