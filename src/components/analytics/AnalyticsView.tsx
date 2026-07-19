@@ -7,6 +7,7 @@ import { PeriodSelector } from "./PeriodSelector";
 import { ImprovementMatrix } from "./ImprovementMatrix";
 import { FuelAdherenceCard } from "./FuelAdherenceCard";
 import { RecoveryOverlayCard } from "./RecoveryOverlayCard";
+import { MiniBarList } from "@/components/ui/MiniBarList";
 import type { TonnageRow, HardSetRow } from "@/lib/analytics/tonnage";
 import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
 import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
@@ -69,6 +70,21 @@ export function AnalyticsView(props: {
         <div id="detail-load" className="flex flex-col gap-2">
           {props.takeaways.load && (
             <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.load}</p>
+          )}
+          {props.tonnage.length > 0 && (
+            <div className="rtd-glass px-4 py-3 flex flex-col gap-2">
+              <div className="rtd-micro-label">Tonnage by movement pattern (this week)</div>
+              <MiniBarList
+                color="var(--rtd-domain-train)"
+                formatValue={(v) => `${Math.round(v)}kg`}
+                rows={(["squat", "hinge", "press", "pull"] as const)
+                  .map((pattern) => ({
+                    label: pattern.charAt(0).toUpperCase() + pattern.slice(1),
+                    value: props.tonnage[props.tonnage.length - 1][pattern],
+                  }))
+                  .filter((r) => r.value > 0)}
+              />
+            </div>
           )}
           <LoadSection dailyLoads={props.dailyLoads} acwr={props.acwr} />
         </div>

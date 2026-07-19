@@ -40,6 +40,20 @@ export function computeWeeklyTonnage(logs: LogWithPattern[]): TonnageRow[] {
   return [...byWeek.values()].sort((a, b) => (a.weekStart < b.weekStart ? -1 : 1));
 }
 
+/** Total tonnage per calendar day (all tracked patterns combined) -- used
+ * for the this-week-vs-last-week daily comparison line, where weekly
+ * buckets are too coarse. */
+export function computeDailyTonnage(logs: LogWithPattern[]): Map<string, number> {
+  const byDate = new Map<string, number>();
+  for (const log of logs) {
+    const pattern = log.movementPattern;
+    if (!pattern || !(PATTERNS as readonly string[]).includes(pattern)) continue;
+    if (!log.weightKg || !log.reps) continue;
+    byDate.set(log.date, (byDate.get(log.date) ?? 0) + Number(log.weightKg) * log.reps);
+  }
+  return byDate;
+}
+
 export function computeWeeklyHardSets(logs: LogWithPattern[]): HardSetRow[] {
   const byWeek = new Map<string, HardSetRow>();
   for (const log of logs) {

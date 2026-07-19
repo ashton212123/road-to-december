@@ -40,7 +40,7 @@ import { withRetry } from "@/lib/db/withRetry";
 import { getDailyBrief } from "@/lib/coach/dailyBrief";
 import { computeReadinessSignals } from "@/lib/rules/readiness";
 import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
-import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
+import { computeDailyTonnage } from "@/lib/analytics/tonnage";
 import { loadTakeaway } from "@/lib/analytics/takeaways";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
@@ -309,9 +309,12 @@ export default async function HomePage() {
     loggedSleepDates: new Set(recentSleepLogs.map((s) => s.date)),
   });
 
-  // Training load: last 8 weeks of tonnage + the same ACWR takeaway Analytics uses.
-  const weeklyTonnage = computeWeeklyTonnage(mainLiftLogs).slice(-8);
-  const weeklyTotals = weeklyTonnage.map((w) => ({ weekStart: w.weekStart, total: w.squat + w.hinge + w.press + w.pull }));
+  // Training load: daily tonnage this week vs last week (dashed), same ACWR
+  // takeaway Analytics uses. null (not 0) for days with no lift logged --
+  // ComparisonLine breaks the line there instead of drawing a fake dip to zero.
+  const dailyTonnage = computeDailyTonnage(mainLiftLogs);
+  const thisWeekDaily = Array.from({ length: 7 }, (_, i) => dailyTonnage.get(addDaysISO(weekStart, i)) ?? null);
+  const lastWeekDaily = Array.from({ length: 7 }, (_, i) => dailyTonnage.get(addDaysISO(weekStart, i - 7)) ?? null);
   const trainingLoadTakeaway = loadTakeaway(acwr);
 
   const recentPRs = findRecentPRs({ mainLiftLogs, swimTimes, cmjTests });
@@ -399,7 +402,7 @@ export default async function HomePage() {
         )}
 
         <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
-        <TrainingLoadCard weeks={weeklyTotals} takeaway={trainingLoadTakeaway} />
+        <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
         <RecentPRsCard prs={recentPRs} />
       </div>
 
@@ -457,7 +460,7 @@ export default async function HomePage() {
         </div>
         {needsAttention.length > 0 && <NeedsAttentionList items={needsAttention} />}
         <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
-        <TrainingLoadCard weeks={weeklyTotals} takeaway={trainingLoadTakeaway} />
+        <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
         <RecentPRsCard prs={recentPRs} />
 
         <div className="grid grid-cols-4 gap-2 mt-1">

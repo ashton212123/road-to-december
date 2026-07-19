@@ -6,6 +6,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { MealSlot } from "@/components/fuel/MealSlot";
 import { WaterLogger } from "@/components/fuel/WaterLogger";
 import { MacroDonut } from "@/components/fuel/MacroDonut";
+import { MiniBarList } from "@/components/ui/MiniBarList";
 import { MealQuickLog } from "@/components/fuel/MealQuickLog";
 import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, todayDayKey, daysBetween, addDaysISO } from "@/lib/time";
@@ -103,6 +104,13 @@ export default async function FuelPage({
       .filter((f) => f.timeSlot === meal.tag)
       .map((f) => ({ id: f.id, description: f.description, kcal: f.kcal, proteinG: f.proteinG })),
   }));
+
+  const proteinByMealSlot = mealsWithLogs
+    .map(({ meal, logged }) => ({
+      label: meal.desc,
+      value: Math.round(logged.reduce((s, f) => s + Number(f.proteinG), 0)),
+    }))
+    .filter((r) => r.value > 0);
 
   return (
     <div className="flex flex-col gap-3 rtd-fade-in pt-1">
@@ -238,6 +246,12 @@ export default async function FuelPage({
             fatLoggedG={fatToday}
             fatTargetG={fatTargetG}
           />
+          {proteinByMealSlot.length > 0 && (
+            <div className="mt-2">
+              <div className="rtd-micro-label mb-1.5">Protein by meal</div>
+              <MiniBarList rows={proteinByMealSlot} color="var(--rtd-green)" formatValue={(v) => `${v}g`} />
+            </div>
+          )}
         </BentoCard>
 
         <div style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0 gap-2">
@@ -348,6 +362,12 @@ export default async function FuelPage({
               fatLoggedG={fatToday}
               fatTargetG={fatTargetG}
             />
+            {proteinByMealSlot.length > 0 && (
+              <div className="mt-2">
+                <div className="rtd-micro-label mb-1.5">Protein by meal</div>
+                <MiniBarList rows={proteinByMealSlot} color="var(--rtd-green)" formatValue={(v) => `${v}g`} />
+              </div>
+            )}
           </div>
         </div>
 
