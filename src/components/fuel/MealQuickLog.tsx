@@ -1,95 +1,244 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { parseMealTextAction, logMealBatchAction, type ParsedMealReviewItem } from "@/app/(app)/fuel/actions";
+import {
+  estimateMealAction,
+  rethinkItemAction,
+  logMealBatchAction,
+  type MealReviewSource,
+} from "@/app/(app)/fuel/actions";
 
 const TIME_SLOTS = ["pre_race_pace", "breakfast", "lunch", "pre_gym", "dinner", "snack", "bedtime"];
 
-type ReviewRow = {
+type Confidence = "high" | "medium" | "low" | null;
+
+type ReviewItem = {
+  clientId: string;
   timeSlot: string;
-  description: string;
+  name: string;
+  portionDesc: string;
   kcal: string;
   proteinG: string;
   carbsG: string;
   fatG: string;
-  candidates: ParsedMealReviewItem["candidates"];
-  selectedFdcId: number | null;
+  confidence: Confidence;
+  assumptions: string;
+  source: MealReviewSource;
+  handEdited: boolean;
+  rethinking: boolean;
+  showHint: boolean;
+  hint: string;
+  pendingOverwrite: boolean;
+  rethinkError: boolean;
 };
 
-export function MealQuickLog() {
-  const [text, setText] = useState("");
-  const [rows, setRows] = useState<ReviewRow[] | null>(null);
-  const [pending, startTransition] = useTransition();
-  const [done, setDone] = useState(false);
+type RecentFood = {
+  description: string;
+  timeSlot: string;
+  kcal: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+};
 
-  function parse() {
+const CONFIDENCE_COLOR: Record<Exclude<Confidence, null>, string> = {
+  high: "var(--rtd-green)",
+  medium: "var(--rtd-orange)",
+  low: "var(--rtd-red)",
+};
+
+function scaleValue(value: string, factor: number): string {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  return String(Math.round(n * factor * 10) / 10);
+}
+
+export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
+  const [text, setText] = useState("");
+  const [items, setItems] = useState<ReviewItem[] | null>(null);
+  const [estimating, startEstimate] = useTransition();
+  const [saving, startSave] = useTransition();
+  const [done, setDone] = useState(false);
+  const [usedAi, setUsedAi] = useState<boolean | null>(null);
+  const nextId = useRef(0);
+  const rethinkPending = useRef<Set<string>>(new Set());
+
+  function newId() {
+    nextId.current += 1;
+    return `item-${nextId.current}`;
+  }
+
+  function estimate() {
     if (!text.trim()) return;
     setDone(false);
-    startTransition(async () => {
-      const parsed = await parseMealTextAction(text);
-      setRows(
-        parsed.map((p) => {
-          const best = p.candidates[0];
-          return {
-            timeSlot: p.timeSlot,
-            description: p.foodText,
-            kcal: best?.kcal !== null && best?.kcal !== undefined ? String(Math.round(best.kcal)) : "",
-            proteinG: best?.proteinG !== null && best?.proteinG !== undefined ? String(Math.round(best.proteinG)) : "",
-            carbsG: best?.carbsG !== null && best?.carbsG !== undefined ? String(Math.round(best.carbsG)) : "",
-            fatG: best?.fatG !== null && best?.fatG !== undefined ? String(Math.round(best.fatG)) : "",
-            candidates: p.candidates,
-            selectedFdcId: best?.fdcId ?? null,
-          };
-        })
+    startEstimate(async () => {
+      const result = await estimateMealAction(text);
+      setUsedAi(result.usedAi);
+      setItems(
+        result.items.map((it) => ({
+          clientId: newId(),
+          timeSlot: it.timeSlot,
+          name: it.name,
+          portionDesc: it.portionDesc,
+          kcal: String(it.kcal),
+          proteinG: String(it.proteinG),
+          carbsG: String(it.carbsG),
+          fatG: String(it.fatG),
+          confidence: it.confidence,
+          assumptions: it.assumptions,
+          source: it.source,
+          handEdited: false,
+          rethinking: false,
+          showHint: false,
+          hint: "",
+          pendingOverwrite: false,
+          rethinkError: false,
+        }))
       );
     });
   }
 
-  function updateRow(index: number, patch: Partial<ReviewRow>) {
-    setRows((prev) => (prev ? prev.map((r, i) => (i === index ? { ...r, ...patch } : r)) : prev));
+  function addManualItem() {
+    setDone(false);
+    setItems((prev) => [
+      ...(prev ?? []),
+      {
+        clientId: newId(),
+        timeSlot: "lunch",
+        name: "",
+        portionDesc: "",
+        kcal: "",
+        proteinG: "",
+        carbsG: "",
+        fatG: "",
+        confidence: null,
+        assumptions: "",
+        source: "manual",
+        handEdited: false,
+        rethinking: false,
+        showHint: false,
+        hint: "",
+        pendingOverwrite: false,
+        rethinkError: false,
+      },
+    ]);
   }
 
-  function selectCandidate(index: number, fdcId: number) {
-    setRows((prev) =>
+  function addRecentFood(food: RecentFood) {
+    setDone(false);
+    setItems((prev) => [
+      ...(prev ?? []),
+      {
+        clientId: newId(),
+        timeSlot: food.timeSlot,
+        name: food.description,
+        portionDesc: "",
+        kcal: String(food.kcal),
+        proteinG: String(food.proteinG),
+        carbsG: String(food.carbsG),
+        fatG: String(food.fatG),
+        confidence: null,
+        assumptions: "Reused from a recent log.",
+        source: "manual",
+        handEdited: false,
+        rethinking: false,
+        showHint: false,
+        hint: "",
+        pendingOverwrite: false,
+        rethinkError: false,
+      },
+    ]);
+  }
+
+  function updateItem(id: string, patch: Partial<ReviewItem>) {
+    setItems((prev) => (prev ? prev.map((r) => (r.clientId === id ? { ...r, ...patch } : r)) : prev));
+  }
+
+  function editMacro(id: string, field: "kcal" | "proteinG" | "carbsG" | "fatG", value: string) {
+    updateItem(id, { [field]: value, handEdited: true, rethinkError: false } as Partial<ReviewItem>);
+  }
+
+  function scalePortion(id: string, factor: number) {
+    setItems((prev) =>
       prev
-        ? prev.map((r, i) => {
-            if (i !== index) return r;
-            const c = r.candidates.find((cand) => cand.fdcId === fdcId);
-            if (!c) return r;
-            return {
-              ...r,
-              selectedFdcId: fdcId,
-              kcal: c.kcal !== null ? String(Math.round(c.kcal)) : r.kcal,
-              proteinG: c.proteinG !== null ? String(Math.round(c.proteinG)) : r.proteinG,
-              carbsG: c.carbsG !== null ? String(Math.round(c.carbsG)) : r.carbsG,
-              fatG: c.fatG !== null ? String(Math.round(c.fatG)) : r.fatG,
-            };
-          })
+        ? prev.map((r) =>
+            r.clientId === id
+              ? {
+                  ...r,
+                  kcal: scaleValue(r.kcal, factor),
+                  proteinG: scaleValue(r.proteinG, factor),
+                  carbsG: scaleValue(r.carbsG, factor),
+                  fatG: scaleValue(r.fatG, factor),
+                }
+              : r
+          )
         : prev
     );
   }
 
-  function removeRow(index: number) {
-    setRows((prev) => (prev ? prev.filter((_, i) => i !== index) : prev));
+  function removeItem(id: string) {
+    setItems((prev) => (prev ? prev.filter((r) => r.clientId !== id) : prev));
+  }
+
+  function toggleHint(id: string) {
+    updateItem(id, { showHint: true });
+  }
+
+  function rethink(id: string) {
+    const item = items?.find((r) => r.clientId === id);
+    if (!item || rethinkPending.current.has(id)) return;
+
+    if (item.handEdited && !item.pendingOverwrite) {
+      updateItem(id, { pendingOverwrite: true });
+      return;
+    }
+
+    rethinkPending.current.add(id);
+    updateItem(id, { rethinking: true, rethinkError: false });
+    startEstimate(async () => {
+      const result = await rethinkItemAction(item.name, item.portionDesc, item.hint);
+      rethinkPending.current.delete(id);
+      if (!result) {
+        updateItem(id, { rethinking: false, rethinkError: true });
+        return;
+      }
+      updateItem(id, {
+        rethinking: false,
+        portionDesc: result.portionDesc,
+        kcal: String(result.kcal),
+        proteinG: String(result.proteinG),
+        carbsG: String(result.carbsG),
+        fatG: String(result.fatG),
+        confidence: result.confidence,
+        assumptions: result.assumptions,
+        source: "ai",
+        handEdited: false,
+        showHint: false,
+        hint: "",
+        pendingOverwrite: false,
+      });
+    });
   }
 
   function confirmLog() {
-    if (!rows || rows.length === 0) return;
-    startTransition(async () => {
+    if (!items || items.length === 0) return;
+    startSave(async () => {
       await logMealBatchAction(
-        rows.map((r) => ({
+        items.map((r) => ({
           timeSlot: r.timeSlot,
-          description: r.description,
+          description: r.name || "Unnamed item",
           kcal: Number(r.kcal) || 0,
           proteinG: Number(r.proteinG) || 0,
           carbsG: r.carbsG ? Number(r.carbsG) : undefined,
           fatG: r.fatG ? Number(r.fatG) : undefined,
+          source: r.source,
         }))
       );
-      setRows(null);
+      setItems(null);
       setText("");
+      setUsedAi(null);
       setDone(true);
     });
   }
@@ -97,34 +246,84 @@ export function MealQuickLog() {
   return (
     <GlassCard className="flex flex-col gap-3">
       <div className="text-title-3">Quick log — describe your day</div>
-      {!rows && (
+
+      {!items && (
         <>
+          {recentFoods.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              {recentFoods.slice(0, 6).map((food, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => addRecentFood(food)}
+                  className="shrink-0 text-caption px-2.5 py-1.5 rounded-full whitespace-nowrap bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target"
+                  title={`${food.kcal} kcal · ${food.proteinG}g protein`}
+                >
+                  {food.description.length > 22 ? `${food.description.slice(0, 22)}…` : food.description}
+                </button>
+              ))}
+            </div>
+          )}
           <textarea
             placeholder='e.g. "lunch: chicken rice, creatine, dinner adobo"'
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={2}
-            className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm outline-none resize-none"
+            className="rounded-lg bg-white/[0.06] px-3 py-2 outline-none resize-none"
           />
-          <Button variant="secondary" disabled={pending || !text.trim()} onClick={parse}>
-            {done ? "Logged ✓ — parse another" : "Parse"}
+          <Button variant="secondary" disabled={estimating || !text.trim()} onClick={estimate}>
+            {estimating ? (
+              <span className="rtd-pulse">Thinking…</span>
+            ) : done ? (
+              "Logged ✓ — estimate another"
+            ) : (
+              "Estimate"
+            )}
           </Button>
+          <button
+            type="button"
+            onClick={addManualItem}
+            className="text-footnote text-[var(--rtd-text-secondary)] cursor-pointer hover:text-[var(--rtd-text)] transition-colors duration-150 ease-out self-start"
+          >
+            + Add item manually
+          </button>
           <div className="text-caption text-[var(--rtd-text-tertiary)]">
-            Macros are fuzzy-matched from USDA FoodData Central — review and edit before saving, nothing logs automatically.
+            AI estimates macros from what you describe — review and edit before saving, nothing logs automatically.
           </div>
         </>
       )}
 
-      {rows && (
-        <div className="flex flex-col gap-3 rtd-fade-in">
-          {rows.length === 0 && <div className="text-footnote text-[var(--rtd-text-secondary)]">Nothing parsed — try rephrasing.</div>}
-          {rows.map((row, i) => (
-            <div key={i} className="flex flex-col gap-2 bg-white/[0.04] rounded-xl p-2.5">
+      {items && (
+        <div className="flex flex-col gap-3 rtd-fade-in" aria-live="polite">
+          {items.length === 0 && (
+            <div className="text-footnote text-[var(--rtd-text-secondary)]">Nothing parsed — try rephrasing.</div>
+          )}
+          {usedAi === false && items.length > 0 && (
+            <div className="text-caption text-[var(--rtd-orange)]">
+              AI estimation unavailable — matched against USDA data instead. Numbers may be less precise.
+            </div>
+          )}
+
+          {items.map((row) => (
+            <div key={row.clientId} className="flex flex-col gap-2 bg-white/[0.04] rounded-xl p-2.5">
               <div className="flex items-center gap-2">
+                {row.confidence && (
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: CONFIDENCE_COLOR[row.confidence] }}
+                    title={`${row.confidence} confidence`}
+                  />
+                )}
+                <input
+                  value={row.name}
+                  onChange={(e) => updateItem(row.clientId, { name: e.target.value })}
+                  placeholder="Item name"
+                  className="flex-1 min-w-0 rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead outline-none"
+                />
                 <select
                   value={row.timeSlot}
-                  onChange={(e) => updateRow(i, { timeSlot: e.target.value })}
-                  className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-[11px] outline-none"
+                  onChange={(e) => updateItem(row.clientId, { timeSlot: e.target.value })}
+                  className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-caption outline-none shrink-0"
                 >
                   {TIME_SLOTS.map((s) => (
                     <option key={s} value={s}>
@@ -132,41 +331,23 @@ export function MealQuickLog() {
                     </option>
                   ))}
                 </select>
-                <input
-                  value={row.description}
-                  onChange={(e) => updateRow(i, { description: e.target.value })}
-                  className="flex-1 rounded-lg bg-white/[0.06] px-2 py-1.5 text-xs outline-none"
-                />
                 <button
                   type="button"
-                  onClick={() => removeRow(i)}
+                  onClick={() => removeItem(row.clientId)}
                   className="text-[var(--rtd-red)] text-footnote shrink-0 rounded-full cursor-pointer rtd-tap-target hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
-                  aria-label="Remove item"
+                  aria-label={`Remove ${row.name || "item"}`}
                 >
                   ✕
                 </button>
               </div>
 
-              {row.candidates.length > 0 && (
-                <div className="flex gap-1.5 overflow-x-auto">
-                  {row.candidates.map((c) => (
-                    <button
-                      key={c.fdcId}
-                      onClick={() => selectCandidate(i, c.fdcId)}
-                      className="shrink-0 text-caption px-2 py-1 rounded-full whitespace-nowrap cursor-pointer rtd-tap-target hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
-                      style={{
-                        background: row.selectedFdcId === c.fdcId ? "var(--rtd-blue)" : "rgba(255,255,255,0.06)",
-                        color: row.selectedFdcId === c.fdcId ? "#fff" : "var(--rtd-text-secondary)",
-                      }}
-                      title={c.description}
-                    >
-                      {c.description.length > 24 ? `${c.description.slice(0, 24)}…` : c.description}
-                    </button>
-                  ))}
-                </div>
+              {row.assumptions && (
+                <div className="text-caption text-[var(--rtd-text-secondary)]">{row.assumptions}</div>
               )}
-              {row.candidates.length === 0 && (
-                <div className="text-caption text-[var(--rtd-orange)]">No USDA match — enter macros manually.</div>
+              {row.handEdited && (
+                <span className="text-caption font-semibold uppercase tracking-wide text-[var(--rtd-orange)] self-start">
+                  Manual edit
+                </span>
               )}
 
               <div className="grid grid-cols-4 gap-1.5">
@@ -174,39 +355,102 @@ export function MealQuickLog() {
                   placeholder="kcal"
                   inputMode="numeric"
                   value={row.kcal}
-                  onChange={(e) => updateRow(i, { kcal: e.target.value })}
-                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-xs text-center outline-none"
+                  onChange={(e) => editMacro(row.clientId, "kcal", e.target.value)}
+                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-center outline-none"
+                  aria-label={`${row.name || "item"} calories`}
                 />
                 <input
                   placeholder="protein"
                   inputMode="numeric"
                   value={row.proteinG}
-                  onChange={(e) => updateRow(i, { proteinG: e.target.value })}
-                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-xs text-center outline-none"
+                  onChange={(e) => editMacro(row.clientId, "proteinG", e.target.value)}
+                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-center outline-none"
+                  aria-label={`${row.name || "item"} protein grams`}
                 />
                 <input
                   placeholder="carbs"
                   inputMode="numeric"
                   value={row.carbsG}
-                  onChange={(e) => updateRow(i, { carbsG: e.target.value })}
-                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-xs text-center outline-none"
+                  onChange={(e) => editMacro(row.clientId, "carbsG", e.target.value)}
+                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-center outline-none"
+                  aria-label={`${row.name || "item"} carb grams`}
                 />
                 <input
                   placeholder="fat"
                   inputMode="numeric"
                   value={row.fatG}
-                  onChange={(e) => updateRow(i, { fatG: e.target.value })}
-                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-xs text-center outline-none"
+                  onChange={(e) => editMacro(row.clientId, "fatG", e.target.value)}
+                  className="rounded-lg bg-white/[0.06] px-1.5 py-1.5 text-center outline-none"
+                  aria-label={`${row.name || "item"} fat grams`}
                 />
               </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[0.5, 1.5, 2].map((factor) => (
+                  <button
+                    key={factor}
+                    type="button"
+                    onClick={() => scalePortion(row.clientId, factor)}
+                    className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target"
+                  >
+                    ×{factor}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={row.rethinking}
+                  onClick={() => toggleHint(row.clientId)}
+                  className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target disabled:opacity-40"
+                >
+                  {row.rethinking ? <span className="rtd-pulse">Rethinking…</span> : "Rethink"}
+                </button>
+
+                {row.pendingOverwrite && !row.rethinking && (
+                  <button
+                    type="button"
+                    onClick={() => rethink(row.clientId)}
+                    className="text-caption px-2 py-1 rounded-full bg-[var(--rtd-orange)]/15 text-[var(--rtd-orange)] cursor-pointer hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target"
+                  >
+                    Rethink anyway (overwrites your edits)
+                  </button>
+                )}
+              </div>
+
+              {row.showHint && !row.rethinking && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    value={row.hint}
+                    onChange={(e) => updateItem(row.clientId, { hint: e.target.value })}
+                    placeholder='optional hint, e.g. "big serving", "air-fried"'
+                    className="flex-1 rounded-lg bg-white/[0.06] px-2 py-1.5 text-footnote outline-none"
+                  />
+                  <Button variant="secondary" onClick={() => rethink(row.clientId)}>
+                    Go
+                  </Button>
+                </div>
+              )}
+              {row.rethinkError && (
+                <div className="text-caption text-[var(--rtd-red)]">
+                  Couldn&apos;t rethink this one — AI estimation is unavailable right now.
+                </div>
+              )}
             </div>
           ))}
 
+          <button
+            type="button"
+            onClick={addManualItem}
+            className="text-footnote text-[var(--rtd-text-secondary)] cursor-pointer hover:text-[var(--rtd-text)] transition-colors duration-150 ease-out self-start"
+          >
+            + Add item manually
+          </button>
+
           <div className="flex gap-2">
-            <Button variant="secondary" disabled={pending || rows.length === 0} onClick={confirmLog} className="flex-1">
-              Log {rows.length} item{rows.length === 1 ? "" : "s"}
+            <Button variant="secondary" disabled={saving || items.length === 0} onClick={confirmLog} className="flex-1">
+              Log {items.length} item{items.length === 1 ? "" : "s"}
             </Button>
-            <Button variant="ghost" disabled={pending} onClick={() => setRows(null)} className="flex-1">
+            <Button variant="ghost" disabled={saving} onClick={() => setItems(null)} className="flex-1">
               Cancel
             </Button>
           </div>

@@ -7,6 +7,7 @@ import { foodLogs, waterLogs, weighIns } from "@/lib/db/schema";
 import { todayManilaISO, manilaHourNow } from "@/lib/time";
 import { parseMealText, defaultTimeSlotForHour } from "@/lib/nutrition/parseMealText";
 import { searchFood, type FoodCandidate } from "@/lib/nutrition/usda";
+import { estimateMacros, rethinkMacroItem, type AiMacroItem } from "@/lib/nutrition/aiMacros";
 
 export async function logFoodAction(input: {
   date?: string;
@@ -50,26 +51,89 @@ export async function deleteWaterLogAction(id: number) {
   revalidatePath("/home");
 }
 
-export type ParsedMealReviewItem = {
+export type MealReviewSource = "ai" | "manual" | "quick";
+
+export type MealReviewItem = {
   timeSlot: string;
-  foodText: string;
-  candidates: FoodCandidate[];
+  name: string;
+  portionDesc: string;
+  kcal: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  confidence: "high" | "medium" | "low" | null;
+  assumptions: string;
+  source: MealReviewSource;
 };
 
-/** Parses free-text meal input and enriches each item with fuzzy-matched USDA
- * candidates, for an editable review step before anything is saved. */
-export async function parseMealTextAction(text: string): Promise<ParsedMealReviewItem[]> {
-  const items = parseMealText(text, defaultTimeSlotForHour(manilaHourNow()));
-  return Promise.all(
-    items.map(async (item) => ({
-      ...item,
-      candidates: await searchFood(item.foodText, 3),
-    }))
+/** Estimates macros for everything described in `text` via Groq; falls back to
+ * the original regex+USDA match (auto-picking the best candidate) when the AI
+ * call is unavailable, so Quick Log never breaks. Nothing is saved here. */
+export async function estimateMealAction(text: string): Promise<{ items: MealReviewItem[]; usedAi: boolean }> {
+  const defaultSlot = defaultTimeSlotForHour(manilaHourNow());
+
+  const aiItems = await estimateMacros(text);
+  if (aiItems) {
+    return {
+      usedAi: true,
+      items: aiItems.map((it) => ({
+        timeSlot: it.timeSlot ?? defaultSlot,
+        name: it.name,
+        portionDesc: it.portionDesc,
+        kcal: it.kcal,
+        proteinG: it.proteinG,
+        carbsG: it.carbsG,
+        fatG: it.fatG,
+        confidence: it.confidence,
+        assumptions: it.assumptions,
+        source: "ai",
+      })),
+    };
+  }
+
+  const parsed = parseMealText(text, defaultSlot);
+  const items = await Promise.all(
+    parsed.map(async (p): Promise<MealReviewItem> => {
+      const candidates = await searchFood(p.foodText, 1);
+      const best: FoodCandidate | undefined = candidates[0];
+      return {
+        timeSlot: p.timeSlot,
+        name: p.foodText,
+        portionDesc: best?.description ?? "",
+        kcal: best?.kcal != null ? Math.round(best.kcal) : 0,
+        proteinG: best?.proteinG != null ? Math.round(best.proteinG * 10) / 10 : 0,
+        carbsG: best?.carbsG != null ? Math.round(best.carbsG * 10) / 10 : 0,
+        fatG: best?.fatG != null ? Math.round(best.fatG * 10) / 10 : 0,
+        confidence: best ? "low" : null,
+        assumptions: best
+          ? "USDA per-100g match (AI estimation unavailable) — check the portion."
+          : "No USDA match — enter macros manually.",
+        source: "quick",
+      };
+    })
   );
+  return { usedAi: false, items };
+}
+
+/** Re-estimates a single item with an optional hint. Returns null if the AI call is unavailable. */
+export async function rethinkItemAction(
+  name: string,
+  portionDesc: string,
+  hint: string
+): Promise<AiMacroItem | null> {
+  return rethinkMacroItem(name, portionDesc, hint);
 }
 
 export async function logMealBatchAction(
-  items: { timeSlot: string; description: string; kcal: number; proteinG: number; carbsG?: number; fatG?: number }[]
+  items: {
+    timeSlot: string;
+    description: string;
+    kcal: number;
+    proteinG: number;
+    carbsG?: number;
+    fatG?: number;
+    source: MealReviewSource;
+  }[]
 ) {
   const today = todayManilaISO();
   if (items.length === 0) return;
@@ -82,7 +146,7 @@ export async function logMealBatchAction(
       proteinG: String(item.proteinG),
       carbsG: item.carbsG !== undefined ? String(item.carbsG) : null,
       fatG: item.fatG !== undefined ? String(item.fatG) : null,
-      source: "quick" as const,
+      source: item.source,
     }))
   );
   revalidatePath("/fuel");

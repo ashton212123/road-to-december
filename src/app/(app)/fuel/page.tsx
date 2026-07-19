@@ -15,6 +15,7 @@ import {
   getAllPhasesWithSessions,
   getCurrentPhase,
   getFoodLogsSince,
+  getRecentFoodChips,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { withRetry } from "@/lib/db/withRetry";
@@ -23,7 +24,7 @@ export default async function FuelPage() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, weekFood] = await withRetry(() =>
+  const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, weekFood, recentFoodRows] = await withRetry(() =>
     Promise.all([
       getFoodLogsForDate(today),
       getWaterLogsForDate(today),
@@ -31,6 +32,7 @@ export default async function FuelPage() {
       getWeighIns(21),
       getAllPhasesWithSessions(),
       getFoodLogsSince(addDaysISO(today, -6)),
+      getRecentFoodChips(addDaysISO(today, -14)),
     ])
   );
 
@@ -154,7 +156,16 @@ export default async function FuelPage() {
       {/* Right column (desktop): quick log, banners, water, meal timeline */}
       <div className="md:col-start-6 md:col-span-7 md:row-start-2">
         <SectionLabel>Quick log</SectionLabel>
-        <MealQuickLog />
+        <MealQuickLog
+          recentFoods={recentFoodRows.map((r) => ({
+            description: r.description,
+            timeSlot: r.timeSlot,
+            kcal: r.kcal,
+            proteinG: Number(r.proteinG),
+            carbsG: r.carbsG !== null ? Number(r.carbsG) : 0,
+            fatG: r.fatG !== null ? Number(r.fatG) : 0,
+          }))}
+        />
       </div>
 
       {banners.length > 0 && (

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "./index";
 import {
@@ -104,6 +104,25 @@ export async function getFoodLogsForDate(dateISO: string) {
 
 export async function getFoodLogsSince(dateISO: string) {
   return db.select().from(foodLogs).where(gte(foodLogs.date, dateISO)).orderBy(desc(foodLogs.date));
+}
+
+/** Frequency-sorted distinct meals logged since `dateISO`, for Quick Log's "recent foods" chips. */
+export async function getRecentFoodChips(dateISO: string, limit = 6) {
+  return db
+    .select({
+      description: foodLogs.description,
+      timeSlot: foodLogs.timeSlot,
+      kcal: foodLogs.kcal,
+      proteinG: foodLogs.proteinG,
+      carbsG: foodLogs.carbsG,
+      fatG: foodLogs.fatG,
+      count: sql<number>`count(*)`.as("count"),
+    })
+    .from(foodLogs)
+    .where(gte(foodLogs.date, dateISO))
+    .groupBy(foodLogs.description, foodLogs.timeSlot, foodLogs.kcal, foodLogs.proteinG, foodLogs.carbsG, foodLogs.fatG)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
 }
 
 export async function getWaterLogsForDate(dateISO: string) {

@@ -132,6 +132,20 @@ body {
   transform: scale(1.15);
 }
 
+@keyframes rtd-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.rtd-pulse {
+  animation: rtd-pulse 1.2s ease-in-out infinite;
+}
+
 .rtd-micro-label {
   font-size: 12px;
   font-weight: 600;
