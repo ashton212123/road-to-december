@@ -331,6 +331,12 @@ select {
   animation: rtd-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rtd-fade-in {
     animation: none;

@@ -1,20 +1,24 @@
-"use client";
-
-import { useState } from "react";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { StrengthSection } from "./StrengthSection";
 import { LoadSection } from "./LoadSection";
 import { PowerSection } from "./PowerSection";
 import { BodyweightSection } from "./BodyweightSection";
 import { SwimSection } from "./SwimSection";
+import { PeriodSelector } from "./PeriodSelector";
+import { ImprovementMatrix } from "./ImprovementMatrix";
+import { FuelAdherenceCard } from "./FuelAdherenceCard";
+import { RecoveryOverlayCard } from "./RecoveryOverlayCard";
 import type { TonnageRow, HardSetRow } from "@/lib/analytics/tonnage";
 import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
 import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
-
-type Tab = "strength" | "load" | "power" | "bodyweight" | "swim";
+import type { Period } from "@/lib/analytics/periods";
+import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
 
 export function AnalyticsView(props: {
-  takeaways: Record<Tab, string | null>;
+  period: Period;
+  offset: number;
+  currentPeriodLabel: string;
+  matrixRows: MatrixRow[];
+  takeaways: Record<"strength" | "load" | "power" | "bodyweight" | "swim", string | null>;
   e1rmByLift: Record<string, { date: string; e1rm: number }[]>;
   liftTargets: Record<string, { label: string; goalKg: number }>;
   tonnage: TonnageRow[];
@@ -45,45 +49,65 @@ export function AnalyticsView(props: {
   }[];
   latestTimeByEvent: Record<string, number>;
   swimSessions: { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null }[];
+  sorenessLogs: { id: number; date: string; area: string; rating1to5: number }[];
+  sleepLogs: { date: string; hours: number }[];
+  foodAdherenceByDate: { date: string; kcal: number; kcalTargetMin: number }[];
 }) {
-  const [tab, setTab] = useState<Tab>("strength");
-
   return (
     <div className="flex flex-col gap-4">
-      <SegmentedControl
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: "strength", label: "Strength" },
-          { value: "load", label: "Load" },
-          { value: "power", label: "Power" },
-          { value: "bodyweight", label: "Weight" },
-          { value: "swim", label: "Swim" },
-        ]}
-      />
-      {props.takeaways[tab] && (
-        <div className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways[tab]}</div>
-      )}
-      {tab === "strength" && (
-        <StrengthSection e1rmByLift={props.e1rmByLift} liftTargets={props.liftTargets} tonnage={props.tonnage} hardSets={props.hardSets} />
-      )}
-      {tab === "load" && <LoadSection dailyLoads={props.dailyLoads} acwr={props.acwr} />}
-      {tab === "power" && <PowerSection cmjSeries={props.cmjSeries} broadJumpSeries={props.broadJumpSeries} />}
-      {tab === "bodyweight" && <BodyweightSection weightSeries={props.weightSeries} />}
-      {tab === "swim" && (
-        <SwimSection
-          pbRows={props.pbRows}
-          targets={props.targets}
-          splitBars={props.splitBars}
-          splitAutopsy={props.splitAutopsy}
-          timeTo15m={props.timeTo15m}
-          recentTimes={props.recentSwimTimes}
-          allSwimTimesByEvent={props.allSwimTimesByEvent}
-          meets={props.meets}
-          latestTimeByEvent={props.latestTimeByEvent}
-          swimSessions={props.swimSessions}
-        />
-      )}
+      <PeriodSelector period={props.period} offset={props.offset} currentLabel={props.currentPeriodLabel} />
+      <ImprovementMatrix rows={props.matrixRows} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div id="detail-strength" className="flex flex-col gap-2">
+          {props.takeaways.strength && (
+            <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.strength}</p>
+          )}
+          <StrengthSection e1rmByLift={props.e1rmByLift} liftTargets={props.liftTargets} tonnage={props.tonnage} hardSets={props.hardSets} />
+        </div>
+
+        <div id="detail-load" className="flex flex-col gap-2">
+          {props.takeaways.load && (
+            <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.load}</p>
+          )}
+          <LoadSection dailyLoads={props.dailyLoads} acwr={props.acwr} />
+        </div>
+
+        <div id="detail-power" className="flex flex-col gap-2">
+          {props.takeaways.power && (
+            <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.power}</p>
+          )}
+          <PowerSection cmjSeries={props.cmjSeries} broadJumpSeries={props.broadJumpSeries} />
+        </div>
+
+        <div id="detail-body" className="flex flex-col gap-2">
+          {props.takeaways.bodyweight && (
+            <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.bodyweight}</p>
+          )}
+          <BodyweightSection weightSeries={props.weightSeries} />
+        </div>
+
+        <div id="detail-swim" className="flex flex-col gap-2 lg:col-span-2">
+          {props.takeaways.swim && (
+            <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.swim}</p>
+          )}
+          <SwimSection
+            pbRows={props.pbRows}
+            targets={props.targets}
+            splitBars={props.splitBars}
+            splitAutopsy={props.splitAutopsy}
+            timeTo15m={props.timeTo15m}
+            recentTimes={props.recentSwimTimes}
+            allSwimTimesByEvent={props.allSwimTimesByEvent}
+            meets={props.meets}
+            latestTimeByEvent={props.latestTimeByEvent}
+            swimSessions={props.swimSessions}
+          />
+        </div>
+
+        <FuelAdherenceCard days={props.foodAdherenceByDate} />
+        <RecoveryOverlayCard sleepLogs={props.sleepLogs} cmjSeries={props.cmjSeries} sorenessLogs={props.sorenessLogs} />
+      </div>
     </div>
   );
 }

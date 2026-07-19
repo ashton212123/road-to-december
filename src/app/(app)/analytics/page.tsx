@@ -4,6 +4,7 @@ import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, addDaysISO } from "@/lib/time";
 import {
   getWorkoutLogsWithExerciseSince,
+  getWorkoutLogsSince,
   getWeighIns,
   getCmjTests,
   getJumpTests,
@@ -11,6 +12,10 @@ import {
   getTimeTo15mLogs,
   getAllMeetsWithEvents,
   getSwimSessions,
+  getFoodLogsSince,
+  getSleepLogs,
+  getSorenessLogs,
+  getWaterLogsSince,
 } from "@/lib/db/queries";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
@@ -19,17 +24,42 @@ import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { withRetry } from "@/lib/db/withRetry";
 import { loadTakeaway, powerTakeaway, bodyweightTakeaway, swimTakeaway } from "@/lib/analytics/takeaways";
 import { getStrengthTakeaway } from "@/lib/coach/strengthTakeaway";
+import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
+import { recentPeriodStarts, periodLabel, type Period } from "@/lib/analytics/periods";
+import { buildImprovementMatrix } from "@/lib/analytics/improvementMatrix";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
   "Trap-bar deadlift": { label: "Trap-bar deadlift", goalKg: 130 },
 };
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string; offset?: string }>;
+}) {
+  const { period: periodParam, offset: offsetParam } = await searchParams;
+  const period: Period = periodParam === "month" ? "month" : "week";
+  const offset = Math.max(0, Number(offsetParam) || 0);
+
   const today = todayManilaISO();
   const since = addDaysISO(today, -180);
 
-  const [mainLiftLogs, weighIns, cmjTests, broadJumps, swimTimes, timeTo15m, meetsWithEvents, swimSessions] = await withRetry(() =>
+  const [
+    mainLiftLogs,
+    weighIns,
+    cmjTests,
+    broadJumps,
+    swimTimes,
+    timeTo15m,
+    meetsWithEvents,
+    swimSessions,
+    foodLogs,
+    sleepLogs,
+    sorenessLogs,
+    waterLogs,
+    workoutLogsPlain,
+  ] = await withRetry(() =>
     Promise.all([
       getWorkoutLogsWithExerciseSince(since),
       getWeighIns(180),
@@ -39,6 +69,11 @@ export default async function AnalyticsPage() {
       getTimeTo15mLogs(30),
       getAllMeetsWithEvents(),
       getSwimSessions(60),
+      getFoodLogsSince(since),
+      getSleepLogs(180),
+      getSorenessLogs(30),
+      getWaterLogsSince(since),
+      getWorkoutLogsSince(since),
     ])
   );
 
@@ -62,7 +97,7 @@ export default async function AnalyticsPage() {
 
   const tonnage = computeWeeklyTonnage(mainLiftLogs);
   const hardSets = computeWeeklyHardSets(mainLiftLogs);
-  const dailyLoads = computeDailySessionLoads(mainLiftLogs);
+  const dailyLoads = computeDailySessionLoads(workoutLogsPlain);
   const acwr = computeAcwr(dailyLoads);
 
   const cmjSeries = [...cmjTests]
@@ -101,7 +136,6 @@ export default async function AnalyticsPage() {
     }),
   }));
 
-  // Most recent logged time per event, to auto-fill "current time" when adding a meet.
   const latestByEvent = new Map<string, number>();
   for (const s of [...swimTimes].sort((a, b) => (a.date < b.date ? 1 : -1))) {
     if (!latestByEvent.has(s.event)) latestByEvent.set(s.event, s.timeMs);
@@ -119,10 +153,56 @@ export default async function AnalyticsPage() {
     swim: swimTakeaway(meetsWithReadiness, today),
   };
 
+  // Improvement matrix: one row per tracked metric, aggregated by the
+  // selected week/month period, with a plain daily-adherence-% approximation
+  // for kcal/protein (target computed per-day for kcal since it varies at
+  // the bulk-window boundary; protein target uses the latest known weight --
+  // exact historical weight-at-the-time isn't worth the extra complexity at
+  // this scale).
+  const latestWeightKg = weightSeries.length > 0 ? Number(weightSeries[weightSeries.length - 1].kg) : 63;
+  const proteinTargetMin = computeProteinTargetG(latestWeightKg).min;
+  const foodByDate = new Map<string, { kcal: number; proteinG: number }[]>();
+  for (const f of foodLogs) {
+    if (!foodByDate.has(f.date)) foodByDate.set(f.date, []);
+    foodByDate.get(f.date)!.push({ kcal: f.kcal, proteinG: Number(f.proteinG) });
+  }
+  const kcalAdherenceDaily: { date: string; pct: number }[] = [];
+  const proteinAdherenceDaily: { date: string; pct: number }[] = [];
+  for (const [date, entries] of foodByDate) {
+    const kcalTotal = entries.reduce((s, e) => s + e.kcal, 0);
+    const proteinTotal = entries.reduce((s, e) => s + e.proteinG, 0);
+    const kcalTargetForDay = computeKcalTarget(date).min;
+    kcalAdherenceDaily.push({ date, pct: (kcalTotal / kcalTargetForDay) * 100 });
+    proteinAdherenceDaily.push({ date, pct: (proteinTotal / proteinTargetMin) * 100 });
+  }
+  const waterByDate = new Map<string, number>();
+  for (const w of waterLogs) waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.ml);
+
+  const periodStarts = recentPeriodStarts(today, period, 10, offset);
+  const matrixRows = buildImprovementMatrix({
+    period,
+    todayISO: today,
+    periodStarts,
+    mainLiftLogs,
+    swimTimes,
+    weighIns,
+    cmjTests,
+    sleepLogs,
+    waterLogsDaily: [...waterByDate.entries()].map(([date, ml]) => ({ date, ml })),
+    proteinAdherenceDaily,
+    kcalAdherenceDaily,
+    gymSessionDates: [...new Set(workoutLogsPlain.map((l) => l.date))],
+  });
+  const currentPeriodLabel = periodLabel(periodStarts[periodStarts.length - 1], period);
+
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
       <SectionLabel>Analytics</SectionLabel>
       <AnalyticsView
+        period={period}
+        offset={offset}
+        currentPeriodLabel={currentPeriodLabel}
+        matrixRows={matrixRows}
         takeaways={takeaways}
         e1rmByLift={e1rmByLiftObj}
         liftTargets={MAIN_LIFT_TARGETS}
@@ -145,6 +225,13 @@ export default async function AnalyticsPage() {
         meets={meetsWithReadiness}
         latestTimeByEvent={Object.fromEntries(latestByEvent)}
         swimSessions={swimSessions.map((s) => ({ id: s.id, date: s.date, loadRating: s.loadRating, setsText: s.setsText, parsedDistanceM: s.parsedDistanceM }))}
+        sorenessLogs={sorenessLogs.map((s) => ({ id: s.id, date: s.date, area: s.area, rating1to5: s.rating1to5 }))}
+        sleepLogs={sleepLogs.slice(0, 30).map((s) => ({ date: s.date, hours: Number(s.hours) }))}
+        foodAdherenceByDate={[...foodByDate.entries()].map(([date, entries]) => ({
+          date,
+          kcal: entries.reduce((s, e) => s + e.kcal, 0),
+          kcalTargetMin: computeKcalTarget(date).min,
+        }))}
       />
     </div>
   );
