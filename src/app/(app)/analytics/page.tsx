@@ -4,7 +4,6 @@ import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, addDaysISO } from "@/lib/time";
 import {
   getWorkoutLogsWithExerciseSince,
-  getWorkoutLogsSince,
   getWeighIns,
   getCmjTests,
   getJumpTests,
@@ -58,9 +57,12 @@ export default async function AnalyticsPage({
     sleepLogs,
     sorenessLogs,
     waterLogs,
-    workoutLogsPlain,
   ] = await withRetry(() =>
     Promise.all([
+      // Unfiltered (every exercise, not just main lifts) -- also covers the
+      // plain workout_logs data computeDailySessionLoads/gymSessionDates
+      // need, so there's no separate getWorkoutLogsSince query for the same
+      // table/window. One less connection needed out of an already-tight pool.
       getWorkoutLogsWithExerciseSince(since),
       getWeighIns(180),
       getCmjTests(30),
@@ -73,7 +75,6 @@ export default async function AnalyticsPage({
       getSleepLogs(180),
       getSorenessLogs(30),
       getWaterLogsSince(since),
-      getWorkoutLogsSince(since),
     ])
   );
 
@@ -97,7 +98,7 @@ export default async function AnalyticsPage({
 
   const tonnage = computeWeeklyTonnage(mainLiftLogs);
   const hardSets = computeWeeklyHardSets(mainLiftLogs);
-  const dailyLoads = computeDailySessionLoads(workoutLogsPlain);
+  const dailyLoads = computeDailySessionLoads(mainLiftLogs);
   const acwr = computeAcwr(dailyLoads);
 
   const cmjSeries = [...cmjTests]
@@ -191,7 +192,7 @@ export default async function AnalyticsPage({
     waterLogsDaily: [...waterByDate.entries()].map(([date, ml]) => ({ date, ml })),
     proteinAdherenceDaily,
     kcalAdherenceDaily,
-    gymSessionDates: [...new Set(workoutLogsPlain.map((l) => l.date))],
+    gymSessionDates: [...new Set(mainLiftLogs.map((l) => l.date))],
   });
   const currentPeriodLabel = periodLabel(periodStarts[periodStarts.length - 1], period);
 
