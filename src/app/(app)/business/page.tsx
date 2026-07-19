@@ -24,19 +24,19 @@ export default async function BusinessPage() {
   const archived = allBusinesses.filter((b) => b.archived);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-3xl md:mx-auto">
       <SectionLabel>Business</SectionLabel>
 
       {allBusinesses.length > 0 && (
         <GlassCard className="flex flex-col gap-1">
           <div className="text-footnote text-[var(--rtd-text-tertiary)]">Overall profit</div>
           <div
-            className="text-large-title"
+            className="text-large-title rtd-nums"
             style={{ color: overall.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}
           >
             {formatPhp(overall.profit)}
           </div>
-          <div className="text-footnote text-[var(--rtd-text-secondary)]">
+          <div className="text-footnote text-[var(--rtd-text-secondary)] rtd-nums">
             {formatPhp(overall.income)} in · {formatPhp(overall.expense)} out
           </div>
         </GlassCard>
@@ -49,7 +49,7 @@ export default async function BusinessPage() {
           body="Add a venture to start tracking income, expenses, tasks, and notes."
         />
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-3">
           {active.map((b) => {
             const profit = computeProfit(byBusiness.get(b.id) ?? []);
             return (
@@ -80,7 +80,7 @@ export default async function BusinessPage() {
       {archived.length > 0 && (
         <div>
           <SectionLabel>Archived</SectionLabel>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-3">
             {archived.map((b) => (
               <Link key={b.id} href={`/business/${b.id}`}>
                 <GlassCard interactive className="flex items-center gap-3 opacity-60">

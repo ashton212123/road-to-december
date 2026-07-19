@@ -26,7 +26,7 @@ export default async function SchoolPage() {
   const submitted = assignments.filter((a) => a.submitted);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-4xl md:mx-auto">
       <SectionLabel>School</SectionLabel>
 
       {error && (
@@ -41,7 +41,7 @@ export default async function SchoolPage() {
       {courses.length === 0 ? (
         <EmptyState title="No active courses found" body="Check back once your courses are published on Canvas." />
       ) : (
-        <>
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4 md:items-start">
           <div>
             <SectionLabel>Courses</SectionLabel>
             <GlassCard className="flex flex-col gap-2">
@@ -68,7 +68,7 @@ export default async function SchoolPage() {
           </div>
 
           {submitted.length > 0 && (
-            <div>
+            <div className="md:col-span-2">
               <SectionLabel>Submitted</SectionLabel>
               <GlassCard className="flex flex-col divide-y divide-white/[0.06] rtd-stagger">
                 {submitted.map((a) => (
@@ -77,7 +77,7 @@ export default async function SchoolPage() {
               </GlassCard>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

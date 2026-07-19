@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { BentoCard } from "@/components/ui/BentoCard";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { MealSlot } from "@/components/fuel/MealSlot";
@@ -80,6 +80,9 @@ export default async function FuelPage({
       banners.push("Post-gym: biggest meal of the day. Don't skip dinner protein tonight.");
     }
   }
+  if (kcalTarget.needsConfirmation) {
+    banners.push("Bulk window ended — confirm a maintenance kcal target in Settings.");
+  }
 
   // Weekly review
   const weekWeighIns = weighInHistory.filter((w) => w.date >= addDaysISO(today, -6));
@@ -102,108 +105,129 @@ export default async function FuelPage({
   }));
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:grid md:grid-cols-12 md:gap-6 md:items-start">
-      <div className="md:col-span-12 md:row-start-1">
-        <SectionLabel
-          right={
-            <div className="flex items-center gap-1">
+    <div className="flex flex-col gap-3 rtd-fade-in pt-1">
+      <SectionLabel
+        right={
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/fuel?date=${addDaysISO(viewDate, -1)}`}
+              aria-label="Previous day"
+              className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-secondary)] cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+            >
+              ‹
+            </Link>
+            <span className="text-footnote font-medium text-[var(--rtd-text-secondary)] min-w-[64px] text-center">
+              {formatDateLabel(viewDate, today)}
+            </span>
+            {isToday ? (
+              <span className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)]" aria-hidden="true">
+                ›
+              </span>
+            ) : (
               <Link
-                href={`/fuel?date=${addDaysISO(viewDate, -1)}`}
-                aria-label="Previous day"
+                href={`/fuel?date=${addDaysISO(viewDate, 1)}`}
+                aria-label="Next day"
                 className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-secondary)] cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
               >
-                ‹
+                ›
               </Link>
-              <span className="text-footnote font-medium text-[var(--rtd-text-secondary)] min-w-[64px] text-center">
-                {formatDateLabel(viewDate, today)}
-              </span>
-              {isToday ? (
-                <span className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)]" aria-hidden="true">
-                  ›
-                </span>
-              ) : (
-                <Link
-                  href={`/fuel?date=${addDaysISO(viewDate, 1)}`}
-                  aria-label="Next day"
-                  className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-secondary)] cursor-pointer hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
-                >
-                  ›
-                </Link>
-              )}
-            </div>
-          }
-        >
-          Fuel
-        </SectionLabel>
-        {!isToday && (
-          <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">
-            Viewing a past day — read-only. Logging is only available for today.
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Left column (desktop): rings, macros, weekly review */}
-      <GlassCard className="flex flex-col gap-4 md:col-start-1 md:col-span-5 md:row-start-2">
-        <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center gap-1.5">
-            <ProgressRing
-              pct={(kcalToday / kcalTarget.mid) * 100}
-              size={68}
-              strokeWidth={7}
-              color="var(--rtd-orange)"
-              className="w-[68px] h-[68px] md:w-24 md:h-24"
-              ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`}
-            />
-            <div className="text-center">
-              <div className="text-footnote font-semibold">
-                <AnimatedNumber value={kcalToday} />
-              </div>
-              <div className="text-caption text-[var(--rtd-text-secondary)]">/ {kcalTarget.min}-{kcalTarget.max}</div>
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <ProgressRing
-              pct={(proteinToday / proteinTarget.mid) * 100}
-              size={68}
-              strokeWidth={7}
-              color="var(--rtd-green)"
-              className="w-[68px] h-[68px] md:w-24 md:h-24"
-              ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`}
-            />
-            <div className="text-center">
-              <div className="text-footnote font-semibold">
-                <AnimatedNumber value={Math.round(proteinToday)} />g
-              </div>
-              <div className="text-caption text-[var(--rtd-text-secondary)]">/ {proteinTarget.min}-{proteinTarget.max}g</div>
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <ProgressRing
-              pct={(waterToday / settingsRow.waterTargetMl) * 100}
-              size={68}
-              strokeWidth={7}
-              color="var(--rtd-cyan)"
-              className="w-[68px] h-[68px] md:w-24 md:h-24"
-              ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`}
-            />
-            <div className="text-center">
-              <div className="text-footnote font-semibold">
-                <AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" />
-              </div>
-              <div className="text-caption text-[var(--rtd-text-secondary)]">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
-            </div>
-          </div>
+        }
+      >
+        Fuel
+      </SectionLabel>
+      {!isToday && (
+        <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-2">
+          Viewing a past day — read-only. Logging is only available for today.
         </div>
-        {kcalTarget.needsConfirmation && (
-          <div className="text-caption text-[var(--rtd-orange)] bg-[var(--rtd-orange)]/10 rounded-lg px-2.5 py-1.5">
-            Bulk window ended — confirm a maintenance kcal target in Settings.
-          </div>
-        )}
-      </GlassCard>
+      )}
 
-      <div className="md:col-start-1 md:col-span-5 md:row-start-3">
-        <SectionLabel>Macros</SectionLabel>
-        <GlassCard>
+      {banners.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {banners.map((b, i) => (
+            <div key={i} className="rtd-strip bg-[var(--rtd-orange)]/10 text-[var(--rtd-text)]">
+              <span aria-hidden="true" className="text-[var(--rtd-orange)] shrink-0">⚠</span>
+              <span className="truncate">{b}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="rtd-bento-grid">
+        <BentoCard colSpan={8} rowSpan={2} label="Today's intake">
+          <div className="grid grid-cols-3 gap-2 flex-1 items-center">
+            <div className="flex flex-col items-center gap-1.5">
+              <ProgressRing
+                pct={(kcalToday / kcalTarget.mid) * 100}
+                size={72}
+                strokeWidth={7}
+                color="var(--rtd-orange)"
+                ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`}
+              />
+              <div className="text-center">
+                <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={kcalToday} /></div>
+                <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {kcalTarget.min}-{kcalTarget.max}</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <ProgressRing
+                pct={(proteinToday / proteinTarget.mid) * 100}
+                size={72}
+                strokeWidth={7}
+                color="var(--rtd-green)"
+                ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`}
+              />
+              <div className="text-center">
+                <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
+                <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {proteinTarget.min}-{proteinTarget.max}g</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <ProgressRing
+                pct={(waterToday / settingsRow.waterTargetMl) * 100}
+                size={72}
+                strokeWidth={7}
+                color="var(--rtd-cyan)"
+                ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`}
+              />
+              <div className="text-center">
+                <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
+                <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
+              </div>
+            </div>
+          </div>
+        </BentoCard>
+
+        <BentoCard colSpan={4} rowSpan={2} label="Water">
+          <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} readOnly={!isToday} />
+        </BentoCard>
+
+        {isToday ? (
+          <div style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0">
+            <SectionLabel>Quick log</SectionLabel>
+            <div className="flex-1 min-h-0">
+              <MealQuickLog
+                recentFoods={recentFoodRows.map((r) => ({
+                  description: r.description,
+                  timeSlot: r.timeSlot,
+                  kcal: r.kcal,
+                  proteinG: Number(r.proteinG),
+                  carbsG: r.carbsG !== null ? Number(r.carbsG) : 0,
+                  fatG: r.fatG !== null ? Number(r.fatG) : 0,
+                }))}
+              />
+            </div>
+          </div>
+        ) : (
+          <BentoCard colSpan={7} rowSpan={3} label="Quick log">
+            <div className="flex-1 flex items-center justify-center text-caption text-[var(--rtd-text-tertiary)]">
+              Logging is only available for today.
+            </div>
+          </BentoCard>
+        )}
+
+        <BentoCard colSpan={5} rowSpan={3} label="Macros">
           <MacroDonut
             kcalLogged={kcalToday}
             kcalTarget={kcalTarget.mid}
@@ -214,96 +238,166 @@ export default async function FuelPage({
             fatLoggedG={fatToday}
             fatTargetG={fatTargetG}
           />
-        </GlassCard>
-      </div>
+        </BentoCard>
 
-      {/* Right column (desktop): quick log, banners, water, meal timeline */}
-      {isToday && (
-        <div className="md:col-start-6 md:col-span-7 md:row-start-2">
-          <SectionLabel>Quick log</SectionLabel>
-          <MealQuickLog
-            recentFoods={recentFoodRows.map((r) => ({
-              description: r.description,
-              timeSlot: r.timeSlot,
-              kcal: r.kcal,
-              proteinG: Number(r.proteinG),
-              carbsG: r.carbsG !== null ? Number(r.carbsG) : 0,
-              fatG: r.fatG !== null ? Number(r.fatG) : 0,
-            }))}
-          />
+        <div style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0 gap-2">
+          <SectionLabel>Meal timeline</SectionLabel>
+          <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
+            {mealsWithLogs.map(({ meal, logged }) => (
+              <MealSlot key={meal.tag} time={meal.time} desc={meal.desc} tag={meal.tag} loggedItems={logged} readOnly={!isToday} />
+            ))}
+          </div>
         </div>
-      )}
 
-      {banners.length > 0 && (
-        <div className="flex flex-col gap-2 md:col-start-6 md:col-span-7 md:row-start-3">
-          {banners.map((b, i) => (
-            <div key={i} className="rtd-glass px-3.5 py-2.5 text-footnote text-[var(--rtd-text-secondary)]">
-              {b}
+        <BentoCard colSpan={5} rowSpan={3} label="Weekly review">
+          <div className="grid grid-cols-2 gap-3 flex-1">
+            <div>
+              <div className="rtd-micro-label">Adherence</div>
+              <div className="text-title-3 rtd-nums">{adherencePct}%</div>
             </div>
-          ))}
-        </div>
-      )}
-
-      <div className="md:col-start-6 md:col-span-7 md:row-start-4">
-        <SectionLabel>Water</SectionLabel>
-        <GlassCard>
-          <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} readOnly={!isToday} />
-        </GlassCard>
+            <div>
+              <div className="rtd-micro-label">Avg kcal/day</div>
+              <div className="text-title-3 rtd-nums">{avgKcalWeek}</div>
+            </div>
+            <div>
+              <div className="rtd-micro-label">Avg protein/day</div>
+              <div className="text-title-3 rtd-nums">{avgProteinWeek}g</div>
+            </div>
+            <div>
+              <div className="rtd-micro-label">Weight response</div>
+              <div
+                className="text-title-3 rtd-nums"
+                style={{
+                  color:
+                    weightDelta === null
+                      ? undefined
+                      : weightDelta >= 0.2 && weightDelta <= 0.4
+                        ? "var(--rtd-green)"
+                        : "var(--rtd-orange)",
+                }}
+              >
+                {weightDelta === null ? "—" : `${weightDelta >= 0 ? "+" : ""}${weightDelta.toFixed(2)} kg`}
+              </div>
+              <div className="text-caption text-[var(--rtd-text-secondary)]">target +0.25–0.3 kg/wk</div>
+            </div>
+          </div>
+        </BentoCard>
       </div>
 
-      <div className="md:col-start-6 md:col-span-7 md:row-start-5">
-        <SectionLabel>Meal timeline</SectionLabel>
-        <div className="flex flex-col gap-3">
-          {mealsWithLogs.map(({ meal, logged }) => (
-            <MealSlot
-              key={meal.tag}
-              time={meal.time}
-              desc={meal.desc}
-              tag={meal.tag}
-              loggedItems={logged}
-              readOnly={!isToday}
+      {/* Mobile stack */}
+      <div className="flex flex-col gap-4 md:hidden">
+        <div className="rtd-glass p-4 flex flex-col gap-4">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col items-center gap-1.5">
+              <ProgressRing pct={(kcalToday / kcalTarget.mid) * 100} size={68} strokeWidth={7} color="var(--rtd-orange)" ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`} />
+              <div className="text-center">
+                <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={kcalToday} /></div>
+                <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {kcalTarget.min}-{kcalTarget.max}</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <ProgressRing pct={(proteinToday / proteinTarget.mid) * 100} size={68} strokeWidth={7} color="var(--rtd-green)" ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`} />
+              <div className="text-center">
+                <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
+                <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {proteinTarget.min}-{proteinTarget.max}g</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <ProgressRing pct={(waterToday / settingsRow.waterTargetMl) * 100} size={68} strokeWidth={7} color="var(--rtd-cyan)" ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`} />
+              <div className="text-center">
+                <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
+                <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {isToday && (
+          <div>
+            <SectionLabel>Quick log</SectionLabel>
+            <MealQuickLog
+              recentFoods={recentFoodRows.map((r) => ({
+                description: r.description,
+                timeSlot: r.timeSlot,
+                kcal: r.kcal,
+                proteinG: Number(r.proteinG),
+                carbsG: r.carbsG !== null ? Number(r.carbsG) : 0,
+                fatG: r.fatG !== null ? Number(r.fatG) : 0,
+              }))}
             />
-          ))}
-        </div>
-      </div>
+          </div>
+        )}
 
-      <div className="md:col-start-1 md:col-span-5 md:row-start-4">
-        <SectionLabel>Weekly review</SectionLabel>
-        <GlassCard className="grid grid-cols-2 gap-3">
-          <div>
-            <div className="rtd-micro-label">Adherence</div>
-            <div className="text-title-3">{adherencePct}%</div>
+        <div>
+          <SectionLabel>Water</SectionLabel>
+          <div className="rtd-glass p-4">
+            <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} readOnly={!isToday} />
           </div>
-          <div>
-            <div className="rtd-micro-label">Avg kcal/day</div>
-            <div className="text-title-3">{avgKcalWeek}</div>
+        </div>
+
+        <div>
+          <SectionLabel>Macros</SectionLabel>
+          <div className="rtd-glass p-4">
+            <MacroDonut
+              kcalLogged={kcalToday}
+              kcalTarget={kcalTarget.mid}
+              proteinLoggedG={proteinToday}
+              proteinTargetG={proteinTarget.mid}
+              carbsLoggedG={carbsToday}
+              carbsTargetG={carbsTargetG}
+              fatLoggedG={fatToday}
+              fatTargetG={fatTargetG}
+            />
           </div>
-          <div>
-            <div className="rtd-micro-label">Avg protein/day</div>
-            <div className="text-title-3">{avgProteinWeek}g</div>
+        </div>
+
+        <div>
+          <SectionLabel>Meal timeline</SectionLabel>
+          <div className="flex flex-col gap-3">
+            {mealsWithLogs.map(({ meal, logged }) => (
+              <MealSlot key={meal.tag} time={meal.time} desc={meal.desc} tag={meal.tag} loggedItems={logged} readOnly={!isToday} />
+            ))}
           </div>
-          <div>
-            <div className="rtd-micro-label">Weight response</div>
-            <div
-              className="text-title-3"
-              style={{
-                color:
-                  weightDelta === null
-                    ? undefined
-                    : weightDelta >= 0.2 && weightDelta <= 0.4
-                      ? "var(--rtd-green)"
-                      : "var(--rtd-orange)",
-              }}
-            >
-              {weightDelta === null ? "—" : `${weightDelta >= 0 ? "+" : ""}${weightDelta.toFixed(2)} kg`}
+        </div>
+
+        <div>
+          <SectionLabel>Weekly review</SectionLabel>
+          <div className="rtd-glass p-4 grid grid-cols-2 gap-3">
+            <div>
+              <div className="rtd-micro-label">Adherence</div>
+              <div className="text-title-3 rtd-nums">{adherencePct}%</div>
             </div>
-            <div className="text-caption text-[var(--rtd-text-secondary)]">target +0.25–0.3 kg/wk</div>
+            <div>
+              <div className="rtd-micro-label">Avg kcal/day</div>
+              <div className="text-title-3 rtd-nums">{avgKcalWeek}</div>
+            </div>
+            <div>
+              <div className="rtd-micro-label">Avg protein/day</div>
+              <div className="text-title-3 rtd-nums">{avgProteinWeek}g</div>
+            </div>
+            <div>
+              <div className="rtd-micro-label">Weight response</div>
+              <div
+                className="text-title-3 rtd-nums"
+                style={{
+                  color:
+                    weightDelta === null
+                      ? undefined
+                      : weightDelta >= 0.2 && weightDelta <= 0.4
+                        ? "var(--rtd-green)"
+                        : "var(--rtd-orange)",
+                }}
+              >
+                {weightDelta === null ? "—" : `${weightDelta >= 0 ? "+" : ""}${weightDelta.toFixed(2)} kg`}
+              </div>
+              <div className="text-caption text-[var(--rtd-text-secondary)]">target +0.25–0.3 kg/wk</div>
+            </div>
           </div>
-        </GlassCard>
+        </div>
       </div>
 
       {currentPhase && (
-        <p className="text-caption text-[var(--rtd-text-secondary)] text-center pb-2 md:col-span-12 md:row-start-6">
+        <p className="text-caption text-[var(--rtd-text-secondary)] text-center pb-2">
           {currentPhase.tag} · {currentPhase.name}
         </p>
       )}

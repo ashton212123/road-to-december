@@ -224,7 +224,11 @@ body {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 16px;
-    grid-auto-rows: 96px;
+    /* minmax, not a fixed 96px: cards with genuinely variable content (a
+       growing quick-log results list, a long needs-attention list) grow the
+       whole row instead of clipping -- siblings spanning the same tracks
+       stay flush either way since span math doesn't change. */
+    grid-auto-rows: minmax(96px, auto);
   }
 }
 

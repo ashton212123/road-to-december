@@ -1,19 +1,24 @@
 import { notFound } from "next/navigation";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { BentoCard } from "@/components/ui/BentoCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DaySelector } from "@/components/train/DaySelector";
 import { WorkoutSession } from "@/components/train/WorkoutSession";
 import { TaperChecklist } from "@/components/train/TaperChecklist";
+import { TrainWeekDots } from "@/components/train/TrainWeekDots";
 import {
   getPhaseById,
   getSessionWorkoutData,
   getSettingsRow,
+  getWorkoutLogsSince,
 } from "@/lib/db/queries";
-import { todayManilaISO, todayDayKey } from "@/lib/time";
+import { todayManilaISO, todayDayKey, mondayOf, addDaysISO } from "@/lib/time";
 import { suggestNextLoad } from "@/lib/train/progression";
 import { withRetry } from "@/lib/db/withRetry";
 import type { workoutLogs } from "@/lib/db/schema";
+
+const DAY_KEY_TO_INDEX: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 };
 
 type WorkoutLogRow = typeof workoutLogs.$inferSelect;
 
@@ -53,10 +58,22 @@ export default async function PhaseSessionPage({
   const session = phase.sessions.find((s) => s.dayKey === selectedDay);
   const today = todayManilaISO();
 
-  // Two queries total for the whole session, not two per exercise.
-  const { todaysByExercise, lastSessionByExercise } = session
-    ? await withRetry(() => getSessionWorkoutData(session.exercises.map((e) => e.id), today))
-    : { todaysByExercise: new Map<number, WorkoutLogRow[]>(), lastSessionByExercise: new Map<number, WorkoutLogRow[]>() };
+  const weekStart = mondayOf(today);
+
+  // Two queries total for the whole session, not two per exercise, plus one
+  // more for the week-dots widget -- still one batched round trip.
+  const [{ todaysByExercise, lastSessionByExercise }, weekLogs] = await withRetry(() =>
+    Promise.all([
+      session
+        ? getSessionWorkoutData(session.exercises.map((e) => e.id), today)
+        : Promise.resolve({ todaysByExercise: new Map<number, WorkoutLogRow[]>(), lastSessionByExercise: new Map<number, WorkoutLogRow[]>() }),
+      getWorkoutLogsSince(weekStart),
+    ])
+  );
+  const loggedDatesThisWeek = new Set(weekLogs.map((l) => l.date));
+  const scheduledDayIndexes = new Set(phase.sessions.map((s) => DAY_KEY_TO_INDEX[s.dayKey]));
+  const weekScheduled = [0, 1, 2, 3, 4, 5, 6].map((i) => scheduledDayIndexes.has(i));
+  const weekLogged = [0, 1, 2, 3, 4, 5, 6].map((i) => loggedDatesThisWeek.has(addDaysISO(weekStart, i)));
 
   const exerciseData = (session?.exercises ?? []).map((ex) => {
     const lastSessionSetsRaw = lastSessionByExercise.get(ex.id) ?? [];
@@ -100,7 +117,21 @@ export default async function PhaseSessionPage({
 
       {session ? (
         <>
-          <div className="text-body font-semibold">{session.title}</div>
+          <div className="rtd-bento-grid">
+            <BentoCard colSpan={8} rowSpan={2} className="justify-center">
+              <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
+              <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
+                {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+              </div>
+            </BentoCard>
+            <TrainWeekDots scheduled={weekScheduled} logged={weekLogged} />
+          </div>
+          <div className="rtd-glass p-4 md:hidden">
+            <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
+            <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
+              {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+            </div>
+          </div>
           <WorkoutSession phaseId={phase.id} sessionTitle={session.title} exercises={exerciseData} />
         </>
       ) : (
