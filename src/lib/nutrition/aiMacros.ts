@@ -5,8 +5,7 @@
  * regex+USDA path (see fuel/actions.ts) and the quick-log feature never breaks.
  */
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
+import { callGroqChat } from "@/lib/ai/groq";
 
 export type AiConfidence = "high" | "medium" | "low";
 
@@ -58,33 +57,16 @@ function normalizeItem(raw: unknown): AiMacroItem | null {
 }
 
 async function callGroq(userContent: string): Promise<AiMacroItem[] | null> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return null;
+  const content = await callGroqChat(
+    [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userContent },
+    ],
+    { jsonMode: true, temperature: 0.2 }
+  );
+  if (!content) return null;
 
   try {
-    const res = await fetch(GROQ_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userContent },
-        ],
-      }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) return null;
-
     const parsed = JSON.parse(content) as { items?: unknown[] } | unknown[];
     const rawItems = Array.isArray(parsed) ? parsed : parsed.items;
     if (!Array.isArray(rawItems)) return null;

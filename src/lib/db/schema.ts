@@ -276,6 +276,22 @@ export const swimSessions = pgTable("swim_sessions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// One AI-generated coach-voiced brief per day, generated on first Home load
+// and cached here so it never regenerates mid-day and never costs a second
+// Groq call.
+export const dailyBriefs = pgTable("daily_briefs", {
+  date: date("date").primaryKey(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const coachMessages = pgTable("coach_messages", {
+  id: serial("id").primaryKey(),
+  role: text("role").notNull(), // 'user' | 'assistant'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Phase = typeof phases.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
@@ -299,3 +315,5 @@ export type CanvasAssignment = typeof canvasAssignments.$inferSelect;
 export type Meet = typeof meets.$inferSelect;
 export type MeetEvent = typeof meetEvents.$inferSelect;
 export type SwimSession = typeof swimSessions.$inferSelect;
+export type DailyBrief = typeof dailyBriefs.$inferSelect;
+export type CoachMessage = typeof coachMessages.$inferSelect;

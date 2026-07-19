@@ -27,6 +27,7 @@ import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "
 import { computeTrainingStreak } from "@/lib/analytics/streak";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 import { withRetry } from "@/lib/db/withRetry";
+import { getDailyBrief } from "@/lib/coach/dailyBrief";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -188,6 +189,29 @@ export default async function HomePage() {
     urgentSchoolAssignments: urgentAssignments,
   });
 
+  const dailyBrief = await withRetry(() =>
+    getDailyBrief({
+      today,
+      athleteWeightKg: latestWeighIn ? Number(latestWeighIn.kg) : null,
+      weightTrendKg: weightTrend,
+      kcalToday,
+      kcalTargetMin: kcalTarget.min,
+      kcalTargetMax: kcalTarget.max,
+      proteinToday,
+      proteinTargetMin: proteinTarget.min,
+      trainingStreak,
+      todaySessionTitle: todaySession?.title ?? null,
+      todaySwim: weekDay.swim ?? null,
+      daysToNcaa,
+      daysToAsean: settingsRow.aseanConfirmed === false ? null : daysToAsean,
+      phaseTag: currentPhase.tag,
+      phaseName: currentPhase.name,
+      loggedWorkoutToday: recentWorkoutLogs.some((l) => l.date === today),
+      loggedSwimToday: recentSwimSessions.some((s) => s.date === today),
+      activeAlertHeadlines: alerts.map((a) => a.title),
+    })
+  );
+
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:grid md:grid-cols-12 md:gap-6 md:items-start">
       <GlassCard className="flex flex-col gap-3 md:col-span-7 md:order-1">
@@ -238,21 +262,28 @@ export default async function HomePage() {
         </div>
       </GlassCard>
 
+      {dailyBrief && (
+        <div className="md:col-span-12 md:order-3">
+          <SectionLabel>Today&apos;s brief</SectionLabel>
+          <GlassCard className="text-subhead text-[var(--rtd-text)] leading-snug">{dailyBrief}</GlassCard>
+        </div>
+      )}
+
       {alerts.length > 0 && (
-        <div className="flex flex-col gap-2 md:col-span-6 md:order-3">
+        <div className="flex flex-col gap-2 md:col-span-6 md:order-4">
           <SectionLabel>Coach</SectionLabel>
           <AlertCardList alerts={alerts} />
         </div>
       )}
 
       {needsAttention.length > 0 && (
-        <div className="md:col-span-6 md:order-4">
+        <div className="md:col-span-6 md:order-5">
           <SectionLabel>Needs attention</SectionLabel>
           <NeedsAttentionList items={needsAttention} />
         </div>
       )}
 
-      <div className="md:col-span-12 md:order-5">
+      <div className="md:col-span-12 md:order-6">
         <SectionLabel>Today · {weekDay.full}</SectionLabel>
         <GlassCard className="flex flex-col gap-3">
           <div>
