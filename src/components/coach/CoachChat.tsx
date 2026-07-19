@@ -63,7 +63,7 @@ export function CoachChat({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-3">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-3" aria-live="polite">
         {messages.length === 0 && (
           <div className="text-subhead text-[var(--rtd-text-tertiary)] text-center py-8">
             Ask about your training, nutrition, or meet readiness -- the coach sees today&apos;s data and your notes.
@@ -116,6 +116,7 @@ export function CoachChat({
             }
           }}
           placeholder="Ask your coach…"
+          aria-label="Message your coach"
           rows={1}
           className="flex-1 min-w-0 rounded-2xl bg-white/[0.06] px-3.5 py-2.5 text-subhead outline-none resize-none focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         />
