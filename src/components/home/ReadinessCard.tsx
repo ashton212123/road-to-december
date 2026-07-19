@@ -21,7 +21,7 @@ export function ReadinessCard({
   signals: { label: string; light: ReadinessLight; detail: string }[];
 }) {
   return (
-    <BentoCard label="Readiness" colSpan={4} rowSpan={2} className="justify-between">
+    <BentoCard label="Readiness" colSpan={4} rowSpan={2} className="justify-between rtd-hero-glow">
       <div className="text-title-1 rtd-display" style={{ color: LIGHT_COLOR[overall] }}>
         {LIGHT_WORD[overall]}
       </div>

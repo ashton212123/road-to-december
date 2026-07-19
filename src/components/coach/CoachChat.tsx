@@ -74,8 +74,8 @@ export function CoachChat({
             key={i}
             className={
               m.role === "user"
-                ? "self-end max-w-[85%] rounded-2xl rounded-br-md bg-[var(--rtd-blue)] text-white px-3.5 py-2.5 text-subhead leading-relaxed whitespace-pre-wrap"
-                : "self-start max-w-[85%] rounded-2xl rounded-bl-md bg-white/[0.06] text-[var(--rtd-text)] px-3.5 py-2.5 text-subhead leading-relaxed whitespace-pre-wrap"
+                ? "self-end max-w-[85%] rounded-[10px] rounded-br-[4px] bg-[var(--rtd-blue)] text-white px-3.5 py-2.5 text-subhead leading-relaxed whitespace-pre-wrap"
+                : "self-start max-w-[85%] rounded-[10px] rounded-bl-[4px] bg-white/[0.06] text-[var(--rtd-text)] px-3.5 py-2.5 text-subhead leading-relaxed whitespace-pre-wrap"
             }
           >
             {m.content || (streaming && i === messages.length - 1 ? "…" : "")}
@@ -118,7 +118,7 @@ export function CoachChat({
           placeholder="Ask your coach…"
           aria-label="Message your coach"
           rows={1}
-          className="flex-1 min-w-0 rounded-2xl bg-white/[0.06] px-3.5 py-2.5 text-subhead outline-none resize-none focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+          className="flex-1 min-w-0 rounded-[8px] bg-white/[0.06] px-3.5 py-2.5 text-subhead outline-none resize-none focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         />
         <Button type="submit" disabled={streaming || !input.trim()} className="shrink-0">
           Send

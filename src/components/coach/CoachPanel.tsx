@@ -43,11 +43,11 @@ export function CoachPanel() {
         aria-label="Open coach"
         className="hidden md:flex fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full items-center justify-center cursor-pointer text-[var(--rtd-purple)] hover:brightness-110 active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         style={{
-          background: "rgba(28,28,30,0.72)",
-          border: "0.5px solid var(--rtd-hairline)",
-          boxShadow: "0 0 24px rgba(191,90,242,0.25), var(--rtd-shadow)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+          background: "rgba(0,0,0,0.5)",
+          border: "1px solid var(--rtd-hairline)",
+          boxShadow: "0 0 24px rgba(129,85,255,0.25), var(--rtd-shadow)",
+          backdropFilter: "blur(var(--rtd-blur))",
+          WebkitBackdropFilter: "blur(var(--rtd-blur))",
         }}
       >
         <IconSparkle />
@@ -67,7 +67,7 @@ export function CoachPanel() {
             className="rtd-glass-blur absolute top-0 right-0 h-full w-[400px] flex flex-col p-4 rtd-fade-in"
             style={{ backgroundColor: "rgba(20,20,22,0.85)", borderLeft: "0.5px solid var(--rtd-hairline)" }}
           >
-            <div className="flex items-center justify-between mb-2 shrink-0">
+            <div className="rtd-hero-glow flex items-center justify-between mb-2 shrink-0 px-1 py-1">
               <div className="flex items-center gap-2">
                 <span className="text-[var(--rtd-purple)]">
                   <IconSparkle />

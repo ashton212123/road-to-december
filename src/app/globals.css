@@ -1,17 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --rtd-bg-radial: radial-gradient(1100px 700px at 50% -8%, #1b1f27 0%, #000000 62%);
-  --rtd-glass-base: #1c1c1e;
-  --rtd-glass-overlay: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.05),
-    rgba(255, 255, 255, 0.015)
-  );
-  --rtd-hairline: rgba(255, 255, 255, 0.07);
-  --rtd-inner-highlight: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
-  --rtd-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  --rtd-blur: 20px;
+  /* DesignCode dark glass: flat translucent black, blurred on desktop only
+     (mobile trades the blur for slightly higher opacity -- same read,
+     without the scroll-jank cost of backdrop-filter on phones). */
+  --rtd-glass-bg-desktop: rgba(0, 0, 0, 0.5);
+  --rtd-glass-bg-mobile: rgba(12, 12, 14, 0.88);
+  --rtd-hairline: rgba(255, 255, 255, 0.1);
+  --rtd-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 30px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.15);
+  --rtd-blur: 10px;
+  --rtd-radius-card: 10px;
+  --rtd-radius-control: 8px;
 
   --rtd-blue: #0a84ff;
   --rtd-cyan: #5ac8fa;
@@ -21,6 +20,13 @@
   --rtd-purple: #bf5af2;
   --rtd-yellow: #ffd60a;
   --rtd-teal: #66d4cf;
+
+  /* DesignCode wallpaper glow palette -- distinct from the domain colors
+     above, used only by .rtd-wallpaper and .rtd-hero-glow. */
+  --rtd-glow-violet: #8155ff;
+  --rtd-glow-cyan: #5fc5ff;
+  --rtd-glow-peach: #ffac89;
+  --rtd-glow-pink: #f262b5;
 
   /* Domain colors -- used consistently everywhere a module's identity shows
      (icon tiles, rings, chart strokes, dots), so the mapping is learned once. */
@@ -32,13 +38,14 @@
   --rtd-domain-school: var(--rtd-yellow);
   --rtd-domain-business: var(--rtd-teal);
 
-  --rtd-text: #f5f5f7;
-  --rtd-text-secondary: rgba(235, 235, 245, 0.78);
-  --rtd-text-tertiary: rgba(235, 235, 245, 0.58);
+  /* DesignCode holds these a couple points higher than its own 70/50 --
+     enough contrast headroom for data-dense text (chart labels, table
+     values) to stay WCAG AA on the flatter, less-opaque card material. */
+  --rtd-text: #fff;
+  --rtd-text-secondary: rgba(255, 255, 255, 0.72);
+  --rtd-text-tertiary: rgba(255, 255, 255, 0.55);
 
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue",
-    Arial, sans-serif;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 }
 
 @theme inline {
@@ -53,7 +60,7 @@
   --color-rtd-text: var(--rtd-text);
   --color-rtd-text-secondary: var(--rtd-text-secondary);
   --color-rtd-text-tertiary: var(--rtd-text-tertiary);
-  --color-rtd-glass: var(--rtd-glass-base);
+  --color-rtd-glass: var(--rtd-glass-bg-desktop);
   --font-sans: var(--font-sans);
 
   /* Apple HIG type scale */
@@ -99,17 +106,46 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Superseded by .rtd-wallpaper (a single fixed layer in the root layout,
+   so the glows read through every card consistently instead of each page
+   painting its own background) -- kept as a layout-only min-height helper
+   so login/not-found's existing markup doesn't need touching. */
 .rtd-app-bg {
-  background: var(--rtd-bg-radial);
   min-height: 100dvh;
 }
 
+/* One fixed full-viewport layer behind everything, painted once in the
+   root layout -- never per-page or per-container, so every card's glass
+   reads through the SAME glow field consistently as you scroll/navigate.
+   Pure radial-gradients, no filter:blur -- GPU-cheap at this size. */
+.rtd-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: #101012;
+  background-image:
+    radial-gradient(1100px 900px at 15% -5%, rgba(129, 85, 255, 0.13), transparent 60%),
+    radial-gradient(1000px 800px at 85% 10%, rgba(95, 197, 255, 0.09), transparent 60%),
+    radial-gradient(900px 800px at 70% 105%, rgba(255, 172, 137, 0.06), transparent 60%),
+    radial-gradient(900px 800px at 10% 90%, rgba(242, 98, 181, 0.05), transparent 60%);
+}
+
+/* DesignCode card material: flat translucent black, blurred on desktop so
+   the wallpaper's glows read through the glass; mobile trades the blur for
+   higher opacity (same read, no backdrop-filter scroll-jank on phones). */
 .rtd-glass {
-  background-color: var(--rtd-glass-base);
-  background-image: var(--rtd-glass-overlay);
-  border: 0.5px solid var(--rtd-hairline);
-  box-shadow: var(--rtd-inner-highlight), var(--rtd-shadow);
-  border-radius: 20px;
+  background-color: var(--rtd-glass-bg-mobile);
+  border: 1px solid var(--rtd-hairline);
+  box-shadow: var(--rtd-shadow);
+  border-radius: var(--rtd-radius-card);
+}
+
+@media (min-width: 768px) {
+  .rtd-glass {
+    background-color: var(--rtd-glass-bg-desktop);
+    -webkit-backdrop-filter: blur(var(--rtd-blur));
+    backdrop-filter: blur(var(--rtd-blur));
+  }
 }
 
 .rtd-glass-blur {
@@ -117,14 +153,82 @@ body {
   backdrop-filter: blur(var(--rtd-blur));
 }
 
-/* .rtd-glass sets background-color/-image directly, which beats Tailwind's
-   layered bg-* utilities in the cascade — lighten via this unlayered hover rule instead. */
 .rtd-glass-interactive {
-  transition: background-image 150ms ease-out;
+  transition: background-color 150ms ease-out;
 }
 
 .rtd-glass-interactive:hover {
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.055));
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Signature move, hero surfaces only (countdown, readiness, session-complete,
+   coach panel header) -- never on ordinary grid cards. A pre-blurred glow
+   layer behind the card via overlapping radial gradients (soft stops do the
+   blurring, no filter needed). Host element needs position:relative. */
+.rtd-hero-glow {
+  position: relative;
+}
+
+.rtd-hero-glow::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  border-radius: 14px;
+  background-image:
+    radial-gradient(60% 80% at 20% 20%, rgba(129, 85, 255, 0.25), transparent 70%),
+    radial-gradient(60% 80% at 80% 30%, rgba(95, 197, 255, 0.2), transparent 70%),
+    radial-gradient(70% 90% at 50% 100%, rgba(255, 172, 137, 0.18), transparent 70%);
+}
+
+/* Primary CTAs only (Start session, Estimate, Save, coach send). */
+.rtd-btn-shiny {
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--rtd-radius-control);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 4px 4px rgba(0, 0, 0, 0.05), 0 10px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .rtd-btn-shiny {
+    -webkit-backdrop-filter: blur(var(--rtd-blur));
+    backdrop-filter: blur(var(--rtd-blur));
+  }
+}
+
+.rtd-btn-shiny::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: calc(var(--rtd-radius-control) + 6px);
+  background-image: linear-gradient(120deg, rgba(129, 85, 255, 0.2), rgba(95, 197, 255, 0.2));
+}
+
+/* Brightest at center, fades to nothing at each end -- replaces flat
+   hairline border-t dividers inside cards and grouped lists. */
+.rtd-divider {
+  height: 1px;
+  background: radial-gradient(50% 100% at 50% 50%, rgba(255, 255, 255, 0.2), transparent);
+  border: none;
+}
+
+/* Same fade, but as a drop-in replacement for Tailwind's divide-y (a
+   pseudo-element per child instead of a border, since border can't do a
+   radial fade) -- apply to the same flex/grid list container. */
+.rtd-divide-y > * {
+  position: relative;
+}
+
+.rtd-divide-y > * + *::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: radial-gradient(50% 100% at 50% 50%, rgba(255, 255, 255, 0.2), transparent);
 }
 
 .rtd-segmented-btn[data-active="true"] {
@@ -200,9 +304,20 @@ body {
   color: var(--rtd-text-tertiary);
 }
 
+/* DesignCode big-number look: semibold (not 800 -- the tighter tracking
+   carries the weight, heavier boldness reads clunky at this tracking).
+   -0.04em is the fixed middle of the spec's -0.03em (32px) to -0.05em
+   (56px) range -- true per-size interpolation needs JS to read the
+   rendered font-size, not worth it for a ~2pt spread. */
 .rtd-display {
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+/* Opt-in tighter tracking for the largest hero numbers (Home's countdown,
+   session-complete stats) where the full -0.05em reads noticeably better. */
+.rtd-display-xl {
+  letter-spacing: -0.05em;
 }
 
 .rtd-nums {

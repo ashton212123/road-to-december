@@ -23,7 +23,7 @@ function formatValue(v: number | null, unit: string, decimals: number): string {
 export function ImprovementMatrix({ rows }: { rows: MatrixRow[] }) {
   return (
     <BentoCard label="Improvement matrix" colSpan={12}>
-      <div className="flex flex-col divide-y divide-white/[0.06]">
+      <div className="flex flex-col rtd-divide-y">
         {rows.map((row) => (
           <a
             key={row.key}

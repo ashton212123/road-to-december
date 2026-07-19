@@ -23,7 +23,7 @@ export function SessionCompleteSummary({
       aria-label="Session complete"
     >
       <GlassCard
-        className="rtd-glass-blur rtd-session-complete flex flex-col items-center gap-3 text-center max-w-sm w-full py-8"
+        className="rtd-glass-blur rtd-session-complete rtd-hero-glow flex flex-col items-center gap-3 text-center max-w-sm w-full py-8"
         style={{ backgroundColor: "rgba(28,28,30,0.72)" }}
       >
         <div

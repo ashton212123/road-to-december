@@ -25,11 +25,11 @@ export function CountdownHero({
   trainingStreak: number;
 }) {
   return (
-    <BentoCard colSpan={8} rowSpan={2} className="justify-between">
+    <BentoCard colSpan={8} rowSpan={2} className="justify-between rtd-hero-glow">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
-          <div className="rtd-display rtd-nums text-large-title mt-1" style={{ fontSize: "clamp(36px, 4vw + 20px, 56px)" }}>
+          <div className="rtd-display rtd-display-xl rtd-nums text-large-title mt-1" style={{ fontSize: "clamp(36px, 4vw + 20px, 56px)" }}>
             <AnimatedNumber value={daysToNcaa} />
           </div>
         </div>

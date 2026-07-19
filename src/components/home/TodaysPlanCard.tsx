@@ -24,7 +24,7 @@ export function TodaysPlanCard({ rows, startHref }: { rows: PlanRow[]; startHref
           <Link
             key={row.key}
             href={row.href}
-            className="flex items-center gap-3 rounded-xl px-2.5 py-2 -mx-1 hover:bg-white/[0.04] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+            className="flex items-center gap-3 rounded-[8px] px-2.5 py-2 -mx-1 hover:bg-white/[0.04] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
           >
             <span
               className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
@@ -46,7 +46,7 @@ export function TodaysPlanCard({ rows, startHref }: { rows: PlanRow[]; startHref
       {startHref && (
         <Link
           href={startHref}
-          className="mt-2 shrink-0 flex items-center justify-center rounded-full bg-[var(--rtd-blue)] text-white text-subhead font-semibold py-2.5 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+          className="rtd-btn-shiny mt-2 shrink-0 flex items-center justify-center text-white text-subhead font-semibold py-2.5 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
         >
           Start session →
         </Link>

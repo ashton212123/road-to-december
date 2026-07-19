@@ -150,7 +150,7 @@ export function ExerciseCard({
       </div>
 
       {progression && (
-        <div className="rounded-xl bg-[var(--rtd-green)]/10 border border-[var(--rtd-green)]/20 px-3 py-2">
+        <div className="rounded-[10px] bg-[var(--rtd-green)]/10 border border-[var(--rtd-green)]/20 px-3 py-2">
           <div className="text-subhead font-semibold text-[var(--rtd-green)]">{progression.headline}</div>
           <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-0.5">{progression.rationale}</div>
         </div>
@@ -186,7 +186,7 @@ export function ExerciseCard({
 
           {restElapsed !== null && (
             <div
-              className="text-center text-footnote rounded-xl py-2"
+              className="text-center text-footnote rounded-[8px] py-2"
               style={{
                 background:
                   restCompare === "under"

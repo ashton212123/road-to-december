@@ -59,7 +59,7 @@ export default async function SchoolPage() {
             {unsubmitted.length === 0 ? (
               <EmptyState title="Nothing outstanding" body="Every assignment is submitted or has no due date yet." />
             ) : (
-              <GlassCard className="flex flex-col divide-y divide-white/[0.06] rtd-stagger">
+              <GlassCard className="flex flex-col rtd-divide-y rtd-stagger">
                 {unsubmitted.map((a) => (
                   <AssignmentRow key={a.id} assignment={a} />
                 ))}
@@ -70,7 +70,7 @@ export default async function SchoolPage() {
           {submitted.length > 0 && (
             <div className="md:col-span-2">
               <SectionLabel>Submitted</SectionLabel>
-              <GlassCard className="flex flex-col divide-y divide-white/[0.06] rtd-stagger">
+              <GlassCard className="flex flex-col rtd-divide-y rtd-stagger">
                 {submitted.map((a) => (
                   <AssignmentRow key={a.id} assignment={a} />
                 ))}

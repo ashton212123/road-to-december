@@ -269,9 +269,9 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={2}
-            className="rounded-lg bg-white/[0.06] px-3 py-2 outline-none resize-none"
+            className="rounded-[8px] bg-white/[0.06] px-3 py-2 outline-none resize-none"
           />
-          <Button variant="secondary" disabled={estimating || !text.trim()} onClick={estimate}>
+          <Button variant="primary" disabled={estimating || !text.trim()} onClick={estimate}>
             {estimating ? (
               <span className="rtd-pulse">Thinking…</span>
             ) : done ? (
@@ -305,7 +305,7 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
           )}
 
           {items.map((row) => (
-            <div key={row.clientId} className="flex flex-col gap-2 bg-white/[0.04] rounded-xl p-2.5">
+            <div key={row.clientId} className="flex flex-col gap-2 bg-white/[0.04] rounded-[10px] p-2.5">
               <div className="flex items-center gap-2">
                 {row.confidence && (
                   <span
@@ -447,7 +447,7 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
           </button>
 
           <div className="flex gap-2">
-            <Button variant="secondary" disabled={saving || items.length === 0} onClick={confirmLog} className="flex-1">
+            <Button variant="primary" disabled={saving || items.length === 0} onClick={confirmLog} className="flex-1">
               Log {items.length} item{items.length === 1 ? "" : "s"}
             </Button>
             <Button variant="ghost" disabled={saving} onClick={() => setItems(null)} className="flex-1">

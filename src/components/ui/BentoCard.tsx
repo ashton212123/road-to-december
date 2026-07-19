@@ -55,7 +55,7 @@ export function BentoCard({
 
   if (href) {
     return (
-      <Link href={href} className="contents focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 rounded-[20px]">
+      <Link href={href} className="contents focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 rounded-[10px]">
         {content}
       </Link>
     );

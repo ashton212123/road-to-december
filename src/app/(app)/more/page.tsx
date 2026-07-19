@@ -23,7 +23,7 @@ export default function MorePage() {
         {LINKS.map((link) => (
           <Link key={link.href} href={link.href}>
             <GlassCard interactive className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/[0.06] flex items-center justify-center text-lg shrink-0">
+              <div className="w-10 h-10 rounded-[8px] bg-white/[0.06] flex items-center justify-center text-lg shrink-0">
                 {link.icon}
               </div>
               <div className="flex-1 min-w-0">

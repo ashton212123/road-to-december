@@ -14,7 +14,7 @@ export default function LoginPage() {
     <div className="flex-1 flex items-center justify-center p-6 rtd-app-bg min-h-dvh">
       <GlassCard className="w-full max-w-sm flex flex-col gap-5 rtd-fade-in">
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[var(--rtd-blue)]/15 flex items-center justify-center text-2xl">
+          <div className="w-14 h-14 rounded-[8px] bg-[var(--rtd-blue)]/15 flex items-center justify-center text-2xl">
             🏊
           </div>
           <h1 className="rtd-display text-title-2">Road to December</h1>
