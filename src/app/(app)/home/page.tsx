@@ -84,6 +84,11 @@ export default async function HomePage() {
     swimTimes,
     mainLiftLogs,
     weekFoodLogs,
+    // A ~14-query Promise.all batch legitimately needs more than the 8s
+    // default (designed for single queries) -- that default was causing
+    // withRetry to treat a merely-slow-but-succeeding batch as failed and
+    // rerun all 14 queries from scratch, up to 3x, which is what actually
+    // produced the "DB call timed out" cascade under load, not a real hang.
   } = await withRetry(async () => {
     const canvas = await getCanvasSummary({ sync: false });
 
@@ -146,7 +151,7 @@ export default async function HomePage() {
       mainLiftLogs,
       weekFoodLogs,
     };
-  });
+  }, { timeoutMs: 15000 });
 
   const criticalIds = new Set(getCriticalAssignments(canvas.assignments).map((a) => a.id));
   const urgentAssignments = getUrgentAssignments(canvas.assignments)

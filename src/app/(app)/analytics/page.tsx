@@ -75,7 +75,7 @@ export default async function AnalyticsPage({
       getSleepLogs(180),
       getSorenessLogs(30),
       getWaterLogsSince(since),
-    ])
+    ]), { timeoutMs: 15000 }
   );
 
   // Strength: best-set e1RM per main lift per date it was logged.
