@@ -1,36 +1,34 @@
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { CoachChat } from "@/components/coach/CoachChat";
+import { getRecentCoachMessages } from "@/lib/coach/messages";
+import { getCoachAppContext } from "@/lib/coach/context";
+import { withRetry } from "@/lib/db/withRetry";
 
-export default function CoachAiPage() {
+function buildQuickPrompts(ctx: Awaited<ReturnType<typeof getCoachAppContext>>): string[] {
+  const prompts: string[] = [];
+  if (ctx.todaySessionTitle) prompts.push(`What should I focus on in today's ${ctx.todaySessionTitle}?`);
+  const nextMeet = ctx.upcomingMeets[0];
+  if (nextMeet) {
+    const worst = [...nextMeet.events].sort((a, b) => (b.gapToTargetMs ?? 0) - (a.gapToTargetMs ?? 0))[0];
+    if (worst) prompts.push(`Am I on track for ${worst.event} at ${nextMeet.name}?`);
+  }
+  prompts.push(`How's my nutrition looking today?`);
+  prompts.push(`How's my training streak and recovery?`);
+  return prompts.slice(0, 4);
+}
+
+export default async function CoachAiPage() {
+  const [initialMessages, appContext] = await withRetry(() =>
+    Promise.all([getRecentCoachMessages(20), getCoachAppContext()])
+  );
+
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
-      <SectionLabel>Coach AI</SectionLabel>
-      <GlassCard className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--rtd-green)]" />
-          <span className="text-body font-semibold">MCP server live at /api/mcp</span>
-        </div>
-        <p className="text-subhead text-[var(--rtd-text-secondary)] leading-relaxed">
-          This app exposes a remote MCP server so your own Claude subscription can act as its AI
-          layer — no API key lives in this codebase. Add it to claude.ai as a custom connector to
-          let Claude read your dashboard, log food/water/sleep/weigh-ins/sets, and log swim times
-          or CMJ tests, all in chat.
-        </p>
-        <ol className="text-subhead text-[var(--rtd-text-secondary)] flex flex-col gap-1.5 list-decimal list-inside">
-          <li>In claude.ai, go to Settings → Connectors → Add custom connector.</li>
-          <li>
-            URL: <code className="text-[var(--rtd-cyan)]">https://your-deployment.vercel.app/api/mcp</code>
-          </li>
-          <li>
-            Auth header: <code className="text-[var(--rtd-cyan)]">Authorization: Bearer &lt;MCP_BEARER_TOKEN&gt;</code> —
-            the same value you set in this app&apos;s environment variables.
-          </li>
-          <li>Save, then ask Claude to check your dashboard or log something.</li>
-        </ol>
-        <p className="text-footnote text-[var(--rtd-text-tertiary)]">
-          Full setup steps, including how to generate the bearer token, are in DEPLOY.md.
-        </p>
-      </GlassCard>
+    <div className="flex flex-col gap-3 rtd-fade-in pt-1 h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-6rem)] md:max-w-2xl md:mx-auto">
+      <SectionLabel>Coach</SectionLabel>
+      <CoachChat
+        initialMessages={initialMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))}
+        quickPrompts={buildQuickPrompts(appContext)}
+      />
     </div>
   );
 }

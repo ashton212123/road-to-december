@@ -4,15 +4,14 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { IconChevronRight } from "@/components/ui/icons";
 import { LogoutButton } from "@/components/more/LogoutButton";
 
-// Ordered by frequency of use: Recovery is a daily-use screen for a
-// training app, School and Business are checked periodically, Settings
-// and Coach AI are occasional.
+// Ordered by frequency of use: Coach and Recovery are daily-use screens,
+// School and Business are checked periodically, Settings is occasional.
 const LINKS = [
+  { href: "/more/coach-ai", label: "Coach", desc: "Chat with your AI coach about training, food, meets", icon: "🤖" },
   { href: "/more/recovery", label: "Recovery", desc: "Sleep, soreness, readiness lights", icon: "🌙" },
   { href: "/school", label: "School", desc: "Courses, assignments, Canvas sync", icon: "🎓" },
   { href: "/business", label: "Business", desc: "Ventures, income, expenses, tasks", icon: "💼" },
-  { href: "/more/settings", label: "Settings", desc: "ASEAN toggle, water target, data export", icon: "⚙️" },
-  { href: "/more/coach-ai", label: "Coach AI", desc: "Connect this app to your Claude account", icon: "🤖" },
+  { href: "/more/settings", label: "Settings", desc: "ASEAN toggle, water target, MCP connector", icon: "⚙️" },
 ];
 
 export default function MorePage() {

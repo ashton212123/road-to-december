@@ -307,6 +307,20 @@ export const coachMessages = pgTable("coach_messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Synced copy of an explicit include-list of Obsidian vault folders, pushed
+// by the local `npm run sync:vault` script (the server can't reach the
+// user's filesystem). One row per note -- the vault is small enough that
+// whole-file storage plus keyword/recency retrieval is the right scale here,
+// no embeddings infra needed.
+export const knowledge = pgTable("knowledge", {
+  path: text("path").primaryKey(), // vault-relative path, e.g. "01 Projects/Road to December.md"
+  folder: text("folder").notNull(), // top-level included folder, e.g. "01 Projects"
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  modifiedAt: timestamp("modified_at", { withTimezone: true }).notNull(),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Phase = typeof phases.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
@@ -332,3 +346,4 @@ export type MeetEvent = typeof meetEvents.$inferSelect;
 export type SwimSession = typeof swimSessions.$inferSelect;
 export type DailyBrief = typeof dailyBriefs.$inferSelect;
 export type CoachMessage = typeof coachMessages.$inferSelect;
+export type KnowledgeNote = typeof knowledge.$inferSelect;
