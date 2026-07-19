@@ -4,10 +4,11 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { IconChevronRight } from "@/components/ui/icons";
 import { LogoutButton } from "@/components/more/LogoutButton";
 
-// Ordered by frequency of use: Coach and Recovery are daily-use screens,
-// School and Business are checked periodically, Settings is occasional.
+// Coach has its own tab/floating panel now (see AppLayout) -- this list is
+// reached via Home's avatar menu or More row on mobile, and the sidebar on
+// desktop. Ordered by frequency of use: Recovery is daily, School/Business
+// are periodic, Settings is occasional.
 const LINKS = [
-  { href: "/more/coach-ai", label: "Coach", desc: "Chat with your AI coach about training, food, meets", icon: "🤖" },
   { href: "/more/recovery", label: "Recovery", desc: "Sleep, soreness, readiness lights", icon: "🌙" },
   { href: "/school", label: "School", desc: "Courses, assignments, Canvas sync", icon: "🎓" },
   { href: "/business", label: "Business", desc: "Ventures, income, expenses, tasks", icon: "💼" },

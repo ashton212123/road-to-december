@@ -1,34 +1,35 @@
 import { TabBar, SideBar, type TabItem } from "@/components/ui/TabBar";
-import { IconHome, IconTrain, IconFuel, IconAnalytics, IconBusiness, IconSchool, IconMore } from "@/components/ui/icons";
+import { CoachPanel, OPEN_COACH_EVENT } from "@/components/coach/CoachPanel";
+import { IconHome, IconTrain, IconFuel, IconAnalytics, IconBusiness, IconSchool, IconMore, IconSparkle } from "@/components/ui/icons";
 
 // Every screen under here reads live, personal, auth-gated data (today's
 // date, logs, alerts) — never statically prerender it at build time.
 export const dynamic = "force-dynamic";
 
-// Desktop sidebar keeps all seven top-level sections.
+// Desktop sidebar keeps all seven top-level sections, plus Coach -- clicking
+// it opens the same slide-over panel as the floating button (CoachPanel),
+// not a navigation, since it's meant as instant access from any page.
 const SIDEBAR_ITEMS: TabItem[] = [
   { href: "/home", label: "Home", icon: <IconHome /> },
   { href: "/train", label: "Train", icon: <IconTrain /> },
   { href: "/fuel", label: "Fuel", icon: <IconFuel /> },
   { href: "/analytics", label: "Analytics", icon: <IconAnalytics /> },
+  { href: "#coach", label: "Coach", icon: <IconSparkle />, dispatchEvent: OPEN_COACH_EVENT },
   { href: "/business", label: "Business", icon: <IconBusiness /> },
   { href: "/school", label: "School", icon: <IconSchool /> },
   { href: "/more", label: "More", icon: <IconMore /> },
 ];
 
-// Mobile bottom bar stays within Apple's 5-tab guidance — Business and
-// School move into the More screen as rows instead (routes are unchanged).
+// Mobile bottom bar: Coach takes the center slot (full-screen chat at
+// /more/coach-ai) in place of the old "More" tab. Business/School/Recovery/
+// Settings/logout move to Home's avatar menu + More row instead (routes
+// unchanged, just reached differently).
 const TAB_BAR_ITEMS: TabItem[] = [
   { href: "/home", label: "Home", icon: <IconHome /> },
   { href: "/train", label: "Train", icon: <IconTrain /> },
+  { href: "/more/coach-ai", label: "Coach", icon: <IconSparkle /> },
   { href: "/fuel", label: "Fuel", icon: <IconFuel /> },
   { href: "/analytics", label: "Analytics", icon: <IconAnalytics /> },
-  {
-    href: "/more",
-    label: "More",
-    icon: <IconMore />,
-    matchPrefixes: ["/more", "/business", "/school"],
-  },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <TabBar items={TAB_BAR_ITEMS} />
+      <CoachPanel />
     </div>
   );
 }

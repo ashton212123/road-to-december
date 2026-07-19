@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
+import { MoreMenuButton } from "@/components/home/MoreMenuButton";
 import { CountdownHero } from "@/components/home/CountdownHero";
 import { ReadinessCard } from "@/components/home/ReadinessCard";
 import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
@@ -50,6 +52,13 @@ const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   sat: 5,
   sun: 6,
 };
+
+const MORE_ROW_ITEMS = [
+  { href: "/more/recovery", label: "Recovery", icon: "🌙" },
+  { href: "/school", label: "School", icon: "🎓" },
+  { href: "/business", label: "Business", icon: "💼" },
+  { href: "/more/settings", label: "Settings", icon: "⚙️" },
+];
 
 export default async function HomePage() {
   const today = todayManilaISO();
@@ -304,6 +313,11 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-3 rtd-fade-in pt-1">
+      <div className="flex items-center justify-between md:hidden">
+        <span className="text-title-3 font-semibold text-[var(--rtd-text)]">Home</span>
+        <MoreMenuButton />
+      </div>
+
       <AlertCardList alerts={alerts} />
 
       <div className="rtd-bento-grid">
@@ -430,6 +444,19 @@ export default async function HomePage() {
         <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
         <TrainingLoadCard weeks={weeklyTotals} takeaway={trainingLoadTakeaway} />
         <RecentPRsCard prs={recentPRs} />
+
+        <div className="grid grid-cols-4 gap-2 mt-1">
+          {MORE_ROW_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rtd-glass flex flex-col items-center gap-1 py-3 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+            >
+              <span className="text-lg" aria-hidden="true">{item.icon}</span>
+              <span className="text-caption text-[var(--rtd-text-secondary)]">{item.label}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

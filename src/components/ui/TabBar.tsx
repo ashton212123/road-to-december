@@ -10,6 +10,8 @@ export type TabItem = {
   icon: ReactNode;
   /** Extra path prefixes (besides `href`) that should also count as active — e.g. routes nested under a "More" tab. Plain strings, not a function, since this crosses the server/client boundary. */
   matchPrefixes?: string[];
+  /** When set, SideBar renders a button that dispatches this DOM event name instead of a Link -- used for "Coach" opening the slide-over panel rather than navigating. */
+  dispatchEvent?: string;
 };
 
 function isActive(item: TabItem, pathname: string) {
@@ -67,16 +69,27 @@ export function SideBar({ items }: { items: TabItem[] }) {
     >
       {items.map((item) => {
         const active = isActive(item, pathname);
+        const sharedClassName =
+          "flex items-center gap-3 min-h-11 px-3 py-2.5 rounded-xl text-subhead font-medium cursor-pointer transition-colors duration-150 ease-out hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2";
+        const sharedStyle = { background: active ? "rgba(10,132,255,0.14)" : undefined, color: active ? "var(--rtd-blue)" : "var(--rtd-text-secondary)" };
+
+        if (item.dispatchEvent) {
+          return (
+            <button
+              key={item.href}
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent(item.dispatchEvent!))}
+              className={sharedClassName}
+              style={sharedStyle}
+            >
+              <span className="w-5 h-5 flex items-center justify-center">{item.icon}</span>
+              {item.label}
+            </button>
+          );
+        }
+
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-3 min-h-11 px-3 py-2.5 rounded-xl text-subhead font-medium cursor-pointer transition-colors duration-150 ease-out hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-            style={{
-              background: active ? "rgba(10,132,255,0.14)" : undefined,
-              color: active ? "var(--rtd-blue)" : "var(--rtd-text-secondary)",
-            }}
-          >
+          <Link key={item.href} href={item.href} className={sharedClassName} style={sharedStyle}>
             <span className="w-5 h-5 flex items-center justify-center">{item.icon}</span>
             {item.label}
           </Link>
