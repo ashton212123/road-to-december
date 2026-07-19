@@ -285,6 +285,21 @@ export const dailyBriefs = pgTable("daily_briefs", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Generic per-day cache for AI-generated one-liners keyed by a feature name
+// (currently just "strength-plateau") so a page never re-costs a Groq call
+// on every load, and future AI takeaways reuse the same table.
+export const aiTakeaways = pgTable(
+  "ai_takeaways",
+  {
+    id: serial("id").primaryKey(),
+    date: date("date").notNull(),
+    key: text("key").notNull(),
+    message: text("message").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("ai_takeaways_date_key_idx").on(table.date, table.key)]
+);
+
 export const coachMessages = pgTable("coach_messages", {
   id: serial("id").primaryKey(),
   role: text("role").notNull(), // 'user' | 'assistant'

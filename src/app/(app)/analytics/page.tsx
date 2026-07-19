@@ -17,6 +17,8 @@ import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
 import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/tonnage";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { withRetry } from "@/lib/db/withRetry";
+import { loadTakeaway, powerTakeaway, bodyweightTakeaway, swimTakeaway } from "@/lib/analytics/takeaways";
+import { getStrengthTakeaway } from "@/lib/coach/strengthTakeaway";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
@@ -108,11 +110,21 @@ export default async function AnalyticsPage() {
   const CANONICAL_EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"];
   const allEventNames = [...new Set([...CANONICAL_EVENTS, ...swimTimes.map((s) => s.event)])];
 
+  const e1rmByLiftObj = Object.fromEntries(e1rmByLift);
+  const takeaways = {
+    strength: await withRetry(() => getStrengthTakeaway(today, e1rmByLiftObj)),
+    load: loadTakeaway(acwr),
+    power: powerTakeaway(cmjSeries, broadJumpSeries),
+    bodyweight: bodyweightTakeaway(rollingAvg),
+    swim: swimTakeaway(meetsWithReadiness, today),
+  };
+
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
       <SectionLabel>Analytics</SectionLabel>
       <AnalyticsView
-        e1rmByLift={Object.fromEntries(e1rmByLift)}
+        takeaways={takeaways}
+        e1rmByLift={e1rmByLiftObj}
         liftTargets={MAIN_LIFT_TARGETS}
         tonnage={tonnage}
         hardSets={hardSets}

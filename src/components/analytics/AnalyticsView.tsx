@@ -14,6 +14,7 @@ import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
 type Tab = "strength" | "load" | "power" | "bodyweight" | "swim";
 
 export function AnalyticsView(props: {
+  takeaways: Record<Tab, string | null>;
   e1rmByLift: Record<string, { date: string; e1rm: number }[]>;
   liftTargets: Record<string, { label: string; goalKg: number }>;
   tonnage: TonnageRow[];
@@ -60,6 +61,9 @@ export function AnalyticsView(props: {
           { value: "swim", label: "Swim" },
         ]}
       />
+      {props.takeaways[tab] && (
+        <div className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways[tab]}</div>
+      )}
       {tab === "strength" && (
         <StrengthSection e1rmByLift={props.e1rmByLift} liftTargets={props.liftTargets} tonnage={props.tonnage} hardSets={props.hardSets} />
       )}
