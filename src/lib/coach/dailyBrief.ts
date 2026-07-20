@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { dailyBriefs } from "@/lib/db/schema";
 import { callGroqChat } from "@/lib/ai/groq";
+import { getAthleteModel, refreshAthleteModel } from "@/lib/coach/athleteModel";
 
 export type DailyBriefContext = {
   today: string;
@@ -60,10 +61,13 @@ function buildUserContent(ctx: DailyBriefContext): string {
   });
 }
 
-async function generateDailyBrief(ctx: DailyBriefContext): Promise<string | null> {
+async function generateDailyBrief(ctx: DailyBriefContext, athleteModel: string | null): Promise<string | null> {
+  const systemContent = [SYSTEM_PROMPT, athleteModel ? `ATHLETE MODEL (persistent):\n${athleteModel}` : ""]
+    .filter(Boolean)
+    .join("\n\n");
   const content = await callGroqChat(
     [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemContent },
       { role: "user", content: buildUserContent(ctx) },
     ],
     { temperature: 0.6 }
@@ -73,14 +77,20 @@ async function generateDailyBrief(ctx: DailyBriefContext): Promise<string | null
   return trimmed.length > 0 ? trimmed.slice(0, 300) : null;
 }
 
-/** Returns today's cached brief if one exists, otherwise generates and persists one. Returns null if Groq is unavailable or fails -- callers render nothing rather than a broken state. */
+/** Returns today's cached brief if one exists, otherwise generates and persists one. Returns null if Groq is unavailable or fails -- callers render nothing rather than a broken state.
+ *
+ * Piggybacks the athlete-model refresh on this same "first request of the
+ * day" gate (the `cached.length > 0` early return above) so it runs at
+ * most once/day without needing its own separate cache check. */
 export async function getDailyBrief(ctx: DailyBriefContext): Promise<string | null> {
   const cached = await db.select().from(dailyBriefs).where(eq(dailyBriefs.date, ctx.today)).limit(1);
   if (cached.length > 0) return cached[0].message;
 
-  const generated = await generateDailyBrief(ctx);
+  const athleteModel = await getAthleteModel();
+  const generated = await generateDailyBrief(ctx, athleteModel);
   if (!generated) return null;
 
   await db.insert(dailyBriefs).values({ date: ctx.today, message: generated }).onConflictDoNothing();
+  await refreshAthleteModel(ctx.today, athleteModel, buildUserContent(ctx));
   return generated;
 }

@@ -9,7 +9,6 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 
 - [ ] **Liquid-glow color pass, app-wide**: no flat/static accent fills — rings become conic **gradients with soft outer glow** (fuel ring first), chart lines get gradient stroke + glowing endpoint dots, active states get gradient tints. Keep the perf rules: no backdrop-filter on grid cards, transform/opacity transitions only.
 - [ ] **Fitonist-style desktop Home** (mobile keeps the compact stack): per-card period toggles, month calendar card with training-day dots, bubble-style macro/age-range-like breakdown for fuel, glowing curve charts. Reverse-engineer layout from the reference, adapt to RTD's data.
-- [ ] **Coach memory (the "Hermes memory" ask, built into the app)**: persistent athlete-memory the coach reads and updates on every chat/brief — goals, injuries, preferences, patterns it noticed. Injected into the system prompt; visible/editable in Settings. (LOOP_PHASE2_PROMPT.md P6 — reuses existing ai_takeaways table, no schema change.)
 - [ ] **Model provider**: evaluate Nous Portal API (Hermes models, free tier) as the coach's LLM alongside/instead of Groq; keep whichever answers better, with fallback. No Telegram anywhere.
 - [ ] Self-host Inter font (next/font/google needs Google reachable at build time — one flaky network = failed deploy).
 
@@ -21,8 +20,11 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] Lighthouse mobile pass on /home and /analytics: performance ≥ 90; fix the top offender if below.
 - [ ] Empty states audit: every empty card app-wide has a CTA that routes to where the data gets logged.
 - [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
+- [ ] Coach memory visible/editable in Settings: the athlete model (iteration 13) persists and is injected into chat/brief, but there's no UI to read or correct it yet — surface the latest model text on /more/settings with a way to fix a wrong fact.
 
 ## Done
+
+- [x] Persistent coach memory (iteration 13, the "Hermes memory" ask): a durable athlete model (soreness patterns, exercise preferences, schedule constraints, nutrition habits, injury history, motivators) now persists via the existing `ai_takeaways` table (key `athlete-model`, no schema change) and refreshes once/day, piggybacked on the daily brief's first-generation-of-the-day gate. Injected as an `ATHLETE MODEL (persistent):` section into both the coach chat's system prompt (`lib/coach/context.ts` → `route.ts`) and the daily brief's system prompt (`lib/coach/dailyBrief.ts`). Groq/DB failures keep the previous model and never block the brief. No Telegram, no schema migration.
 
 - [x] Typography scale + PWA hygiene (iteration 12): Home hero's countdown number and readiness word now use the shared `.rtd-big-num` scale (34px→44px) instead of ad-hoc clamp()/text-large-title sizing; StatCard's headline number steps up from 32px to 44px on desktop (mobile stays 28px per V4 density). PWA audit found everything already correct on inspection — manifest already had 192+512 maskable icons, `theme_color`/`background_color` both `#000000`, root layout's Viewport API already emitted the `<meta name="theme-color">` tag, `/offline` already existed and worked — so the only change needed was adding `/offline` to smoke.mjs's permanent route list as a regression guard.
 

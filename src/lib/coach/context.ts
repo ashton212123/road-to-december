@@ -16,6 +16,7 @@ import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
 import { computeConsistencyPct } from "@/lib/analytics/streak";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { addDaysISO } from "@/lib/time";
+import { getAthleteModel } from "@/lib/coach/athleteModel";
 
 const KNOWLEDGE_STOPWORDS = new Set(["this", "that", "with", "have", "what", "when", "your", "about", "from", "just"]);
 
@@ -50,7 +51,7 @@ export async function getCoachAppContext() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [allPhases, latestWeighIn, todaysFood, todaysWater, settingsRow, recentWorkoutLogs, meetsWithEvents, swimTimes] =
+  const [allPhases, latestWeighIn, todaysFood, todaysWater, settingsRow, recentWorkoutLogs, meetsWithEvents, swimTimes, athleteModel] =
     await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
@@ -60,6 +61,7 @@ export async function getCoachAppContext() {
       getWorkoutLogsSince(addDaysISO(today, -150)),
       getAllMeetsWithEvents(),
       getSwimTimes(50),
+      getAthleteModel(),
     ]);
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
@@ -92,6 +94,7 @@ export async function getCoachAppContext() {
 
   return {
     today,
+    athleteModel,
     phase: currentPhase ? `${currentPhase.tag} · ${currentPhase.name}` : null,
     todaySessionTitle: todaySession?.title ?? null,
     consistencyPct: consistency.pct,

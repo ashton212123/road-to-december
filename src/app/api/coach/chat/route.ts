@@ -26,9 +26,12 @@ export async function POST(req: NextRequest) {
     getRecentCoachMessages(12),
   ]);
 
+  const { athleteModel, ...liveContext } = appContext;
+
   const systemContent = [
     SYSTEM_PROMPT,
-    `Today's app context (JSON): ${JSON.stringify(appContext)}`,
+    athleteModel ? `ATHLETE MODEL (persistent):\n${athleteModel}` : "",
+    `Today's app context (JSON): ${JSON.stringify(liveContext)}`,
     notes.length > 0
       ? `Relevant notes from the athlete's vault:\n${notes.map((n) => `### ${n.title}\n${n.content.slice(0, 1500)}`).join("\n\n")}`
       : "",
