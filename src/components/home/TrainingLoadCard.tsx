@@ -7,15 +7,17 @@ export function TrainingLoadCard({
   thisWeekDaily,
   lastWeekDaily,
   takeaway,
+  className,
 }: {
   thisWeekDaily: (number | null)[];
   lastWeekDaily: (number | null)[];
   takeaway: string | null;
+  className?: string;
 }) {
   const hasAnyData = thisWeekDaily.some((v) => v !== null) || lastWeekDaily.some((v) => v !== null);
 
   return (
-    <BentoCard label="Training load" colSpan={4} rowSpan={2}>
+    <BentoCard label="Training load" colSpan={4} rowSpan={2} className={className}>
       {!hasAnyData ? (
         <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
           <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />

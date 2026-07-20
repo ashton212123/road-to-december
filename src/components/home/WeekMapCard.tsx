@@ -10,9 +10,17 @@ const CELL_COLOR: Record<string, string> = {
   excused: "rgba(255,255,255,0.05)",
 };
 
-export function WeekMapCard({ days, rows }: { days: { iso: string; short: string }[]; rows: WeekMapRow[] }) {
+export function WeekMapCard({
+  days,
+  rows,
+  className,
+}: {
+  days: { iso: string; short: string }[];
+  rows: WeekMapRow[];
+  className?: string;
+}) {
   return (
-    <BentoCard label="Week map" colSpan={4} rowSpan={2}>
+    <BentoCard label="Week map" colSpan={4} rowSpan={2} className={className}>
       <div className="grid gap-y-1.5" style={{ gridTemplateColumns: "44px repeat(7, 1fr) 32px" }}>
         <div />
         {days.map((d) => (

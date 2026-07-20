@@ -13,7 +13,6 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] **Model provider**: evaluate Nous Portal API (Hermes models, free tier) as the coach's LLM alongside/instead of Groq; keep whichever answers better, with fallback. No Telegram anywhere.
 - [ ] Self-host Inter font (next/font/google needs Google reachable at build time — one flaky network = failed deploy).
 
-- [ ] Home renders every module twice (desktop bento grid + mobile stack both in DOM, CSS-hides one). Double hydration cost on phones. Restructure so each module renders once with responsive classes, or split server-side.
 - [ ] Verify every V4 phase actually shipped (P1–P6 acceptance bars in REVAMP_V4_PROMPT.md); create one backlog item per gap found instead of fixing inline.
 - [ ] Coach panel: confirm chat history persists across sessions and the panel restores scroll position; fix if not.
 - [ ] Fuel: meal timeline rows — swipe/press delete affordance on mobile (currently only ✕ on desktop hover, if any).
@@ -25,6 +24,8 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
 
 ## Done
+
+- [x] Home single render (iteration 11): merged the desktop 12-col bento grid and the mobile stack into one `.rtd-home-grid` container (flex-column below md, the same 12-col grid at md+) so every module renders exactly once instead of twice with one copy CSS-hidden. Visual order differs by breakpoint (fuel/stat cluster sits mid-sequence on mobile, near the top on desktop) so every child got explicit `order-N md:order-M` classes rather than relying on default/tied ordering. Fuel+Bodyweight+Consistency share one wrapper (`grid grid-cols-2 gap-2.5 md:contents`) so they're a compact 2-col cluster on mobile and three independent 12-col-grid items on desktop. MonthCalendarCard is `hidden md:flex` (desktop-only, as before — it never had a mobile equivalent). 6 card components (HomeHeroBand, MonthCalendarCard, TodaysPlanCard, CoachBriefCard, WeekMapCard, TrainingLoadCard, RecentPRsCard) gained a `className` passthrough prop to carry the order classes.
 
 - [x] Improvement matrix trailing windows (iteration 10, the Monday-morning fix): current/previous/delta/progress/needsDataHint now compare a trailing N-day window ending today (7 for week, 28 for month) against the equal-length window before it, instead of calendar-period-to-date. A Friday session now counts on the following Monday. Sparkline/dot history unchanged (still calendar-period-aligned via periodStarts, still respects the offset stepper). Card label now reads "Improvement matrix · last 7/28 days vs previous".
 

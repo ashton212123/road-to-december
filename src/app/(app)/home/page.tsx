@@ -386,7 +386,16 @@ export default async function HomePage() {
 
       <AlertCardList alerts={alerts} />
 
-      <div className="rtd-bento-grid">
+      {/* Every module renders exactly once. Mobile order (order-N) and
+          desktop order (md:order-N) are two independent sequences declared
+          explicitly on every child -- see the two lists below -- rather than
+          left to fall back on default/tied ordering, since the fuel/stat
+          cluster sits in the MIDDLE of the mobile sequence but near the TOP
+          of the desktop one; a partial override would place it wrong on one
+          side.
+          Mobile:  Hero(1) Plan(2) Brief(3) FuelCluster(4) Needs(5) WeekMap(6) Load(7) PRs(8)
+          Desktop: Hero(1) Calendar(2) FuelCluster(3) Plan(4) Brief(5) Needs(6) WeekMap(7) Load(8) PRs(9) */}
+      <div className="rtd-home-grid">
         <HomeHeroBand
           daysToNcaa={daysToNcaa}
           daysToAsean={daysToAsean}
@@ -400,86 +409,35 @@ export default async function HomePage() {
           readinessOverall={readinessOverall}
           readinessSignals={readinessSignals}
           actionLine={readinessActionLineText}
+          className="order-1 md:order-1"
         />
         <MonthCalendarCard
           today={today}
           gymDates={recentWorkoutLogs.map((l) => l.date)}
           swimDates={recentSwimSessions.map((s) => s.date)}
+          className="hidden md:flex md:order-2"
         />
 
-        <FuelRingCard
-          kcalToday={kcalToday}
-          kcalTargetMid={kcalTarget.mid}
-          proteinToday={proteinToday}
-          proteinTargetG={proteinTarget.mid}
-          carbsToday={carbsToday}
-          carbsTargetG={carbsFatTarget.carbsG}
-          fatToday={fatToday}
-          fatTargetG={carbsFatTarget.fatG}
-          waterMl={waterToday}
-          waterTargetMl={settingsRow.waterTargetMl}
-          className="col-span-6 row-span-2"
-        />
-        <StatCard
-          label="Bodyweight (7d)"
-          numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
-          decimals={1}
-          suffix=" kg"
-          domainColor="var(--rtd-cyan)"
-          deltaPct={weightTrendPct}
-          goodDirection="up"
-          sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
-          className="col-span-3 row-span-2"
-        />
-        <StatCard
-          label="Consistency"
-          value={consistency.pct !== null ? `${consistency.pct}%` : "—"}
-          domainColor="var(--rtd-blue)"
-          icon={<IconTrain />}
-          sub={consistency.pct !== null ? `${consistency.done}/${consistency.planned} · 4wk` : "no data yet"}
-          className="col-span-3 row-span-2"
-        />
-
-        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} phaseId={todaySession ? currentPhase.id : null} todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []} />
-        <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
-        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full" />
-
-        <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
-        <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
-        <RecentPRsCard prs={recentPRs} />
-      </div>
-
-      {/* Mobile: single-column stack, same modules, spec's priority order. */}
-      <div className="flex flex-col gap-2.5 md:hidden">
-        <HomeHeroBand
-          daysToNcaa={daysToNcaa}
-          daysToAsean={daysToAsean}
-          aseanLabel={aseanLabel}
-          aseanDateLabel={aseanDateLabel}
-          aseanConfirmed={settingsRow.aseanConfirmed}
-          seasonPct={seasonPct}
-          phaseTag={currentPhase.tag}
-          phaseName={currentPhase.name}
-          weekNumber={weekNumber}
-          readinessOverall={readinessOverall}
-          readinessSignals={readinessSignals}
-          actionLine={readinessActionLineText}
-        />
-        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} phaseId={todaySession ? currentPhase.id : null} todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []} />
-        <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
-        <FuelRingCard
-          kcalToday={kcalToday}
-          kcalTargetMid={kcalTarget.mid}
-          proteinToday={proteinToday}
-          proteinTargetG={proteinTarget.mid}
-          carbsToday={carbsToday}
-          carbsTargetG={carbsFatTarget.carbsG}
-          fatToday={fatToday}
-          fatTargetG={carbsFatTarget.fatG}
-          waterMl={waterToday}
-          waterTargetMl={settingsRow.waterTargetMl}
-        />
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* FuelRingCard + the two stat tiles share one wrapper so they can
+            be a compact 2-col cluster on mobile (Fuel spans both cols,
+            stats split the row below) while dissolving via md:contents on
+            desktop so each keeps its own independent col-span in the 12-col
+            grid. display:contents makes the WRAPPER's own order inert at
+            desktop, so md:order-3 has to live on each child individually. */}
+        <div className="grid grid-cols-2 gap-2.5 order-4 md:contents">
+          <FuelRingCard
+            kcalToday={kcalToday}
+            kcalTargetMid={kcalTarget.mid}
+            proteinToday={proteinToday}
+            proteinTargetG={proteinTarget.mid}
+            carbsToday={carbsToday}
+            carbsTargetG={carbsFatTarget.carbsG}
+            fatToday={fatToday}
+            fatTargetG={carbsFatTarget.fatG}
+            waterMl={waterToday}
+            waterTargetMl={settingsRow.waterTargetMl}
+            className="col-span-2 md:col-span-6 md:row-span-2 md:order-3"
+          />
           <StatCard
             label="Bodyweight (7d)"
             numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
@@ -488,6 +446,8 @@ export default async function HomePage() {
             domainColor="var(--rtd-cyan)"
             deltaPct={weightTrendPct}
             goodDirection="up"
+            sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
+            className="md:col-span-3 md:row-span-2 md:order-3"
           />
           <StatCard
             label="Consistency"
@@ -495,25 +455,47 @@ export default async function HomePage() {
             domainColor="var(--rtd-blue)"
             icon={<IconTrain />}
             sub={consistency.pct !== null ? `${consistency.done}/${consistency.planned} · 4wk` : "no data yet"}
+            className="md:col-span-3 md:row-span-2 md:order-3"
           />
         </div>
-        <NeedsAttentionList items={needsAttention} />
-        <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
-        <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
-        <RecentPRsCard prs={recentPRs} />
 
-        <div className="grid grid-cols-5 gap-2 mt-1">
-          {MORE_ROW_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rtd-glass flex flex-col items-center gap-1 py-3 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
-            >
-              <span className="text-lg" aria-hidden="true">{item.icon}</span>
-              <span className="text-caption text-[var(--rtd-text-secondary)]">{item.label}</span>
-            </Link>
-          ))}
-        </div>
+        <TodaysPlanCard
+          rows={planRows}
+          startHref={startHref}
+          tomorrow={tomorrowPreview}
+          phaseId={todaySession ? currentPhase.id : null}
+          todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
+          className="order-2 md:order-4"
+        />
+        <CoachBriefCard
+          brief={dailyBrief}
+          bullets={coachBriefBullets}
+          followUps={followUps}
+          className="order-3 md:order-5"
+        />
+        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full order-5 md:order-6" />
+
+        <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="order-6 md:order-7" />
+        <TrainingLoadCard
+          thisWeekDaily={thisWeekDaily}
+          lastWeekDaily={lastWeekDaily}
+          takeaway={trainingLoadTakeaway}
+          className="order-7 md:order-8"
+        />
+        <RecentPRsCard prs={recentPRs} className="order-8 md:order-9" />
+      </div>
+
+      <div className="grid grid-cols-5 gap-2 mt-1 md:hidden">
+        {MORE_ROW_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="rtd-glass flex flex-col items-center gap-1 py-3 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+          >
+            <span className="text-lg" aria-hidden="true">{item.icon}</span>
+            <span className="text-caption text-[var(--rtd-text-secondary)]">{item.label}</span>
+          </Link>
+        ))}
       </div>
     </div>
   );

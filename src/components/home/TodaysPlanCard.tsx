@@ -31,15 +31,17 @@ export function TodaysPlanCard({
   tomorrow,
   phaseId,
   todayExercises,
+  className,
 }: {
   rows: PlanRow[];
   startHref: string | null;
   tomorrow: TomorrowPreview;
   phaseId: string | null;
   todayExercises: { id: number; name: string }[];
+  className?: string;
 }) {
   return (
-    <BentoCard colSpan={5} rowSpan={3}>
+    <BentoCard colSpan={5} rowSpan={3} className={className}>
       <div className="flex items-center justify-between gap-2 mb-1 shrink-0">
         <span className="rtd-micro-label truncate">Today&apos;s plan</span>
         <ImportSessionButton phaseId={phaseId} todayExercises={todayExercises} compact />

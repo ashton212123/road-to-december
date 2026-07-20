@@ -427,6 +427,27 @@ body {
   }
 }
 
+/* Home's single-render grid: every module renders exactly once and is
+   reordered per breakpoint via order-N/md:order-N utility classes on the
+   children, instead of the old approach of rendering two separate DOM
+   copies (a 12-col desktop grid + a mobile stack) and hiding one with CSS.
+   Kept separate from .rtd-bento-grid (which every OTHER page still uses
+   unchanged) because this one needs a real mobile layout, not display:none. */
+.rtd-home-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .rtd-home-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+    grid-auto-rows: minmax(96px, auto);
+  }
+}
+
 .rtd-bento-card {
   transition: transform 150ms ease-out, border-color 150ms ease-out;
 }

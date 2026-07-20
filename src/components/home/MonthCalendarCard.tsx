@@ -12,12 +12,14 @@ export function MonthCalendarCard({
   swimDates,
   colSpan = 4,
   rowSpan = 3,
+  className,
 }: {
   today: string;
   gymDates: string[];
   swimDates: string[];
   colSpan?: number;
   rowSpan?: number;
+  className?: string;
 }) {
   const ym = today.slice(0, 7);
   const monthStart = new Date(`${ym}-01T00:00:00`);
@@ -30,7 +32,7 @@ export function MonthCalendarCard({
   const sessionsThisMonth = new Set([...gym, ...swim]).size;
 
   return (
-    <BentoCard label={monthLabel} colSpan={colSpan} rowSpan={rowSpan}>
+    <BentoCard label={monthLabel} colSpan={colSpan} rowSpan={rowSpan} className={className}>
       <div className="grid grid-cols-7 gap-1 flex-1 content-start">
         {WEEKDAYS.map((d, i) => (
           <span key={`h${i}`} className="text-caption text-[var(--rtd-text-tertiary)] text-center pb-0.5">
