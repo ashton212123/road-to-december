@@ -5,6 +5,7 @@ import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { MoreMenuButton } from "@/components/home/MoreMenuButton";
 import { QuickLogSheet } from "@/components/home/QuickLogSheet";
 import { HomeHeroBand } from "@/components/home/HomeHeroBand";
+import { MonthCalendarCard } from "@/components/home/MonthCalendarCard";
 import { FuelRingCard } from "@/components/home/FuelRingCard";
 import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
 import { CoachBriefCard } from "@/components/home/CoachBriefCard";
@@ -280,7 +281,7 @@ export default async function HomePage() {
       time: weekDay.swim,
       title: "Swim",
       done: loggedSwimToday,
-      href: "/analytics?tab=swim",
+      href: "/swim",
       color: "var(--rtd-domain-swim)",
     });
   }
@@ -398,6 +399,11 @@ export default async function HomePage() {
           readinessOverall={readinessOverall}
           readinessSignals={readinessSignals}
           actionLine={readinessActionLineText}
+        />
+        <MonthCalendarCard
+          today={today}
+          gymDates={recentWorkoutLogs.map((l) => l.date)}
+          swimDates={recentSwimSessions.map((s) => s.date)}
         />
 
         <FuelRingCard

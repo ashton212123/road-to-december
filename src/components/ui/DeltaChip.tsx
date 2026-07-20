@@ -17,14 +17,15 @@ export function DeltaChip({
 
   const isUp = pct > 0;
   const isGood = goodDirection === "up" ? isUp : !isUp;
-  const color = isGood ? "var(--rtd-green)" : "var(--rtd-red)";
-  const bg = isGood ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)";
+  // Fitonist chips are solid with dark text -- they read as stamped verdicts,
+  // not tints. Green = on track, red = off track.
+  const bg = isGood ? "#4ade80" : "#f87171";
   const capped = Math.max(-99, Math.min(99, pct));
 
   return (
     <span
       className="inline-flex items-center gap-0.5 font-semibold px-1.5 py-0.5 rounded-full rtd-nums"
-      style={{ color, backgroundColor: bg, fontSize: "12px" }}
+      style={{ color: "#0b0b0d", backgroundColor: bg, fontSize: "12px" }}
     >
       {isUp ? "↗" : "↘"} {isUp ? "+" : ""}
       {capped.toFixed(1)}%

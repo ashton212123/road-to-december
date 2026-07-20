@@ -50,6 +50,11 @@ export function ComparisonLine({
   const previousPath = toPath(previous);
   const fillPath = currentPath ? `${currentPath} L${(n - 1) * stepX},${height} L0,${height} Z` : "";
   const gradientId = `rtd-cmp-grad-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
+  // Fitonist two-tone: previous period rides in butter yellow against the
+  // current series' domain color -- two glowing curves, not a line and its
+  // ghost. Dotted horizontal gridlines complete the chart identity.
+  const previousColor = "var(--rtd-butter)";
+  const gridYs = [0.25, 0.5, 0.75].map((f) => pad + (height - pad * 2) * f);
 
   return (
     <div className="flex flex-col gap-1">
@@ -60,9 +65,12 @@ export function ComparisonLine({
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
+        {gridYs.map((y) => (
+          <line key={y} x1="0" x2={width} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="1 5" strokeLinecap="round" />
+        ))}
         {fillPath && <path d={fillPath} fill={`url(#${gradientId})`} stroke="none" />}
         {previousPath && (
-          <path d={previousPath} fill="none" stroke={color} strokeOpacity="0.45" strokeWidth="1.5" strokeDasharray="4 4" strokeLinecap="round" />
+          <path d={previousPath} fill="none" stroke={previousColor} strokeOpacity="0.75" strokeWidth="1.5" strokeDasharray="5 4" strokeLinecap="round" />
         )}
         {currentPath && (
           <path
@@ -112,7 +120,7 @@ export function ComparisonLegend({
       <span className="inline-flex items-center gap-1.5 text-caption bg-white/[0.06] rounded-full px-2 py-1 text-[var(--rtd-text-tertiary)]">
         {previousAvailable ? (
           <>
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ border: `1.5px solid ${color}`, opacity: 0.6 }} />
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: "var(--rtd-butter)", opacity: 0.85 }} />
             {previousLabel}
           </>
         ) : (

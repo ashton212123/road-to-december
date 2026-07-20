@@ -3,22 +3,17 @@ import { StrengthSection } from "./StrengthSection";
 import { LoadSection } from "./LoadSection";
 import { PowerSection } from "./PowerSection";
 import { BodyweightSection } from "./BodyweightSection";
-import { SwimSection } from "./SwimSection";
 import { PeriodSelector } from "./PeriodSelector";
 import { ImprovementMatrix } from "./ImprovementMatrix";
 import { FuelAdherenceCard } from "./FuelAdherenceCard";
 import { RecoveryOverlayCard } from "./RecoveryOverlayCard";
 import { AnalyticsTabs } from "./AnalyticsTabs";
-import { SwimWeeklyVolumeCard, SwimMonthDotsCard, SwimLatestSessionCard, type SwimWeek } from "./SwimTrainingBlock";
 import { MiniBarList } from "@/components/ui/MiniBarList";
 import type { TonnageRow, HardSetRow } from "@/lib/analytics/tonnage";
 import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
-import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
 import type { Period } from "@/lib/analytics/periods";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
-import type { PacePoint } from "@/lib/swim/pace";
 import type { AnalyticsTab } from "@/lib/analytics/tabs";
-import type { SwimSessionInterval } from "@/lib/db/schema";
 
 export function AnalyticsView(props: {
   today: string;
@@ -26,14 +21,6 @@ export function AnalyticsView(props: {
   period: Period;
   offset: number;
   currentPeriodLabel: string;
-  swimWeekly: SwimWeek[];
-  monthStartISO: string;
-  latestSwimSession: {
-    date: string;
-    parsedDistanceM: number | null;
-    setsText: string | null;
-    intervals: SwimSessionInterval[] | null;
-  } | null;
   matrixRows: MatrixRow[];
   takeaways: Record<"strength" | "load" | "power" | "bodyweight" | "swim", string | null>;
   e1rmByLift: Record<string, { date: string; e1rm: number }[]>;
@@ -46,38 +33,27 @@ export function AnalyticsView(props: {
   cmjSeries: { date: string; cm: number }[];
   broadJumpSeries: { date: string; cm: number }[];
   weightSeries: { date: string; kg: number; avg7: number }[];
-  pbRows: SeedPbRow[];
-  targets: SeedTarget[];
-  splitBars: SeedSplitBar[];
-  splitAutopsy: { date: string; splits: number[]; strokeCounts: number[] }[];
-  timeTo15m: { date: string; seconds: number; condition: string }[];
-  recentSwimTimes: { id: number; date: string; event: string; timeMs: number; meetName: string | null }[];
-  allSwimTimesByEvent: Record<string, { date: string; timeMs: number }[]>;
-  meets: {
-    id: number;
-    name: string;
-    date: string;
-    events: {
-      id: number;
-      event: string;
-      currentTimeMs: number | null;
-      targetTimeMs: number;
-      readiness: import("@/lib/swim/readiness").ReadinessResult;
-    }[];
-  }[];
-  latestTimeByEvent: Record<string, number>;
-  swimSessions: { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null }[];
-  paceSeries: PacePoint[];
-  paceTakeaway: string | null;
   sorenessLogs: { id: number; date: string; area: string; rating1to5: number }[];
   sleepLogs: { date: string; hours: number }[];
   foodAdherenceByDate: { date: string; kcal: number; kcalTargetMin: number }[];
 }) {
-  const overviewDomains: { tab: AnalyticsTab; label: string; takeaway: string | null }[] = [
-    { tab: "train", label: "Train", takeaway: props.takeaways.strength ?? props.takeaways.load },
-    { tab: "swim", label: "Swim", takeaway: props.takeaways.swim },
-    { tab: "fuel", label: "Fuel", takeaway: props.takeaways.bodyweight },
-    { tab: "recovery", label: "Recovery", takeaway: props.takeaways.power },
+  const overviewDomains: { href: string; label: string; takeaway: string | null }[] = [
+    {
+      href: `/analytics?tab=train&period=${props.period}&offset=${props.offset}`,
+      label: "Train",
+      takeaway: props.takeaways.strength ?? props.takeaways.load,
+    },
+    { href: "/swim", label: "Swim", takeaway: props.takeaways.swim },
+    {
+      href: `/analytics?tab=fuel&period=${props.period}&offset=${props.offset}`,
+      label: "Fuel",
+      takeaway: props.takeaways.bodyweight,
+    },
+    {
+      href: `/analytics?tab=recovery&period=${props.period}&offset=${props.offset}`,
+      label: "Recovery",
+      takeaway: props.takeaways.power,
+    },
   ];
 
   return (
@@ -91,8 +67,8 @@ export function AnalyticsView(props: {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {overviewDomains.map((d) => (
               <Link
-                key={d.tab}
-                href={`/analytics?tab=${d.tab}&period=${props.period}&offset=${props.offset}`}
+                key={d.label}
+                href={d.href}
                 className="rtd-glass px-4 py-3 flex flex-col gap-1 cursor-pointer hover:bg-white/[0.05] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
               >
                 <div className="flex items-center justify-between">
@@ -163,35 +139,6 @@ export function AnalyticsView(props: {
             <PowerSection cmjSeries={props.cmjSeries} broadJumpSeries={props.broadJumpSeries} />
           </div>
         </div>
-      )}
-
-      {props.tab === "swim" && (
-        <>
-          {props.takeaways.swim && (
-            <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.swim}</p>
-          )}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            <SwimWeeklyVolumeCard weeks={props.swimWeekly} />
-            <SwimMonthDotsCard monthStartISO={props.monthStartISO} today={props.today} sessions={props.swimSessions} />
-          </div>
-          <SwimLatestSessionCard session={props.latestSwimSession} />
-          <div id="detail-swim">
-            <SwimSection
-              pbRows={props.pbRows}
-              targets={props.targets}
-              splitBars={props.splitBars}
-              splitAutopsy={props.splitAutopsy}
-              timeTo15m={props.timeTo15m}
-              recentTimes={props.recentSwimTimes}
-              allSwimTimesByEvent={props.allSwimTimesByEvent}
-              meets={props.meets}
-              latestTimeByEvent={props.latestTimeByEvent}
-              swimSessions={props.swimSessions}
-              paceSeries={props.paceSeries}
-              paceTakeaway={props.paceTakeaway}
-            />
-          </div>
-        </>
       )}
 
       {props.tab === "fuel" && (

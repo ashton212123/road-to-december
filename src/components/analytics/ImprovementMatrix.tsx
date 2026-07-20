@@ -6,7 +6,7 @@ import { ProgressChip } from "@/components/ui/ProgressChip";
 import { DotStrip } from "@/components/ui/DotStrip";
 import { IconBolt } from "@/components/ui/icons";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
-import { tabForMatrixKey } from "@/lib/analytics/tabs";
+import { matrixHref } from "@/lib/analytics/tabs";
 import type { Period } from "@/lib/analytics/periods";
 
 function formatValue(v: number | null, unit: string, decimals: number): string {
@@ -21,7 +21,7 @@ export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[];
         {rows.map((row) => (
           <a
             key={row.key}
-            href={`/analytics?tab=${tabForMatrixKey(row.key)}&period=${period}&offset=${offset}`}
+            href={matrixHref(row.key, period, offset)}
             className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 hover:bg-white/[0.03] rounded-lg px-1.5 -mx-1.5 transition-colors duration-150 ease-out cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
           >
             <IconTile color={row.domainColor}>

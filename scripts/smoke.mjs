@@ -28,7 +28,7 @@ const CHECKS = [
   ["/fuel", "Protein"],
   ["/analytics?period=week&offset=0", "Improvement matrix"],
   ["/analytics?period=month&offset=0", "Improvement matrix"],
-  ["/analytics?tab=swim&period=week&offset=0", "Weekly swim volume"],
+  ["/swim", "Weekly swim volume"],
   ["/analytics?tab=train&period=week&offset=0", null],
   ["/analytics?tab=fuel&period=month&offset=0", null],
   ["/analytics?tab=recovery&period=week&offset=0", null],

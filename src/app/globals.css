@@ -8,10 +8,13 @@
   --rtd-glass-bg-desktop: rgba(10, 10, 12, 0.78);
   --rtd-glass-bg-mobile: rgba(12, 12, 14, 0.88);
   --rtd-hairline: rgba(255, 255, 255, 0.1);
+  /* Fitonist lift: borders are a visible design element now, not a whisper --
+     cards read as defined plates on the near-black field. */
+  --rtd-border: rgba(255, 255, 255, 0.14);
   --rtd-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 30px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.15);
   --rtd-blur: 10px;
-  --rtd-radius-card: 10px;
-  --rtd-radius-control: 8px;
+  --rtd-radius-card: 20px;
+  --rtd-radius-control: 12px;
 
   --rtd-blue: #0a84ff;
   --rtd-cyan: #5ac8fa;
@@ -21,6 +24,10 @@
   --rtd-purple: #bf5af2;
   --rtd-yellow: #ffd60a;
   --rtd-teal: #66d4cf;
+  /* Fitonist accent pair: lilac carries primary data, butter carries the
+     comparison series -- the two-tone chart identity of the whole app. */
+  --rtd-lilac: #c4b5fd;
+  --rtd-butter: #fde68a;
 
   /* DesignCode wallpaper glow palette -- distinct from the domain colors
      above, used only by .rtd-wallpaper and .rtd-hero-glow. */
@@ -31,7 +38,7 @@
 
   /* Domain colors -- used consistently everywhere a module's identity shows
      (icon tiles, rings, chart strokes, dots), so the mapping is learned once. */
-  --rtd-domain-train: var(--rtd-blue);
+  --rtd-domain-train: var(--rtd-lilac);
   --rtd-domain-fuel: var(--rtd-orange);
   --rtd-domain-swim: var(--rtd-cyan);
   --rtd-domain-recovery: var(--rtd-green);
@@ -152,7 +159,7 @@ body {
    .rtd-glass-blur alongside this class, never through it. */
 .rtd-glass {
   background-color: var(--rtd-glass-bg-mobile);
-  border: 1px solid var(--rtd-hairline);
+  border: 1px solid var(--rtd-border);
   box-shadow: var(--rtd-shadow);
   border-radius: var(--rtd-radius-card);
 }
@@ -344,6 +351,33 @@ body {
 
 .rtd-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Fitonist numerals: the number IS the design. Big, tight, tabular. */
+.rtd-big-num {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  .rtd-big-num {
+    font-size: 44px;
+  }
+}
+
+/* Fitonist active state: solid white pill, near-black content. Used by every
+   segmented control, tab bar, and toggle thumb -- one learned interaction
+   language across the app. */
+.rtd-pill-thumb {
+  background: #fff;
+  border: none;
+}
+
+.rtd-pill-on {
+  color: #0b0b0d !important;
 }
 
 /* The 12-col bento grid -- every desktop page body is this. Cards declare

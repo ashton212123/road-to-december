@@ -18,7 +18,7 @@ export function PeriodSelector({
       <div className="relative flex p-1 gap-1 rounded-full bg-white/[0.06] border border-[var(--rtd-hairline)] w-[152px]" role="tablist">
         <div
           aria-hidden="true"
-          className="absolute top-1 bottom-1 rounded-full bg-white/[0.12] border border-[var(--rtd-hairline)] transition-[left] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className="absolute top-1 bottom-1 rounded-full bg-white transition-[left] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
           style={{ left: period === "week" ? "4px" : "calc(50% + 0px)", width: "calc(50% - 8px)" }}
         />
         {(["week", "month"] as Period[]).map((p) => (
@@ -28,7 +28,7 @@ export function PeriodSelector({
             role="tab"
             aria-selected={p === period}
             className="relative z-10 flex-1 min-h-11 px-4 py-1.5 rounded-full text-subhead font-medium cursor-pointer transition-colors duration-200 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 flex items-center justify-center"
-            style={{ color: p === period ? "#fff" : "var(--rtd-text-secondary)" }}
+            style={{ color: p === period ? "#0b0b0d" : "var(--rtd-text-secondary)" }}
           >
             {p === "week" ? "Week" : "Month"}
           </Link>

@@ -1,25 +1,23 @@
 import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
+import { redirect } from "next/navigation";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AnalyticsView } from "@/components/analytics/AnalyticsView";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
-import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, addDaysISO, mondayOf } from "@/lib/time";
+import { todayManilaISO, addDaysISO } from "@/lib/time";
 import { parseAnalyticsTab } from "@/lib/analytics/tabs";
-import type { SwimWeek } from "@/components/analytics/SwimTrainingBlock";
 import { getSettingsRow } from "@/lib/db/queries";
 import { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeDailySessionLoads, computeAcwr, computeWeeklySessions } from "@/lib/analytics/load";
 import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/tonnage";
-import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { withRetry } from "@/lib/db/withRetry";
-import { loadTakeaway, powerTakeaway, bodyweightTakeaway, swimTakeaway } from "@/lib/analytics/takeaways";
+import { loadTakeaway, powerTakeaway, bodyweightTakeaway } from "@/lib/analytics/takeaways";
 import { getStrengthTakeaway } from "@/lib/coach/strengthTakeaway";
 import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
 import { recentPeriodStarts, periodLabel, type Period } from "@/lib/analytics/periods";
 import { buildImprovementMatrix } from "@/lib/analytics/improvementMatrix";
-import { buildPacePer100Series, pacePer100Takeaway } from "@/lib/swim/pace";
+import { buildSwimViewModel } from "@/lib/swim/viewModel";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
@@ -70,6 +68,8 @@ async function AnalyticsContent({
   searchParams: Promise<{ period?: string; offset?: string; tab?: string }>;
 }) {
   const { period: periodParam, offset: offsetParam, tab: tabParam } = await searchParams;
+  // Swim graduated to its own top-level page; old ?tab=swim links follow it.
+  if (tabParam === "swim") redirect("/swim");
   const period: Period = periodParam === "month" ? "month" : "week";
   const offset = Math.max(0, Number(offsetParam) || 0);
   const tab = parseAnalyticsTab(tabParam);
@@ -87,11 +87,7 @@ async function AnalyticsContent({
   // silently change how far back the broad-jump series reaches.
   const broadJumps = raw.jumpTestsRaw.filter((j) => j.type === "broad_jump");
   const swimTimes = raw.swimTimes;
-  const timeTo15m = raw.timeTo15m;
-  const meetsWithEvents = raw.meetsWithEvents;
-  const swimSessions = raw.swimSessions;
-  const paceSeries = buildPacePer100Series(swimSessions);
-  const paceTakeaway = pacePer100Takeaway(paceSeries, today);
+  const swimVm = buildSwimViewModel(raw, today);
   const foodLogs = raw.foodLogs;
   const sleepLogs = raw.sleepLogs;
   const sorenessLogs = raw.sorenessLogs;
@@ -136,43 +132,13 @@ async function AnalyticsContent({
     return { date: w.date, kg: Number(w.kg), avg7: Math.round(avg * 100) / 100 };
   });
 
-  const swimEvents = ["200 Breast"];
-  const splitAutopsy = swimTimes
-    .filter((s) => swimEvents.includes(s.event) && s.splits && s.splits.length === 4)
-    .slice(0, 5)
-    .map((s) => ({ date: s.date, splits: s.splits as number[], strokeCounts: (s.strokeCounts as number[]) ?? [] }));
-
-  const meetsWithReadiness = meetsWithEvents.map((meet) => ({
-    id: meet.id,
-    name: meet.name,
-    date: meet.date,
-    events: meet.events.map((ev) => {
-      const loggedTimes = swimTimes.filter((s) => s.event === ev.event).map((s) => ({ date: s.date, timeMs: s.timeMs }));
-      return {
-        id: ev.id,
-        event: ev.event,
-        currentTimeMs: ev.currentTimeMs,
-        targetTimeMs: ev.targetTimeMs,
-        readiness: computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today }),
-      };
-    }),
-  }));
-
-  const latestByEvent = new Map<string, number>();
-  for (const s of [...swimTimes].sort((a, b) => (a.date < b.date ? 1 : -1))) {
-    if (!latestByEvent.has(s.event)) latestByEvent.set(s.event, s.timeMs);
-  }
-
-  const CANONICAL_EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"];
-  const allEventNames = [...new Set([...CANONICAL_EVENTS, ...swimTimes.map((s) => s.event)])];
-
   const e1rmByLiftObj = Object.fromEntries(e1rmByLift);
   const takeaways = {
     strength: await withRetry(() => getCachedStrengthTakeaway(today, e1rmByLiftObj)),
     load: loadTakeaway(acwr),
     power: powerTakeaway(cmjSeries, broadJumpSeries),
     bodyweight: bodyweightTakeaway(rollingAvg),
-    swim: swimTakeaway(meetsWithReadiness, today),
+    swim: swimVm.takeaway,
   };
 
   // Improvement matrix: one row per tracked metric, aggregated by the
@@ -200,30 +166,7 @@ async function AnalyticsContent({
   const waterByDate = new Map<string, number>();
   for (const w of waterLogs) waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.ml);
 
-  // Swim training aggregates for the Swim tab: last 8 weeks of volume, the
-  // dot-calendar month (selected month when period=month, else current), and
-  // the latest session that has a structured interval breakdown.
-  const swimByWeek = new Map<string, SwimWeek>();
-  for (const s of swimSessions) {
-    const wk = mondayOf(s.date);
-    const cur = swimByWeek.get(wk) ?? { weekStart: wk, distanceM: 0, sessions: 0, loadSum: 0 };
-    cur.distanceM += s.parsedDistanceM ?? 0;
-    cur.sessions += 1;
-    cur.loadSum += s.loadRating;
-    swimByWeek.set(wk, cur);
-  }
-  const thisMonday = mondayOf(today);
-  const swimWeekly: SwimWeek[] = Array.from({ length: 8 }, (_, i) => {
-    const weekStart = addDaysISO(thisMonday, -7 * (7 - i));
-    return swimByWeek.get(weekStart) ?? { weekStart, distanceM: 0, sessions: 0, loadSum: 0 };
-  });
-  const latestSwimSession =
-    [...swimSessions]
-      .sort((a, b) => (a.date < b.date ? 1 : -1))
-      .find((s) => s.intervals && s.intervals.length > 0) ?? null;
-
   const periodStarts = recentPeriodStarts(today, period, 10, offset);
-  const monthStartISO = period === "month" ? periodStarts[periodStarts.length - 1] : `${today.slice(0, 7)}-01`;
   const matrixRows = buildImprovementMatrix({
     period,
     todayISO: today,
@@ -248,18 +191,6 @@ async function AnalyticsContent({
         period={period}
         offset={offset}
         currentPeriodLabel={currentPeriodLabel}
-        swimWeekly={swimWeekly}
-        monthStartISO={monthStartISO}
-        latestSwimSession={
-          latestSwimSession
-            ? {
-                date: latestSwimSession.date,
-                parsedDistanceM: latestSwimSession.parsedDistanceM,
-                setsText: latestSwimSession.setsText,
-                intervals: latestSwimSession.intervals,
-              }
-            : null
-        }
         matrixRows={matrixRows}
         takeaways={takeaways}
         e1rmByLift={e1rmByLiftObj}
@@ -272,20 +203,6 @@ async function AnalyticsContent({
         cmjSeries={cmjSeries}
         broadJumpSeries={broadJumpSeries}
         weightSeries={rollingAvg}
-        pbRows={seasonData.PB_ROWS}
-        targets={seasonData.TARGETS}
-        splitBars={seasonData.SPLIT_BARS}
-        splitAutopsy={splitAutopsy}
-        timeTo15m={timeTo15m.map((t) => ({ date: t.date, seconds: Number(t.seconds), condition: t.condition }))}
-        recentSwimTimes={swimTimes.slice(0, 50).map((t) => ({ id: t.id, date: t.date, event: t.event, timeMs: t.timeMs, meetName: t.meetName }))}
-        allSwimTimesByEvent={Object.fromEntries(
-          allEventNames.map((ev) => [ev, swimTimes.filter((s) => s.event === ev).map((s) => ({ date: s.date, timeMs: s.timeMs }))])
-        )}
-        meets={meetsWithReadiness}
-        latestTimeByEvent={Object.fromEntries(latestByEvent)}
-        swimSessions={swimSessions.map((s) => ({ id: s.id, date: s.date, loadRating: s.loadRating, setsText: s.setsText, parsedDistanceM: s.parsedDistanceM }))}
-        paceSeries={paceSeries}
-        paceTakeaway={paceTakeaway}
         sorenessLogs={sorenessLogs.map((s) => ({ id: s.id, date: s.date, area: s.area, rating1to5: s.rating1to5 }))}
         sleepLogs={sleepLogs.slice(0, 30).map((s) => ({ date: s.date, hours: Number(s.hours) }))}
         foodAdherenceByDate={[...foodByDate.entries()].map(([date, entries]) => ({

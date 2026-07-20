@@ -1,5 +1,16 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-20 — Iteration 6: Fitonist lift — Swim top-level, desktop TopBar, design tokens
+
+**Direct user feedback driving this:** swim must be its own tab (not inside Analytics); Home must follow the Fitonist wireframe; everything reads bland (borders, letters, no design).
+**Shipped:**
+1. `/swim` top-level page (weekly volume, month dots, latest session, full SwimSection) — shares the analytics batch cache via `buildSwimViewModel` in lib/swim/viewModel.ts so the two pages can't drift. Analytics tabs now 4; legacy `?tab=swim` redirects (streamed redirect — 200 + NEXT_REDIRECT in stream, NOT a 307, because it fires inside Suspense; assertion must check the stream, not status).
+2. Desktop sidebar → Fitonist TopBar: wordmark "road2dec", center white-pill nav (Home Train Swim Fuel Analytics), right icon buttons (Coach dispatch, Business, School, More). Mobile dock mirrors the five primaries; Coach lives on the floating button.
+3. Token lift: card radius 10→20px, borders rgba(.14) visible, lilac #c4b5fd + butter #fde68a accents, domain-train → lilac, white active pills with near-black text EVERYWHERE (dock, topbar, period selector, analytics tabs), DeltaChip → solid green/red with dark text, ComparisonLine → two-tone (domain current + butter previous) with dotted gridlines, .rtd-big-num utility.
+4. Home desktop: hero band 12→8 cols + NEW MonthCalendarCard (4 cols) — lilac-filled training days, gym+swim gradient days, today ringed, "N training days this month" inset stat.
+**Verified live:** 16-route smoke + burst green after 20s alias wait; 8-point + 2-point design assertions on prod HTML.
+**Learnings:** redirect() inside Suspense streams a 200 — never assert 3xx on it. TAB_LABELS Record<AnalyticsTab,...> catches stale keys at build time (good pattern, keep). PULSE has no extractable CSS (Vite/Tailwind inline) — the Fitonist screenshot is the binding design reference now.
+
 ## 2026-07-20 — Iteration 5: Analytics tabs + Swim tab (first liquid-gradient components)
 
 **Shipped:** URL-param tab bar (Overview | Train | Swim | Fuel | Recovery) — server-rendered Links, same sliding-thumb pattern as PeriodSelector, so caching/streaming is untouched. Overview slimmed to matrix + 4 takeaway link cards. Train = strength/load/power. Swim = NEW weekly-volume bars (cyan→indigo gradient fill + glow), NEW month dot calendar with legend (buckets: rest / <2k / 2–4k / 4k+, today ringed), NEW latest-imported-session interval card (W/U-W/D dimmed), + existing SwimSection. Fuel = adherence + bodyweight. Recovery = overlay card. Matrix rows deep-link to tabs (replaced #detail anchors). Home's existing `/analytics?tab=swim` link now actually works.
