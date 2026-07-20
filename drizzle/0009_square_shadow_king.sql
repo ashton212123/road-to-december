@@ -1,0 +1,1 @@
+ALTER TABLE "swim_sessions" ADD COLUMN "intervals" jsonb;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { IconCheck } from "@/components/ui/icons";
+import { ImportSessionButton } from "@/components/train/ImportSessionButton";
 
 type PlanRow = {
   key: string;
@@ -28,13 +29,21 @@ export function TodaysPlanCard({
   rows,
   startHref,
   tomorrow,
+  phaseId,
+  todayExercises,
 }: {
   rows: PlanRow[];
   startHref: string | null;
   tomorrow: TomorrowPreview;
+  phaseId: string | null;
+  todayExercises: { id: number; name: string }[];
 }) {
   return (
-    <BentoCard label="Today's plan" colSpan={5} rowSpan={3}>
+    <BentoCard colSpan={5} rowSpan={3}>
+      <div className="flex items-center justify-between gap-2 mb-1 shrink-0">
+        <span className="rtd-micro-label truncate">Today&apos;s plan</span>
+        <ImportSessionButton phaseId={phaseId} todayExercises={todayExercises} compact />
+      </div>
       <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto">
         {rows.length === 0 ? (
           <div className="flex-1 flex flex-col gap-3">

@@ -102,7 +102,8 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
       ) t) as "meetsWithEvents",
 
       (select coalesce(json_agg(t), '[]') from (
-        select id, date, load_rating as "loadRating", sets_text as "setsText", parsed_distance_m as "parsedDistanceM", created_at as "createdAt"
+        select id, date, load_rating as "loadRating", sets_text as "setsText", parsed_distance_m as "parsedDistanceM",
+               intervals, created_at as "createdAt"
         from swim_sessions order by date desc limit 60
       ) t) as "swimSessions",
 

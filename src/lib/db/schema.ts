@@ -273,12 +273,26 @@ export const meetEvents = pgTable("meet_events", {
 
 // ---------- Swim training sessions (daily load, distinct from race-pace swim_times) ----------
 
+export type SwimSessionInterval = {
+  reps: number;
+  distanceM: number;
+  stroke: string;
+  targetInterval?: string; // e.g. "1:10"
+  avgTime?: string; // e.g. "38s" -- per-rep average, not the interval clock
+  note?: string; // e.g. "W/U", "W/D", "drill"
+};
+
 export const swimSessions = pgTable("swim_sessions", {
   id: serial("id").primaryKey(),
   date: date("date").notNull(),
   loadRating: integer("load_rating").notNull(), // 1-10 subjective session load (RPE-style)
   setsText: text("sets_text"), // free-text description, e.g. "10x100 BR @1:30, main set 6x200 IM"
   parsedDistanceM: integer("parsed_distance_m"), // best-effort total distance parsed from setsText
+  // Structured interval breakdown from the V4 P4 AI session-import flow.
+  // Null for sessions logged the old way (manual load+text) -- never
+  // backfilled/fabricated, so the pace-per-100 trend only ever plots real
+  // parsed data.
+  intervals: jsonb("intervals").$type<SwimSessionInterval[]>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

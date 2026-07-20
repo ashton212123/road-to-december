@@ -17,6 +17,7 @@ import { getStrengthTakeaway } from "@/lib/coach/strengthTakeaway";
 import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
 import { recentPeriodStarts, periodLabel, type Period } from "@/lib/analytics/periods";
 import { buildImprovementMatrix } from "@/lib/analytics/improvementMatrix";
+import { buildPacePer100Series, pacePer100Takeaway } from "@/lib/swim/pace";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
@@ -86,6 +87,8 @@ async function AnalyticsContent({
   const timeTo15m = raw.timeTo15m;
   const meetsWithEvents = raw.meetsWithEvents;
   const swimSessions = raw.swimSessions;
+  const paceSeries = buildPacePer100Series(swimSessions);
+  const paceTakeaway = pacePer100Takeaway(paceSeries, today);
   const foodLogs = raw.foodLogs;
   const sleepLogs = raw.sleepLogs;
   const sorenessLogs = raw.sorenessLogs;
@@ -242,6 +245,8 @@ async function AnalyticsContent({
         meets={meetsWithReadiness}
         latestTimeByEvent={Object.fromEntries(latestByEvent)}
         swimSessions={swimSessions.map((s) => ({ id: s.id, date: s.date, loadRating: s.loadRating, setsText: s.setsText, parsedDistanceM: s.parsedDistanceM }))}
+        paceSeries={paceSeries}
+        paceTakeaway={paceTakeaway}
         sorenessLogs={sorenessLogs.map((s) => ({ id: s.id, date: s.date, area: s.area, rating1to5: s.rating1to5 }))}
         sleepLogs={sleepLogs.slice(0, 30).map((s) => ({ date: s.date, hours: Number(s.hours) }))}
         foodAdherenceByDate={[...foodByDate.entries()].map(([date, entries]) => ({

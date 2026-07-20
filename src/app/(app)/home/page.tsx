@@ -419,7 +419,7 @@ export default async function HomePage() {
           className="col-span-3 row-span-2"
         />
 
-        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} />
+        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} phaseId={todaySession ? currentPhase.id : null} todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []} />
         <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
         <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full" />
 
@@ -444,7 +444,7 @@ export default async function HomePage() {
           readinessSignals={readinessSignals}
           actionLine={readinessActionLineText}
         />
-        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} />
+        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} phaseId={todaySession ? currentPhase.id : null} todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []} />
         <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
         <FuelRingCard
           kcalToday={kcalToday}

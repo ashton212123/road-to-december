@@ -16,6 +16,8 @@ import { SwimSessionList } from "./SwimSessionList";
 import { deleteSwimTimeAction } from "@/app/(app)/analytics/actions";
 import { formatSwimTime } from "@/lib/swim/format";
 import type { ReadinessResult } from "@/lib/swim/readiness";
+import { ComparisonLine } from "@/components/ui/ComparisonLine";
+import type { PacePoint } from "@/lib/swim/pace";
 
 type RecentSwimTime = { id: number; date: string; event: string; timeMs: number; meetName: string | null };
 type MeetWithEvents = {
@@ -37,6 +39,8 @@ export function SwimSection({
   meets,
   latestTimeByEvent,
   swimSessions,
+  paceSeries,
+  paceTakeaway,
 }: {
   pbRows: SeedPbRow[];
   targets: SeedTarget[];
@@ -48,6 +52,8 @@ export function SwimSection({
   meets: MeetWithEvents[];
   latestTimeByEvent: Record<string, number>;
   swimSessions: SwimSessionRow[];
+  paceSeries: PacePoint[];
+  paceTakeaway: string | null;
 }) {
   const swimTarget = targets.find((t) => t.id === "swim_200br_200im");
   const [pending, startTransition] = useTransition();
@@ -75,6 +81,22 @@ export function SwimSection({
           <SwimSessionList sessions={swimSessions} />
         </div>
       </div>
+
+      {paceSeries.length > 0 && (
+        <div>
+          <SectionLabel>Pace per 100 (from imported sessions)</SectionLabel>
+          <GlassCard className="flex flex-col gap-2">
+            {paceTakeaway && <p className="text-caption text-[var(--rtd-text-secondary)]">{paceTakeaway}</p>}
+            <ComparisonLine
+              current={paceSeries.map((p) => p.paceSecPer100)}
+              previous={paceSeries.map(() => null)}
+              color="var(--rtd-cyan)"
+              height={100}
+              labels={paceSeries.map((p) => p.date.slice(5))}
+            />
+          </GlassCard>
+        </div>
+      )}
 
       <SwimTimeLogger />
 

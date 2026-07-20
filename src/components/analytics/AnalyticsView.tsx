@@ -13,6 +13,7 @@ import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
 import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
 import type { Period } from "@/lib/analytics/periods";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
+import type { PacePoint } from "@/lib/swim/pace";
 
 export function AnalyticsView(props: {
   today: string;
@@ -52,6 +53,8 @@ export function AnalyticsView(props: {
   }[];
   latestTimeByEvent: Record<string, number>;
   swimSessions: { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null }[];
+  paceSeries: PacePoint[];
+  paceTakeaway: string | null;
   sorenessLogs: { id: number; date: string; area: string; rating1to5: number }[];
   sleepLogs: { date: string; hours: number }[];
   foodAdherenceByDate: { date: string; kcal: number; kcalTargetMin: number }[];
@@ -135,6 +138,8 @@ export function AnalyticsView(props: {
             meets={props.meets}
             latestTimeByEvent={props.latestTimeByEvent}
             swimSessions={props.swimSessions}
+            paceSeries={props.paceSeries}
+            paceTakeaway={props.paceTakeaway}
           />
         </div>
 

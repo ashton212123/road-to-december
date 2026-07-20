@@ -64,6 +64,13 @@
       "when": 1784514033929,
       "tag": "0008_bitter_korg",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784515069480,
+      "tag": "0009_square_shadow_king",
+      "breakpoints": true
     }
   ]
 }

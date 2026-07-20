@@ -7,6 +7,7 @@ import { DaySelector } from "@/components/train/DaySelector";
 import { WorkoutSession } from "@/components/train/WorkoutSession";
 import { TaperChecklist } from "@/components/train/TaperChecklist";
 import { TrainWeekDots } from "@/components/train/TrainWeekDots";
+import { ImportSessionButton } from "@/components/train/ImportSessionButton";
 import {
   getPhaseById,
   getSessionWorkoutData,
@@ -119,18 +120,37 @@ export default async function PhaseSessionPage({
         <>
           <div className="rtd-bento-grid">
             <BentoCard colSpan={8} rowSpan={2} className="justify-center">
-              <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
-              <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
-                {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
+                  <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
+                    {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+                {selectedDay === todayDayKey() && (
+                  <ImportSessionButton
+                    phaseId={phase.id}
+                    todayExercises={session.exercises.map((e) => ({ id: e.id, name: e.name }))}
+                  />
+                )}
               </div>
             </BentoCard>
             <TrainWeekDots scheduled={weekScheduled} logged={weekLogged} />
           </div>
-          <div className="rtd-glass p-4 md:hidden">
-            <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
-            <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
-              {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+          <div className="rtd-glass p-4 md:hidden flex items-center justify-between gap-2">
+            <div>
+              <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
+              <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
+                {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+              </div>
             </div>
+            {selectedDay === todayDayKey() && (
+              <ImportSessionButton
+                phaseId={phase.id}
+                todayExercises={session.exercises.map((e) => ({ id: e.id, name: e.name }))}
+                compact
+              />
+            )}
           </div>
           <WorkoutSession phaseId={phase.id} sessionTitle={session.title} exercises={exerciseData} />
         </>
