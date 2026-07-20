@@ -320,6 +320,21 @@ export const aiTakeaways = pgTable(
   (table) => [uniqueIndex("ai_takeaways_date_key_idx").on(table.date, table.key)]
 );
 
+// Completion tracking for the Learn tab. Content (tracks/levels) lives as
+// static data in lib/data/learn-tracks.ts, not the DB -- this table only
+// records which level keys are done. trackId/levelKey are the static data's
+// own ids (e.g. "python-30-days" / "day-05"), never a foreign key.
+export const learnProgress = pgTable(
+  "learn_progress",
+  {
+    id: serial("id").primaryKey(),
+    trackId: text("track_id").notNull(),
+    levelKey: text("level_key").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("learn_progress_track_level_idx").on(table.trackId, table.levelKey)]
+);
+
 export const coachMessages = pgTable("coach_messages", {
   id: serial("id").primaryKey(),
   role: text("role").notNull(), // 'user' | 'assistant'

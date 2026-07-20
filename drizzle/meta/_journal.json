@@ -71,6 +71,13 @@
       "when": 1784515069480,
       "tag": "0009_square_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784564388065,
+      "tag": "0010_clammy_martin_li",
+      "breakpoints": true
     }
   ]
 }

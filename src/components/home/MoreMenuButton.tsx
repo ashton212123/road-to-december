@@ -8,6 +8,7 @@ import type { TrainingStatus } from "@/app/(app)/more/actions";
 
 const ITEMS = [
   { href: "/more/recovery", label: "Recovery", icon: "🌙" },
+  { href: "/learn", label: "Learn", icon: "📚" },
   { href: "/school", label: "School", icon: "🎓" },
   { href: "/business", label: "Business", icon: "💼" },
   { href: "/more/settings", label: "Settings", icon: "⚙️" },

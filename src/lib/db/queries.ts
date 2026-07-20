@@ -23,9 +23,14 @@ import {
   meets,
   meetEvents,
   swimSessions,
+  learnProgress,
 } from "./schema";
 import { todayManilaISO, addDaysISO } from "../time";
 import { seasonData } from "../data/season-data";
+
+export async function getLearnProgress() {
+  return db.select().from(learnProgress);
+}
 
 export async function getSettingsRow() {
   const rows = await db.select().from(settings).where(eq(settings.id, "singleton")).limit(1);

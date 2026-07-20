@@ -1,6 +1,6 @@
 import { TabBar, TopBar, type TabItem } from "@/components/ui/TabBar";
 import { CoachPanel, OPEN_COACH_EVENT } from "@/components/coach/CoachPanel";
-import { IconHome, IconTrain, IconFuel, IconAnalytics, IconBusiness, IconSchool, IconMore, IconSparkle, IconSwim } from "@/components/ui/icons";
+import { IconHome, IconTrain, IconFuel, IconAnalytics, IconBusiness, IconSchool, IconMore, IconSparkle, IconSwim, IconBook } from "@/components/ui/icons";
 
 // Every screen under here reads live, personal, auth-gated data (today's
 // date, logs, alerts) — never statically prerender it at build time.
@@ -20,6 +20,7 @@ const PRIMARY_ITEMS: TabItem[] = [
 
 const EXTRA_ITEMS: TabItem[] = [
   { href: "#coach", label: "Coach", icon: <IconSparkle />, dispatchEvent: OPEN_COACH_EVENT },
+  { href: "/learn", label: "Learn", icon: <IconBook /> },
   { href: "/business", label: "Business", icon: <IconBusiness /> },
   { href: "/school", label: "School", icon: <IconSchool /> },
   { href: "/more", label: "More", icon: <IconMore /> },
