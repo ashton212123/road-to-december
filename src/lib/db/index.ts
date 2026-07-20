@@ -9,18 +9,17 @@ if (!connectionString) {
 
 const globalForDb = globalThis as unknown as { rtdQueryClient?: ReturnType<typeof postgres> };
 
-// `max` is deliberately below postgres.js's default of 10: each Vercel
-// serverless container gets its own pool, and several concurrent containers
-// each maxing out can exhaust the Supabase pooler's shared connection budget
-// (this is what caused the "statement timeout" / "DB call timed out"
-// cascade in production). 8 is a middle ground -- low enough to matter
-// across concurrent containers, high enough that a single page's ~12-15
-// query Promise.all batch (Home, Analytics, post-V3-rewrite) mostly clears
-// in one or two waves instead of three, which matters a lot given
-// withRetry's per-attempt timeout races the *whole* batch (see its callers).
+// `max` is deliberately tiny: each Vercel serverless container gets its own
+// pool, and a navigation burst (link prefetches fan out to parallel
+// containers) multiplies max by container count against Supabase Micro's
+// shared ~60-connection budget -- max 8 x 7 containers was the intermittent
+// "database connection hiccup" error boundary. Post-V4 the hot pages are one
+// batched statement (Analytics) or tag-cached (Home), so per-request
+// parallelism no longer needs a wide pool; a cold Home's ~14-query
+// Promise.all just queues over 3 conns in a few fast waves.
 const queryClient =
   globalForDb.rtdQueryClient ??
-  postgres(connectionString, { prepare: false, max: 8, idle_timeout: 10, connect_timeout: 8 });
+  postgres(connectionString, { prepare: false, max: 3, idle_timeout: 10, connect_timeout: 8 });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.rtdQueryClient = queryClient;

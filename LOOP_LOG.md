@@ -1,5 +1,14 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-20 — Iteration 4: the "database connection hiccup" root cause
+
+**Trigger:** Ashton still hit the error boundary on his phone while my sequential fetch checks passed. Vercel logs during his live browsing showed the smoking gun: seven parallel `/train/p*` GETs in one second — Next.js prefetching every phase link on /train simultaneously.
+**Root cause:** pool `max: 8` per serverless container × ~7 containers in a prefetch burst > Supabase Micro's ~60-connection budget → intermittent connect timeouts → error boundary. Sequential smoke checks could never reproduce it.
+**Shipped:** pool `max: 8 → 3` (post-V4, hot pages are one batched statement or tag-cached; a wide pool serves nothing), `prefetch={false}` on the six phase links, and a **burst phase in the smoke harness** (10 concurrent heavy pages) so this class of failure is reproducible and gated forever.
+**Verification:** local prod build — burst x10 green in 3.8s; live prod post-deploy — burst x10 green in 1.4s.
+**Learnings:** the harness itself had a bug first (burst ran after the finally-block killed the server → instant "fetch failed" — moved inside try). Vercel logs during the user's real browsing beat any synthetic check for finding burst patterns. Google Fonts fetch is a build-time single point of failure (backlogged self-hosting Inter).
+**Direction shift from Ashton:** NO Telegram — drop that whole layer. Hermes's value re-scoped: its memory/model ideas get built INTO the app (coach_memory, Nous API evaluation). V5 queue captured in BACKLOG.md (Analytics tabs + Swim tab, liquid-glow color system, Fitonist-style desktop Home, Learn tab).
+
 ## 2026-07-20 — Iteration 2: self-verification harness + Training Load was tonnage in disguise
 
 **Trigger:** iteration 1's preview link failed for Ashton — Vercel Preview deploys don't get the DB env vars (only Production does), so preview-based verification is structurally dead. Loop pipeline changed to: lint/build → local prod-build smoke → deploy prod → live-prod assertions. No more asking Ashton to check.

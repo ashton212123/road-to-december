@@ -22,8 +22,11 @@ export default async function TrainPage() {
           const pctComplete = Math.round(
             Math.max(0, Math.min(1, daysBetween(phase.startDate, today) / span)) * 100
           );
+          // prefetch={false}: six phase links prefetching at once spawned
+          // parallel lambdas whose pools blew the Supabase connection
+          // ceiling (the intermittent "database connection hiccup").
           return (
-            <Link key={phase.id} href={`/train/${phase.id}`}>
+            <Link key={phase.id} href={`/train/${phase.id}`} prefetch={false}>
               <GlassCard
                 interactive
                 className="flex flex-col gap-3"

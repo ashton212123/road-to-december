@@ -3,7 +3,18 @@
 Rules: small, testable, one screen/module each. Hermes rewrites raw wishes into this shape.
 Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: reason]`.
 
-## Queue
+## Queue — V5 (Ashton's 2026-07-20 direction: Fitonist-style, liquid color, swim analytics, learning space)
+
+Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~20px radius, lilac/yellow accents, per-card period toggles (Today/Week/Month), month calendar with activity dots, glowing curve charts with dot markers, bubble stats.
+
+- [ ] **Analytics reorg into tabs**: pill tab bar at top — Overview | Train | Swim | Fuel | Recovery. Move existing cards into their domain tabs; Overview keeps the improvement matrix + one headline stat per domain. Fold in the Monday-morning fix: matrix cells use trailing-7-day windows, not calendar-week-to-date.
+- [ ] **Swim tab**: weekly swim load chart (distance + duration per week, ComparisonLine), pace-per-100 trend (from V4 import intervals), latest imported session's interval breakdown, and a **monthly view as a dot calendar with legend** (Fitonist month-grid pattern: dot intensity = that day's swim load).
+- [ ] **Liquid-glow color pass, app-wide**: no flat/static accent fills — rings become conic **gradients with soft outer glow** (fuel ring first), chart lines get gradient stroke + glowing endpoint dots, active states get gradient tints. Keep the perf rules: no backdrop-filter on grid cards, transform/opacity transitions only.
+- [ ] **Fitonist-style desktop Home** (mobile keeps the compact stack): per-card period toggles, month calendar card with training-day dots, bubble-style macro/age-range-like breakdown for fuel, glowing curve charts. Reverse-engineer layout from the reference, adapt to RTD's data.
+- [ ] **Learn tab (career learning space)**: new nav section with 5 GitHub curricula as leveled tracks — 30 Days of Python (Asabeneh), ML for Beginners (Microsoft), Build Your Own X (codecrafters-io), Project Based Learning (practical-tutorials), and the 19-day cybersecurity one (resolve exact repo). Track page shows levels/progression BEFORE opening a topic (locked → unlocked → done), each lesson links to the repo content, mark-done persists, progress % per track, "explain this lesson" button that opens the coach with lesson context. [needs schema: learning_progress]
+- [ ] **Coach memory (the "Hermes memory" ask, built into the app)**: persistent athlete-memory the coach reads and updates on every chat/brief — goals, injuries, preferences, patterns it noticed. Injected into the system prompt; visible/editable in Settings. [needs schema: coach_memory]
+- [ ] **Model provider**: evaluate Nous Portal API (Hermes models, free tier) as the coach's LLM alongside/instead of Groq; keep whichever answers better, with fallback. No Telegram anywhere.
+- [ ] Self-host Inter font (next/font/google needs Google reachable at build time — one flaky network = failed deploy).
 
 - [ ] Analytics improvement matrix uses calendar-week-to-date, so Monday mornings show "needs more data — log a gym session" even when you trained Friday. Switch matrix cells to trailing-7-day windows (comparison vs the 7 days before), keeping the Week/Month toggle for the detail charts only.
 - [ ] Home renders every module twice (desktop bento grid + mobile stack both in DOM, CSS-hides one). Double hydration cost on phones. Restructure so each module renders once with responsive classes, or split server-side.

@@ -120,6 +120,38 @@ async function main() {
         results.push({ route, ok: false, ms: Date.now() - started, detail: String(e) });
       }
     }
+
+    // Burst phase (must run while the server is still up): reproduce a real
+    // navigation storm (Train page prefetching all phase links at once) --
+    // the pattern that intermittently blew the Supabase connection budget.
+    const BURST = [
+      "/train/p1", "/train/p2", "/train/p3", "/train/p4", "/train/p5", "/train/p6",
+      "/home", "/analytics?period=week&offset=0", "/analytics?period=month&offset=0", "/fuel",
+    ];
+    const burstStarted = Date.now();
+    const burst = await Promise.all(
+      BURST.map(async (route) => {
+        try {
+          const res = await fetch(BASE + route, {
+            headers: { cookie },
+            redirect: "manual",
+            signal: AbortSignal.timeout(30000),
+          });
+          const body = await res.text();
+          const errorHit = ERROR_MARKERS.find((m) => body.includes(m));
+          return { route, ok: res.status === 200 && !errorHit, detail: errorHit ? `error boundary` : `status ${res.status}` };
+        } catch (e) {
+          return { route, ok: false, detail: String(e) };
+        }
+      })
+    );
+    const burstFailures = burst.filter((r) => !r.ok);
+    results.push({
+      route: `[burst x${BURST.length} concurrent]`,
+      ok: burstFailures.length === 0,
+      ms: Date.now() - burstStarted,
+      detail: burstFailures.length === 0 ? "ok" : JSON.stringify(burstFailures),
+    });
   } finally {
     if (server) {
       try {
