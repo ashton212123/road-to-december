@@ -6,7 +6,6 @@ Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: re
 ## Queue
 
 - [ ] Analytics improvement matrix uses calendar-week-to-date, so Monday mornings show "needs more data — log a gym session" even when you trained Friday. Switch matrix cells to trailing-7-day windows (comparison vs the 7 days before), keeping the Week/Month toggle for the detail charts only.
-- [ ] Audit every MCP tool write path (log_workout_set, log_meal, log_water, etc.): confirm each calls `revalidateTag("home-data")` + `revalidateTag("analytics-data")`. If not, logs via Claude/Hermes stay invisible in the UI until an unrelated in-app write flushes the cache.
 - [ ] Home renders every module twice (desktop bento grid + mobile stack both in DOM, CSS-hides one). Double hydration cost on phones. Restructure so each module renders once with responsive classes, or split server-side.
 - [ ] Verify every V4 phase actually shipped (P1–P6 acceptance bars in REVAMP_V4_PROMPT.md); create one backlog item per gap found instead of fixing inline.
 - [ ] Coach panel: confirm chat history persists across sessions and the panel restores scroll position; fix if not.
@@ -19,5 +18,7 @@ Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: re
 - [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
 
 ## Done
+
+- [x] Cache-invalidation audit (iteration 3): every write path already busts both caches — in-app server actions call `updateTag("home-data")`+`updateTag("analytics-data")` (fuel/train/import/analytics/more actions), MCP route calls `revalidateTag(..., {expire: 0})` after all 15+ write tools. Hermes/Claude Telegram logs WILL appear in the UI immediately. No fix needed.
 
 - [x] Smoke suite (iteration 2, adapted from the Playwright plan): `npm run smoke` boots the prod build (or targets a deployed origin via `SMOKE_BASE_URL`), mints a session with the app's own JWT signing (secret never printed), asserts every screen returns 200 with real content and no error boundary, plus auth-redirect still enforced. Zero new dependencies.
