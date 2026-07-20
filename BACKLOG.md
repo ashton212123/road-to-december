@@ -18,12 +18,13 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] Fuel: meal timeline rows — swipe/press delete affordance on mobile (currently only ✕ on desktop hover, if any).
 - [ ] Analytics month view: stepping offset back past data start shows a sane empty state, not blank charts.
 - [ ] Import parser: handle kick/drill/pull notation ("4x50 kick @1:10", "200 drill") — parse to intervals with note, excluded from pace-per-100.
-- [ ] PWA audit: manifest icons (180 + maskable 512), theme-color meta, standalone display — installed app must not show a white flash on launch.
 - [ ] Lighthouse mobile pass on /home and /analytics: performance ≥ 90; fix the top offender if below.
 - [ ] Empty states audit: every empty card app-wide has a CTA that routes to where the data gets logged.
 - [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
 
 ## Done
+
+- [x] Typography scale + PWA hygiene (iteration 12): Home hero's countdown number and readiness word now use the shared `.rtd-big-num` scale (34px→44px) instead of ad-hoc clamp()/text-large-title sizing; StatCard's headline number steps up from 32px to 44px on desktop (mobile stays 28px per V4 density). PWA audit found everything already correct on inspection — manifest already had 192+512 maskable icons, `theme_color`/`background_color` both `#000000`, root layout's Viewport API already emitted the `<meta name="theme-color">` tag, `/offline` already existed and worked — so the only change needed was adding `/offline` to smoke.mjs's permanent route list as a regression guard.
 
 - [x] Home single render (iteration 11): merged the desktop 12-col bento grid and the mobile stack into one `.rtd-home-grid` container (flex-column below md, the same 12-col grid at md+) so every module renders exactly once instead of twice with one copy CSS-hidden. Visual order differs by breakpoint (fuel/stat cluster sits mid-sequence on mobile, near the top on desktop) so every child got explicit `order-N md:order-M` classes rather than relying on default/tied ordering. Fuel+Bodyweight+Consistency share one wrapper (`grid grid-cols-2 gap-2.5 md:contents`) so they're a compact 2-col cluster on mobile and three independent 12-col-grid items on desktop. MonthCalendarCard is `hidden md:flex` (desktop-only, as before — it never had a mobile equivalent). 6 card components (HomeHeroBand, MonthCalendarCard, TodaysPlanCard, CoachBriefCard, WeekMapCard, TrainingLoadCard, RecentPRsCard) gained a `className` passthrough prop to carry the order classes.
 

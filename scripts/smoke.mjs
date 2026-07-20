@@ -39,6 +39,7 @@ const CHECKS = [
   ["/more/settings", "Training status"],
   ["/school", null],
   ["/business", null],
+  ["/offline", null],
 ];
 const ERROR_MARKERS = ["Something went wrong", "Couldn't load this screen", "Application error"];
 

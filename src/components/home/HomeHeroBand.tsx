@@ -54,10 +54,7 @@ export function HomeHeroBand({
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
-              <div
-                className="rtd-display rtd-display-xl rtd-nums text-large-title mt-1"
-                style={{ fontSize: "clamp(32px, 4vw + 18px, 52px)" }}
-              >
+              <div className="rtd-big-num mt-1">
                 <AnimatedNumber value={daysToNcaa} />
               </div>
             </div>
@@ -95,7 +92,7 @@ export function HomeHeroBand({
         <div className="md:w-[300px] shrink-0 flex flex-col justify-between min-w-0">
           <div>
             <div className="rtd-micro-label">Readiness</div>
-            <div className="text-title-1 rtd-display mt-1" style={{ color: LIGHT_COLOR[readinessOverall] }}>
+            <div className="rtd-big-num mt-1" style={{ color: LIGHT_COLOR[readinessOverall] }}>
               {LIGHT_WORD[readinessOverall]}
             </div>
             <p className="text-caption text-[var(--rtd-text-secondary)] mt-0.5">{actionLine}</p>
