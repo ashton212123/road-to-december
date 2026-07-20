@@ -45,9 +45,10 @@ export type ParseSessionResult =
 const SYSTEM_PROMPT = `You structure a competitive swimmer's pasted training-session notes into JSON. First decide if the session is a SWIM practice or a GYM/weights session, then return ONLY a JSON object of the matching shape below -- no other text.
 
 SWIM shape:
-{"kind":"swim","intervals":[{"reps":8,"distanceM":50,"stroke":"breast","targetInterval":"1:10","avgTime":"38s","note":null}],"loadRatingSuggestion":6,"notable":[]}
+{"kind":"swim","intervals":[{"reps":1,"distanceM":400,"stroke":"freestyle","targetInterval":null,"avgTime":null,"note":"W/U"},{"reps":8,"distanceM":50,"stroke":"breast","targetInterval":"1:10","avgTime":"38s","note":null},{"reps":1,"distanceM":200,"stroke":"freestyle","targetInterval":null,"avgTime":null,"note":"W/D"}],"loadRatingSuggestion":6,"notable":[]}
 - Parse real interval notation: "8x50 br @1:10 hold 38s" -> reps 8, distanceM 50, stroke "breast", targetInterval "1:10", avgTime "38s". Stroke abbreviations: fr/free=freestyle, br=breast, bk/back=backstroke, fl/fly=butterfly, im=IM, pull/kick/drill stay as written.
-- Warm-up and warm-down/cool-down lines get an interval with note "W/U" or "W/D" (or "drill" for drill sets) -- these must still appear as intervals (reps 1 if not repeated), just flagged so pace analysis can exclude them.
+- EVERY comma-separated segment in the input becomes its own interval object in the output array, with NO exceptions -- including the warm-up and warm-down/cool-down lines shown in the example above. Never omit, merge, or summarize away a segment just because it's not a "main set" line. If the input has 5 segments, the output array must have 5 entries.
+- Warm-up and warm-down/cool-down lines get an interval with note "W/U" or "W/D" (or "drill" for drill sets), reps 1 if not repeated -- flagged so pace analysis can exclude them, but still present as a full interval object exactly like every other segment.
 - loadRatingSuggestion is your 1-10 subjective estimate of session difficulty from total volume + intensity (long aerobic volume ~3-5, mixed main set ~5-7, heavy race-pace/sprint work ~7-9).
 - notable: only include a race-pace or time-trial effort explicitly stated as a real clocked time for a named event (e.g. "time trial 200 breast 2:25.40" -> {"event":"200 Breast","timeMs":145400}). Leave empty if nothing like that is mentioned -- do not invent one from a regular interval.
 
