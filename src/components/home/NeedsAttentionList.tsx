@@ -1,10 +1,26 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { IconCheck } from "@/components/ui/icons";
 import { DOMAIN_META, sortAttentionItems, type AttentionItem } from "@/lib/dashboard/needsAttention";
 
 export function NeedsAttentionList({ items, className }: { items: AttentionItem[]; className?: string }) {
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <GlassCard className={clsx("flex flex-col items-center justify-center gap-2 text-center", className)}>
+        <span
+          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: "color-mix(in srgb, var(--rtd-green) 16%, transparent)", color: "var(--rtd-green)" }}
+        >
+          <IconCheck size={16} />
+        </span>
+        <span className="text-subhead font-semibold" style={{ color: "var(--rtd-green)" }}>
+          All clear
+        </span>
+        <span className="text-caption text-[var(--rtd-text-tertiary)]">No alerts yet today</span>
+      </GlassCard>
+    );
+  }
   const sorted = sortAttentionItems(items);
   const domainsPresent = [...new Set(sorted.map((i) => i.domain))];
 

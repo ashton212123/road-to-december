@@ -34,9 +34,15 @@ const TAB_BAR_ITEMS: TabItem[] = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex-1 flex flex-col md:flex-row max-w-6xl w-full mx-auto md:gap-6 md:px-6 md:py-6">
+    // No shell-level max-width -- this used to cap the whole app at ~1152px
+    // (max-w-6xl) regardless of display size, pinning it to roughly half a
+    // 1920px screen. The shell is full viewport width now; the 1600px cap
+    // lives on <main> alone so content still centers on ultra-wide displays
+    // instead of stretching forever, while normal 1440-1920px screens get
+    // essentially all the remaining space after the fixed sidebar.
+    <div className="flex-1 flex flex-col md:flex-row w-full md:gap-6 px-4 md:px-6 lg:px-10 md:py-6">
       <SideBar items={SIDEBAR_ITEMS} />
-      <main className="flex-1 min-w-0 max-w-[430px] md:max-w-none w-full mx-auto pb-24 md:pb-6 px-4 pt-[calc(env(safe-area-inset-top)+16px)] md:pt-0">
+      <main className="flex-1 min-w-0 max-w-[1600px] w-full mx-auto pb-24 md:pb-6 pt-[calc(env(safe-area-inset-top)+16px)] md:pt-0">
         {children}
       </main>
       <TabBar items={TAB_BAR_ITEMS} />

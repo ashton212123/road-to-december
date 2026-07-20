@@ -58,9 +58,20 @@ export function StatCard({
         {deltaPct !== undefined && <DeltaChip pct={deltaPct} goodDirection={goodDirection} />}
       </div>
       {sub && <span className="text-footnote text-[var(--rtd-text-tertiary)] truncate relative">{sub}</span>}
-      {sparklinePoints && sparklinePoints.length > 0 && (
+      {/* Reserve the sparkline zone whenever the caller passed the prop at
+          all (even empty/short) -- never just leave a void when there isn't
+          yet enough history. Only cards that never track a trend (Kcal,
+          Week completion) skip this block entirely by omitting the prop. */}
+      {sparklinePoints !== undefined && (
         <div className="flex-1 min-h-0 flex items-end mt-1 relative">
-          <Sparkline points={sparklinePoints} color={domainColor ?? "var(--rtd-blue)"} width={140} height={40} />
+          {sparklinePoints.length >= 2 ? (
+            <Sparkline points={sparklinePoints} color={domainColor ?? "var(--rtd-blue)"} width={140} height={40} />
+          ) : (
+            <div className="w-full flex flex-col gap-1 pb-0.5">
+              <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+              <span className="text-caption text-[var(--rtd-text-tertiary)]">tracking starts after 2+ days of logs</span>
+            </div>
+          )}
         </div>
       )}
     </BentoCard>

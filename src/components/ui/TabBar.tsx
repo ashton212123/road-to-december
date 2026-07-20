@@ -65,7 +65,7 @@ export function SideBar({ items }: { items: TabItem[] }) {
   const pathname = usePathname();
   return (
     <nav
-      className="hidden md:flex flex-col gap-1 w-56 shrink-0 rtd-glass p-3 h-fit sticky top-6"
+      className="hidden md:flex flex-col gap-1 w-[220px] shrink-0 rtd-glass p-3 h-fit sticky top-6"
     >
       {items.map((item) => {
         const active = isActive(item, pathname);

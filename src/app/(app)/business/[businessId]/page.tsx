@@ -29,7 +29,7 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
   const profit = computeProfit(transactions);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
       <SectionLabel>{business.name}</SectionLabel>
       {business.description && <p className="text-footnote text-[var(--rtd-text-tertiary)] -mt-2">{business.description}</p>}
 

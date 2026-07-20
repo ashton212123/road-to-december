@@ -11,7 +11,7 @@ export default async function SchoolPage() {
 
   if (!configured) {
     return (
-      <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-xl md:mx-auto">
+      <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
         <SectionLabel>School</SectionLabel>
         <EmptyState
           icon="🎓"

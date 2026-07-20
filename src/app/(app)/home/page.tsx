@@ -12,7 +12,7 @@ import { RecentPRsCard } from "@/components/home/RecentPRsCard";
 import { StatCard } from "@/components/ui/StatCard";
 import { IconFuel, IconTrain } from "@/components/ui/icons";
 import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, todayDayKey, daysBetween, addDaysISO, manilaHourNow, mondayOf } from "@/lib/time";
+import { todayManilaISO, todayDayKey, dayKeyForDate, daysBetween, addDaysISO, manilaHourNow, mondayOf } from "@/lib/time";
 import {
   getAllPhasesWithSessions,
   getCurrentPhase,
@@ -289,6 +289,26 @@ export default async function HomePage() {
   }
   const startHref = todaySession && !loggedWorkoutToday ? `/train/${currentPhase.id}?day=${todayKey}` : null;
 
+  // Rest-day preview: only ever rendered when planRows is empty, but cheap
+  // enough to always compute -- tomorrow can land in a different phase than
+  // today near a phase boundary, so re-resolve it rather than assuming
+  // currentPhase still applies.
+  const tomorrowISO = addDaysISO(today, 1);
+  const tomorrowKey = dayKeyForDate(tomorrowISO);
+  const tomorrowWeekDay = seasonData.WEEK[DAY_KEY_TO_WEEK_INDEX[tomorrowKey]];
+  const tomorrowPhase = getCurrentPhase(allPhases, tomorrowISO) ?? currentPhase;
+  const tomorrowSession = tomorrowPhase.sessions.find((s) => s.dayKey === tomorrowKey) ?? null;
+  const tomorrowPreview = tomorrowSession
+    ? {
+        title: tomorrowSession.title,
+        time: null,
+        exercises: tomorrowSession.exercises.slice(0, 3).map((e) => e.name),
+        href: `/train/${tomorrowPhase.id}?day=${tomorrowKey}`,
+      }
+    : tomorrowWeekDay.swim
+      ? { title: "Swim", time: tomorrowWeekDay.swim, exercises: [], href: "/analytics?tab=swim" }
+      : null;
+
   // Week map: Mon..Sun of the current week across Swim/Gym/Fuel/Sleep.
   const scheduledSwimDays = new Set(
     [0, 1, 2, 3, 4, 5, 6]
@@ -327,6 +347,15 @@ export default async function HomePage() {
   const followUps = [
     todaySession ? `What should I focus on in ${todaySession.title}?` : "How's my training this week?",
     "How's my nutrition looking today?",
+  ];
+
+  // Same underlying facts the brief's system prompt is told to reference --
+  // surfaced as bullets so the brief text is never the only place the data
+  // behind it shows up.
+  const coachBriefBullets = [
+    `${trainingStreak}-day training streak`,
+    todaySession ? `Today: ${todaySession.title}` : weekDay.swim ? "Today: Swim" : "Today: Rest day",
+    `${daysToNcaa}d to NCAA`,
   ];
 
   return (
@@ -391,15 +420,9 @@ export default async function HomePage() {
           className="col-span-3 row-span-2"
         />
 
-        <TodaysPlanCard rows={planRows} startHref={startHref} />
-        <CoachBriefCard brief={dailyBrief} followUps={followUps} />
-        {needsAttention.length > 0 ? (
-          <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full" />
-        ) : (
-          <div className="rtd-glass rtd-bento-card flex items-center justify-center p-5" style={{ gridColumn: "span 3 / span 3", gridRow: "span 3 / span 3" }}>
-            <span className="text-caption text-[var(--rtd-text-tertiary)] text-center">Nothing needs attention right now</span>
-          </div>
-        )}
+        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} />
+        <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
+        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full" />
 
         <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
         <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
@@ -421,8 +444,8 @@ export default async function HomePage() {
           trainingStreak={trainingStreak}
         />
         <ReadinessCard overall={readinessOverall} signals={readinessSignals} />
-        <TodaysPlanCard rows={planRows} startHref={startHref} />
-        <CoachBriefCard brief={dailyBrief} followUps={followUps} />
+        <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} />
+        <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
         <div className="grid grid-cols-2 gap-3">
           <StatCard
             label="Kcal today"
@@ -458,7 +481,7 @@ export default async function HomePage() {
             sub={`${trainingStreak} day streak`}
           />
         </div>
-        {needsAttention.length > 0 && <NeedsAttentionList items={needsAttention} />}
+        <NeedsAttentionList items={needsAttention} />
         <WeekMapCard days={weekMap.days} rows={weekMap.rows} />
         <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
         <RecentPRsCard prs={recentPRs} />

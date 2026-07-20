@@ -2,7 +2,15 @@ import Link from "next/link";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { IconSparkle } from "@/components/ui/icons";
 
-export function CoachBriefCard({ brief, followUps }: { brief: string | null; followUps: string[] }) {
+export function CoachBriefCard({
+  brief,
+  bullets,
+  followUps,
+}: {
+  brief: string | null;
+  bullets: string[];
+  followUps: string[];
+}) {
   return (
     <BentoCard colSpan={4} rowSpan={3}>
       <Link href="/more/coach-ai" className="flex items-center gap-2 mb-1 w-fit cursor-pointer">
@@ -11,9 +19,19 @@ export function CoachBriefCard({ brief, followUps }: { brief: string | null; fol
         </span>
         <span className="rtd-micro-label">Coach brief</span>
       </Link>
-      <p className="text-subhead text-[var(--rtd-text)] leading-snug flex-1 overflow-y-auto">
+      <p className="text-subhead text-[var(--rtd-text)] leading-snug shrink-0">
         {brief ?? "Your coach doesn't have a brief yet today — ask a question to get started."}
       </p>
+      {bullets.length > 0 && (
+        <ul className="flex flex-col gap-1 mt-2 flex-1 min-h-0 overflow-y-auto">
+          {bullets.map((b) => (
+            <li key={b} className="flex items-baseline gap-1.5 text-caption text-[var(--rtd-text-secondary)]">
+              <span className="text-[var(--rtd-purple)] shrink-0">·</span>
+              <span className="truncate">{b}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       {followUps.length > 0 && (
         <div className="flex flex-col gap-1.5 mt-2 shrink-0">
           {followUps.map((q) => (
