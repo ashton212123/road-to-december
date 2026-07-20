@@ -6,8 +6,11 @@ export function RecentPRsCard({ prs }: { prs: PrEntry[] }) {
   return (
     <BentoCard label="Recent PRs" colSpan={4} rowSpan={2}>
       {prs.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-caption text-[var(--rtd-text-tertiary)] text-center">
-          Needs more data — log a few sessions to start tracking PRs
+        <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
+          <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+          <span className="text-caption text-[var(--rtd-text-tertiary)]">
+            PRs surface here once a few sessions are logged
+          </span>
         </div>
       ) : (
         <div className="flex flex-col gap-2 flex-1 justify-center">

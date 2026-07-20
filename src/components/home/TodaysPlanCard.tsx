@@ -42,7 +42,7 @@ export function TodaysPlanCard({
             {tomorrow && (
               <Link
                 href={tomorrow.href}
-                className="rtd-glass px-3 py-2.5 flex flex-col gap-1 hover:bg-white/[0.04] transition-colors duration-150 ease-out"
+                className="rounded-[8px] bg-white/[0.04] px-3 py-2.5 flex flex-col gap-1 hover:bg-white/[0.06] transition-colors duration-150 ease-out"
               >
                 <div className="rtd-micro-label">Tomorrow</div>
                 <div className="text-subhead font-medium text-[var(--rtd-text)] truncate">{tomorrow.title}</div>

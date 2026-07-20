@@ -17,7 +17,10 @@ export function TrainingLoadCard({
   return (
     <BentoCard label="Training load" colSpan={4} rowSpan={2}>
       {!hasAnyData ? (
-        <div className="flex-1 flex items-center justify-center text-caption text-[var(--rtd-text-tertiary)]">Needs more data — log gym sessions</div>
+        <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
+          <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+          <span className="text-caption text-[var(--rtd-text-tertiary)]">Tracking starts after your first logged gym session</span>
+        </div>
       ) : (
         <>
           <ComparisonLegend currentLabel="This week" previousLabel="Last week" color="var(--rtd-domain-train)" />
