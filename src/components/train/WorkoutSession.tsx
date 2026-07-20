@@ -102,6 +102,7 @@ export function WorkoutSession({
           lastSessionSets={entry.lastSessionSets}
           todaysSets={entry.todaysSets}
           progression={entry.progression}
+          resolvedDefaultWeightKg={entry.resolvedDefaultWeightKg}
           completed={optimisticCompleted.get(entry.exercise.id) ?? false}
           onToggleCompleted={() => handleToggle(entry)}
           togglePending={pendingId === entry.exercise.id}

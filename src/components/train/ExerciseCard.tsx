@@ -37,6 +37,7 @@ export function ExerciseCard({
   lastSessionSets,
   todaysSets,
   progression,
+  resolvedDefaultWeightKg,
   completed,
   onToggleCompleted,
   togglePending,
@@ -46,6 +47,10 @@ export function ExerciseCard({
   lastSessionSets: PastSet[];
   todaysSets: LoggedSet[];
   progression: ProgressionSuggestion | null;
+  /** Same fallback chain (stored default -> progression -> last session's
+   * top weight) the checkbox-complete flow already uses -- the "Add set"
+   * row's ghost weight, so both entry points suggest the same number. */
+  resolvedDefaultWeightKg: number | null;
   /** Owned by the parent WorkoutSession so it can detect "all done" and show the completion summary. */
   completed: boolean;
   onToggleCompleted: () => void;
@@ -58,6 +63,18 @@ export function ExerciseCard({
   const [rpe, setRpe] = useState("");
   const [restElapsed, setRestElapsed] = useState<number | null>(null);
   const lastLogAt = useRef<number | null>(null);
+
+  // Ghost defaults (Hevy pattern, V4 P5): every field arrives pre-filled as
+  // placeholder text so nothing in the workout flow ever starts genuinely
+  // blank. Confirming an untouched field logs the ghost value; typing
+  // overrides it. Weight: prescribed -> progression -> last session's top
+  // weight (same chain checkbox-complete uses). Reps: prescribed range,
+  // falling back to last session's last set. RPE: last session's last set
+  // only -- there's no "prescribed RPE" concept here.
+  const lastSet = lastSessionSets[lastSessionSets.length - 1];
+  const ghostWeight = resolvedDefaultWeightKg !== null ? String(resolvedDefaultWeightKg) : (lastSet?.weightKg ?? "");
+  const ghostReps = String(exercise.targetRepsMax ?? exercise.targetRepsMin ?? lastSet?.reps ?? "");
+  const ghostRpe = lastSet?.rpe ?? "";
 
   useEffect(() => {
     if (restElapsed === null) return;
@@ -73,12 +90,15 @@ export function ExerciseCard({
     const restSeconds = lastLogAt.current ? Math.floor((Date.now() - lastLogAt.current) / 1000) : null;
     const setNumber = todaysSets.length + 1;
     startTransition(async () => {
+      const usedWeight = weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
+      const usedReps = reps ? Number(reps) : ghostReps ? Number(ghostReps) : null;
+      const usedRpe = rpe ? Number(rpe) : ghostRpe ? Number(ghostRpe) : null;
       await logSetAction({
         exerciseId: exercise.id,
         setNumber,
-        weightKg: weight ? Number(weight) : null,
-        reps: reps ? Number(reps) : null,
-        rpe: rpe ? Number(rpe) : null,
+        weightKg: usedWeight,
+        reps: usedReps,
+        rpe: usedRpe,
         restSeconds,
         phaseId,
       });
@@ -213,8 +233,9 @@ export function ExerciseCard({
               <input
                 inputMode="decimal"
                 value={weight}
+                placeholder={ghostWeight || undefined}
                 onChange={(e) => setWeight(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
               />
             </label>
             <label className="flex flex-col gap-1 col-span-1">
@@ -222,8 +243,9 @@ export function ExerciseCard({
               <input
                 inputMode="numeric"
                 value={reps}
+                placeholder={ghostReps || undefined}
                 onChange={(e) => setReps(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
               />
             </label>
             <label className="flex flex-col gap-1 col-span-1">
@@ -231,8 +253,9 @@ export function ExerciseCard({
               <input
                 inputMode="decimal"
                 value={rpe}
+                placeholder={ghostRpe || undefined}
                 onChange={(e) => setRpe(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none"
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
               />
             </label>
             <Button type="button" variant="secondary" disabled={pending} onClick={handleAddSet} className="col-span-1 !px-2">

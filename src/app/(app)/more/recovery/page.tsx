@@ -72,7 +72,7 @@ export default async function RecoveryPage() {
       </GlassCard>
 
       <CmjQuickLog />
-      <SleepLogger />
+      <SleepLogger lastNight={sleepLogs[0] ? { hours: Number(sleepLogs[0].hours), bedtime: sleepLogs[0].bedtime } : null} />
       <SorenessLogger />
 
       {sorenessLogs.length > 0 && (

@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { MoreMenuButton } from "@/components/home/MoreMenuButton";
+import { QuickLogSheet } from "@/components/home/QuickLogSheet";
 import { HomeHeroBand } from "@/components/home/HomeHeroBand";
 import { FuelRingCard } from "@/components/home/FuelRingCard";
 import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
@@ -363,9 +364,19 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-3 rtd-fade-in pt-1">
-      <div className="flex items-center justify-between md:hidden">
-        <span className="text-title-3 font-semibold text-[var(--rtd-text)]">Home</span>
-        <MoreMenuButton trainingStatus={settingsRow.trainingStatus} />
+      <div className="flex items-center justify-between">
+        <span className="text-title-3 font-semibold text-[var(--rtd-text)] md:hidden">Home</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <QuickLogSheet
+            lastNightSleep={recentSleepLogs[0] ? { hours: Number(recentSleepLogs[0].hours), bedtime: recentSleepLogs[0].bedtime } : null}
+            lastWeighInKg={latestWeighIn ? Number(latestWeighIn.kg) : null}
+            phaseId={todaySession ? currentPhase.id : null}
+            todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
+          />
+          <div className="md:hidden">
+            <MoreMenuButton trainingStatus={settingsRow.trainingStatus} />
+          </div>
+        </div>
       </div>
 
       <AlertCardList alerts={alerts} />

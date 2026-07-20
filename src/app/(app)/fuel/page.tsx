@@ -212,7 +212,7 @@ export default async function FuelPage({
         </BentoCard>
 
         {isToday ? (
-          <div style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0">
+          <div id="quick-log" style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0">
             <SectionLabel>Quick log</SectionLabel>
             <div className="flex-1 min-h-0">
               <MealQuickLog
@@ -327,7 +327,7 @@ export default async function FuelPage({
         </div>
 
         {isToday && (
-          <div>
+          <div id="quick-log-mobile">
             <SectionLabel>Quick log</SectionLabel>
             <MealQuickLog
               recentFoods={recentFoodRows.map((r) => ({

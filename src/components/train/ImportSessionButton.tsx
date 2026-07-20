@@ -31,12 +31,24 @@ export function ImportSessionButton({
   phaseId,
   todayExercises,
   compact = false,
+  hideTrigger = false,
+  open: openProp,
+  onOpenChange,
 }: {
   phaseId: string | null;
   todayExercises: TodayExercise[];
   compact?: boolean;
+  /** Renders no trigger button of its own -- controlled entirely via `open`/`onOpenChange` by a parent (Home's quick-log sheet reuses this same flow instead of duplicating it). */
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  function setOpen(v: boolean) {
+    setOpenState(v);
+    onOpenChange?.(v);
+  }
   const [text, setText] = useState("");
   const [result, setResult] = useState<ParseSessionResult | null | "error">(null);
   const [swimIntervals, setSwimIntervals] = useState<ParsedSwimInterval[]>([]);
@@ -128,17 +140,19 @@ export function ImportSessionButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={
-          compact
-            ? "text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
-            : "text-footnote font-medium px-3 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
-        }
-      >
-        Import session
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={
+            compact
+              ? "text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+              : "text-footnote font-medium px-3 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+          }
+        >
+          Import session
+        </button>
+      )}
 
       {open && (
         <div
