@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { sleepLogs, sorenessLogs, settings, cmjTests, jumpTests } from "@/lib/db/schema";
@@ -15,22 +15,28 @@ export async function logSleepAction(input: { hours: number; bedtime: string; on
   });
   revalidatePath("/more/recovery");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function logSorenessAction(rating: number, area: string) {
   await db.insert(sorenessLogs).values({ date: todayManilaISO(), rating1to5: rating, area });
   revalidatePath("/more/recovery");
+  updateTag("analytics-data");
 }
 
 export async function logCmjAction(cm: number) {
   await db.insert(cmjTests).values({ date: todayManilaISO(), bestOf3Cm: String(cm) });
   revalidatePath("/more/recovery");
   revalidatePath("/analytics");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function logJumpTestAction(type: "broad_jump" | "seated_box", cm: number) {
   await db.insert(jumpTests).values({ date: todayManilaISO(), type, valueCm: String(cm) });
   revalidatePath("/analytics");
+  updateTag("analytics-data");
 }
 
 export async function updateSettingsAction(input: {
@@ -47,4 +53,6 @@ export async function updateSettingsAction(input: {
     })
     .where(eq(settings.id, "singleton"));
   revalidatePath("/", "layout");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }

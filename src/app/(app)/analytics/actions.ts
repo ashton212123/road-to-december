@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { swimTimes, meets, meetEvents, swimSessions } from "@/lib/db/schema";
@@ -23,11 +23,15 @@ export async function logSwimTimeAction(input: {
     strokeCounts: input.strokeCounts,
   });
   revalidatePath("/analytics");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function deleteSwimTimeAction(id: number) {
   await db.delete(swimTimes).where(eq(swimTimes.id, id));
   revalidatePath("/analytics");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function createMeetAction(input: {
@@ -42,12 +46,14 @@ export async function createMeetAction(input: {
     );
   }
   revalidatePath("/analytics");
+  updateTag("analytics-data");
   return meet;
 }
 
 export async function deleteMeetAction(meetId: number) {
   await db.delete(meets).where(eq(meets.id, meetId));
   revalidatePath("/analytics");
+  updateTag("analytics-data");
 }
 
 export async function logSwimSessionAction(input: { loadRating: number; setsText: string | null; date?: string }) {
@@ -59,9 +65,13 @@ export async function logSwimSessionAction(input: { loadRating: number; setsText
   });
   revalidatePath("/analytics");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function deleteSwimSessionAction(id: number) {
   await db.delete(swimSessions).where(eq(swimSessions.id, id));
   revalidatePath("/analytics");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }

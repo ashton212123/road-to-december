@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { MoreMenuButton } from "@/components/home/MoreMenuButton";
@@ -68,44 +69,15 @@ function intradayDeltaPct(current: number, targetMin: number): number | null {
   return ((current - targetMin) / targetMin) * 100;
 }
 
-export default async function HomePage() {
-  const today = todayManilaISO();
-  const todayKey = todayDayKey();
-  const weekStart = mondayOf(today);
-
-  // Everything Home needs in one batched round trip -- see DECISIONS.md for
-  // why this DB connection is worth being careful about. Canvas is
-  // cache-only (no live sync call) so Home never blocks on it.
-  const {
-    canvas,
-    allPhases,
-    latestWeighIn,
-    weighInHistory,
-    todaysFood,
-    settingsRow,
-    alerts,
-    undoneTasks,
-    recentWorkoutLogs,
-    recentSwimSessions,
-    recentSleepLogs,
-    cmjTests,
-    swimTimes,
-    mainLiftLogs,
-    weekFoodLogs,
-    // A ~14-query Promise.all batch legitimately needs more than the 8s
-    // default (designed for single queries) -- that default was causing
-    // withRetry to treat a merely-slow-but-succeeding batch as failed and
-    // rerun all 14 queries from scratch, up to 3x, which is what actually
-    // produced the "DB call timed out" cascade under load, not a real hang.
-  } = await withRetry(async () => {
+// Every DB read Home needs, cached and tagged "home-data" -- every log-
+// writing server action revalidates this tag. evaluateAlerts is
+// deliberately NOT called in here: it reads the wall-clock hour internally
+// (some alerts only fire after a threshold hour), so it has to run fresh on
+// every request against these cached raw rows, not get frozen at whatever
+// hour first populated the cache.
+const getCachedHomeData = unstable_cache(
+  async (today: string, weekStart: string) => {
     const canvas = await getCanvasSummary({ sync: false });
-
-    const settingsRowPromise = getSettingsRow();
-    const todaysFoodPromise = getFoodLogsForDate(today);
-    const weighIns21Promise = getWeighIns(21);
-    const workoutLogsWidePromise = getWorkoutLogsSince(addDaysISO(today, -150));
-    const allPhasesPromise = getAllPhasesWithSessions();
-    const cmjTestsPromise = getCmjTests(20);
 
     const [
       allPhases,
@@ -113,7 +85,6 @@ export default async function HomePage() {
       weighInHistory,
       todaysFood,
       settingsRow,
-      alerts,
       undoneTasks,
       recentWorkoutLogs,
       recentSwimSessions,
@@ -123,20 +94,16 @@ export default async function HomePage() {
       mainLiftLogs,
       weekFoodLogs,
     ] = await Promise.all([
-      allPhasesPromise,
+      getAllPhasesWithSessions(),
       getLatestWeighIn(),
-      weighIns21Promise,
-      todaysFoodPromise,
-      settingsRowPromise,
-      Promise.all([settingsRowPromise, todaysFoodPromise, weighIns21Promise, workoutLogsWidePromise, allPhasesPromise, cmjTestsPromise]).then(
-        ([settingsRow, todaysFood, weighIns21, workoutLogsWide, allPhases, cmjRows12]) =>
-          evaluateAlerts(canvas, { settingsRow, todaysFood, weighIns21, workoutLogsWide, allPhases, cmjRows12 })
-      ),
+      getWeighIns(21),
+      getFoodLogsForDate(today),
+      getSettingsRow(),
       getUndoneBusinessTasks(5),
-      workoutLogsWidePromise,
+      getWorkoutLogsSince(addDaysISO(today, -150)),
       getSwimSessions(60),
       getSleepLogs(30),
-      cmjTestsPromise,
+      getCmjTests(20),
       getSwimTimes(200),
       getMainLiftLogHistory(),
       getFoodLogsSince(weekStart),
@@ -149,7 +116,6 @@ export default async function HomePage() {
       weighInHistory,
       todaysFood,
       settingsRow,
-      alerts,
       undoneTasks,
       recentWorkoutLogs,
       recentSwimSessions,
@@ -159,7 +125,41 @@ export default async function HomePage() {
       mainLiftLogs,
       weekFoodLogs,
     };
-  }, { timeoutMs: 15000 });
+  },
+  ["home-page-data"],
+  { tags: ["home-data"] }
+);
+
+export default async function HomePage() {
+  const today = todayManilaISO();
+  const todayKey = todayDayKey();
+  const weekStart = mondayOf(today);
+
+  const {
+    canvas,
+    allPhases,
+    latestWeighIn,
+    weighInHistory,
+    todaysFood,
+    settingsRow,
+    undoneTasks,
+    recentWorkoutLogs,
+    recentSwimSessions,
+    recentSleepLogs,
+    cmjTests,
+    swimTimes,
+    mainLiftLogs,
+    weekFoodLogs,
+  } = await withRetry(() => getCachedHomeData(today, weekStart), { timeoutMs: 15000 });
+
+  const alerts = await evaluateAlerts(canvas, {
+    settingsRow,
+    todaysFood,
+    weighIns21: weighInHistory,
+    workoutLogsWide: recentWorkoutLogs,
+    allPhases,
+    cmjRows12: cmjTests,
+  });
 
   const criticalIds = new Set(getCriticalAssignments(canvas.assignments).map((a) => a.id));
   const urgentAssignments = getUrgentAssignments(canvas.assignments)

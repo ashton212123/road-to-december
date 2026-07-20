@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "crypto";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
@@ -57,6 +58,17 @@ import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 import { withRetry } from "@/lib/db/withRetry";
+
+// MCP tool writes bypass every Next.js server action -- they need the same
+// cache invalidation those actions make (via updateTag), or a cached
+// Home/Analytics page never notices data Claude just logged via chat. This
+// is a Route Handler, not a Server Action, so updateTag itself is off
+// limits here (it throws outside Server Actions) -- revalidateTag with an
+// explicit `{ expire: 0 }` profile is the equivalent immediate invalidation.
+function revalidateTraining() {
+  revalidateTag("analytics-data", { expire: 0 });
+  revalidateTag("home-data", { expire: 0 });
+}
 
 const handler = createMcpHandler(
   (server) => {
@@ -258,6 +270,7 @@ const handler = createMcpHandler(
           fatG: fat_g !== undefined ? String(fat_g) : null,
           source: "ai",
         });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged: ${description} (${kcal} kcal, ${protein_g}g protein).` }] };
       }
     );
@@ -297,6 +310,7 @@ const handler = createMcpHandler(
           }))
         );
         const totalKcal = foods.reduce((s, f) => s + f.kcal, 0);
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${foods.length} food${foods.length === 1 ? "" : "s"} for ${time_slot} (${totalKcal} kcal total).` }] };
       }
     );
@@ -306,6 +320,7 @@ const handler = createMcpHandler(
       { description: "Log water intake in milliliters.", inputSchema: { ml: z.number(), date: z.string().optional() } },
       async ({ ml, date }) => {
         await db.insert(waterLogs).values({ date: date ?? todayManilaISO(), ml });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${ml}ml of water.` }] };
       }
     );
@@ -316,6 +331,7 @@ const handler = createMcpHandler(
       async ({ kg, date }) => {
         const d = date ?? todayManilaISO();
         await db.insert(weighIns).values({ date: d, kg: String(kg) }).onConflictDoUpdate({ target: weighIns.date, set: { kg: String(kg) } });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged weigh-in: ${kg}kg on ${d}.` }] };
       }
     );
@@ -332,6 +348,7 @@ const handler = createMcpHandler(
         const isBedtimeCheckDay = dayKey === 2 || dayKey === 4; // Tue/Thu
         const onTime = isBedtimeCheckDay && bedtime ? bedtime <= "21:30" : null;
         await db.insert(sleepLogs).values({ date: today, hours: String(hours), bedtime: bedtime ?? null, onTime });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${hours}h of sleep.` }] };
       }
     );
@@ -366,6 +383,7 @@ const handler = createMcpHandler(
           reps: reps ?? null,
           rpe: rpe !== undefined ? String(rpe) : null,
         });
+        revalidateTraining();
         return {
           content: [
             { type: "text" as const, text: `Logged set ${setNumber} of ${match.name}: ${weight_kg ?? "–"}kg x ${reps ?? "–"} @ RPE ${rpe ?? "–"}.` },
@@ -395,6 +413,7 @@ const handler = createMcpHandler(
           splits: splits ?? null,
           strokeCounts: stroke_counts ?? null,
         });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${event}: ${(time_ms / 1000).toFixed(2)}s.` }] };
       }
     );
@@ -404,6 +423,7 @@ const handler = createMcpHandler(
       { description: "Log a countermovement jump test (best of 3), the weekly Sunday fatigue monitor.", inputSchema: { cm: z.number() } },
       async ({ cm }) => {
         await db.insert(cmjTests).values({ date: todayManilaISO(), bestOf3Cm: String(cm) });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged CMJ: ${cm}cm.` }] };
       }
     );
@@ -420,6 +440,7 @@ const handler = createMcpHandler(
       },
       async ({ rating, area, date }) => {
         await db.insert(sorenessLogs).values({ date: date ?? todayManilaISO(), rating1to5: rating, area });
+        revalidateTag("analytics-data", { expire: 0 });
         return { content: [{ type: "text" as const, text: `Logged soreness: ${area} at ${rating}/5.` }] };
       }
     );
@@ -436,6 +457,7 @@ const handler = createMcpHandler(
       },
       async ({ type, cm, date }) => {
         await db.insert(jumpTests).values({ date: date ?? todayManilaISO(), type, valueCm: String(cm) });
+        revalidateTag("analytics-data", { expire: 0 });
         return { content: [{ type: "text" as const, text: `Logged ${type.replace("_", " ")}: ${cm}cm.` }] };
       }
     );
@@ -452,6 +474,7 @@ const handler = createMcpHandler(
       },
       async ({ seconds, condition, date }) => {
         await db.insert(timeTo15m).values({ date: date ?? todayManilaISO(), seconds: String(seconds), condition });
+        revalidateTag("analytics-data", { expire: 0 });
         return { content: [{ type: "text" as const, text: `Logged 15m time: ${seconds}s (${condition}).` }] };
       }
     );
@@ -477,6 +500,7 @@ const handler = createMcpHandler(
             weightUnit: weight_unit ?? current.weightUnit,
           })
           .where(eq(settings.id, "singleton"));
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: "Settings updated." }] };
       }
     );
@@ -544,6 +568,7 @@ const handler = createMcpHandler(
           return { content: [{ type: "text" as const, text: `No business found matching "${business}".` }], isError: true };
         }
         await db.insert(businessTasks).values({ businessId: match.id, title, dueDate: due_date ?? null });
+        revalidateTag("home-data", { expire: 0 });
         return { content: [{ type: "text" as const, text: `Added task "${title}" to ${match.name}.` }] };
       }
     );
@@ -567,6 +592,7 @@ const handler = createMcpHandler(
           return { content: [{ type: "text" as const, text: `No task found matching "${task}" for ${businessMatch.name}.` }], isError: true };
         }
         await db.update(businessTasks).set({ done: true }).where(eq(businessTasks.id, taskMatch.id));
+        revalidateTag("home-data", { expire: 0 });
         return { content: [{ type: "text" as const, text: `Marked "${taskMatch.title}" done for ${businessMatch.name}.` }] };
       }
     );
@@ -609,6 +635,7 @@ const handler = createMcpHandler(
           setsText: sets_text ?? null,
           parsedDistanceM: sets_text ? estimateDistanceM(sets_text) : null,
         });
+        revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged swim session: load ${load_rating}/10${sets_text ? `, ${sets_text}` : ""}.` }] };
       }
     );
@@ -694,6 +721,7 @@ const handler = createMcpHandler(
           logged.push(`${match.name} set ${setNumber}: ${s.weight_kg ?? "–"}kg x ${s.reps ?? "–"} @ RPE ${s.rpe ?? "–"}`);
         }
 
+        if (logged.length > 0) revalidateTraining();
         const summary = `Logged ${logged.length} set${logged.length === 1 ? "" : "s"}.${notFound.length > 0 ? ` No exercise found matching: ${notFound.join(", ")}.` : ""}`;
         return {
           content: [{ type: "text" as const, text: `${summary}\n${logged.join("\n")}` }],

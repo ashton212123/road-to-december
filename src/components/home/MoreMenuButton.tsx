@@ -38,7 +38,7 @@ export function MoreMenuButton() {
         👤
       </button>
       {open && (
-        <div role="menu" className="rtd-glass rtd-fade-in absolute right-0 top-11 z-30 w-52 p-1.5 flex flex-col gap-0.5 overflow-hidden">
+        <div role="menu" className="rtd-glass rtd-glass-blur rtd-fade-in absolute right-0 top-11 z-30 w-52 p-1.5 flex flex-col gap-0.5 overflow-hidden">
           {ITEMS.map((item) => (
             <Link
               key={item.href}

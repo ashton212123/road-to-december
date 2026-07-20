@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { workoutLogs, exercises } from "@/lib/db/schema";
@@ -28,11 +28,15 @@ export async function logSetAction(input: {
   });
   revalidatePath(`/train/${input.phaseId}`);
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function deleteSetAction(logId: number, phaseId: string) {
   await db.delete(workoutLogs).where(eq(workoutLogs.id, logId));
   revalidatePath(`/train/${phaseId}`);
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function updateSetAction(input: {
@@ -53,6 +57,8 @@ export async function updateSetAction(input: {
     })
     .where(eq(workoutLogs.id, input.logId));
   revalidatePath(`/train/${input.phaseId}`);
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 /** Checkbox-first logging: marks an exercise done in one tap by logging every
@@ -92,6 +98,8 @@ export async function completeExerciseAction(input: {
   }
   revalidatePath(`/train/${input.phaseId}`);
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function uncompleteExerciseAction(exerciseId: number, phaseId: string) {
@@ -99,4 +107,6 @@ export async function uncompleteExerciseAction(exerciseId: number, phaseId: stri
   await db.delete(workoutLogs).where(and(eq(workoutLogs.exerciseId, exerciseId), eq(workoutLogs.date, today)));
   revalidatePath(`/train/${phaseId}`);
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }

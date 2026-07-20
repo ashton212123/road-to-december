@@ -1,22 +1,12 @@
+import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AnalyticsView } from "@/components/analytics/AnalyticsView";
+import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, addDaysISO } from "@/lib/time";
-import {
-  getWorkoutLogsWithExerciseSince,
-  getWeighIns,
-  getCmjTests,
-  getJumpTests,
-  getSwimTimes,
-  getTimeTo15mLogs,
-  getAllMeetsWithEvents,
-  getSwimSessions,
-  getFoodLogsSince,
-  getSleepLogs,
-  getSorenessLogs,
-  getWaterLogsSince,
-  getSettingsRow,
-} from "@/lib/db/queries";
+import { getSettingsRow } from "@/lib/db/queries";
+import { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeDailySessionLoads, computeAcwr, computeWeeklySessions } from "@/lib/analytics/load";
 import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/tonnage";
@@ -33,7 +23,45 @@ const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Trap-bar deadlift": { label: "Trap-bar deadlift", goalKg: 130 },
 };
 
-export default async function AnalyticsPage({
+// Every dataset the page needs from ONE round trip instead of 13 parallel
+// queries fighting over the connection pool (see getAnalyticsPageDataRaw).
+// Tagged "analytics-data" -- every log-writing server action revalidates
+// this tag, so a warm cache is never stale after a write, only ever stale
+// for the seconds between a write and its updateTag call.
+const getCachedAnalyticsPageData = unstable_cache(
+  async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO),
+  ["analytics-page-data"],
+  { tags: ["analytics-data"] }
+);
+
+// getStrengthTakeaway already self-caches per-day at the DB level (see its
+// own doc comment) -- this layer just skips the redundant SELECT on repeat
+// warm loads within the same day, same tag so a new lift log still surfaces
+// a regenerated takeaway on the next cache-busted load.
+const getCachedStrengthTakeaway = unstable_cache(getStrengthTakeaway, ["strength-takeaway"], {
+  tags: ["analytics-data"],
+});
+
+export default function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string; offset?: string }>;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+      <SectionLabel>Analytics</SectionLabel>
+      <Suspense fallback={<AnalyticsSkeleton />}>
+        <AnalyticsContent searchParams={searchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+// The page shell above (header + Suspense boundary) paints on navigation
+// before this ever resolves -- everything that actually waits on the DB
+// round trip lives here so "cold nav paints instantly" doesn't depend on
+// the query being fast, only on the shell being static.
+async function AnalyticsContent({
   searchParams,
 }: {
   searchParams: Promise<{ period?: string; offset?: string }>;
@@ -45,41 +73,24 @@ export default async function AnalyticsPage({
   const today = todayManilaISO();
   const since = addDaysISO(today, -180);
 
-  const [
-    mainLiftLogs,
-    weighIns,
-    cmjTests,
-    broadJumps,
-    swimTimes,
-    timeTo15m,
-    meetsWithEvents,
-    swimSessions,
-    foodLogs,
-    sleepLogs,
-    sorenessLogs,
-    waterLogs,
-    settingsRow,
-  ] = await withRetry(() =>
-    Promise.all([
-      // Unfiltered (every exercise, not just main lifts) -- also covers the
-      // plain workout_logs data computeDailySessionLoads/gymSessionDates
-      // need, so there's no separate getWorkoutLogsSince query for the same
-      // table/window. One less connection needed out of an already-tight pool.
-      getWorkoutLogsWithExerciseSince(since),
-      getWeighIns(180),
-      getCmjTests(30),
-      getJumpTests("broad_jump", 30),
-      getSwimTimes(200),
-      getTimeTo15mLogs(30),
-      getAllMeetsWithEvents(),
-      getSwimSessions(60),
-      getFoodLogsSince(since),
-      getSleepLogs(180),
-      getSorenessLogs(30),
-      getWaterLogsSince(since),
-      getSettingsRow(),
-    ]), { timeoutMs: 15000 }
-  );
+  const raw = await withRetry(() => getCachedAnalyticsPageData(since), { timeoutMs: 15000 });
+  const mainLiftLogs = raw.mainLiftLogs;
+  const weighIns = raw.weighIns;
+  const cmjTests = raw.cmjTests;
+  // getJumpTests's original behavior: top-30 most-recent jump tests of ANY
+  // type, filtered to broad_jump after the fact -- not "30 most recent
+  // broad_jump rows". Preserved exactly so a run of seated-box tests can't
+  // silently change how far back the broad-jump series reaches.
+  const broadJumps = raw.jumpTestsRaw.filter((j) => j.type === "broad_jump");
+  const swimTimes = raw.swimTimes;
+  const timeTo15m = raw.timeTo15m;
+  const meetsWithEvents = raw.meetsWithEvents;
+  const swimSessions = raw.swimSessions;
+  const foodLogs = raw.foodLogs;
+  const sleepLogs = raw.sleepLogs;
+  const sorenessLogs = raw.sorenessLogs;
+  const waterLogs = raw.waterLogs;
+  const settingsRow = raw.settingsRow ?? (await getSettingsRow());
 
   // Strength: best-set e1RM per main lift per date it was logged.
   const e1rmByLift = new Map<string, { date: string; e1rm: number }[]>();
@@ -151,7 +162,7 @@ export default async function AnalyticsPage({
 
   const e1rmByLiftObj = Object.fromEntries(e1rmByLift);
   const takeaways = {
-    strength: await withRetry(() => getStrengthTakeaway(today, e1rmByLiftObj)),
+    strength: await withRetry(() => getCachedStrengthTakeaway(today, e1rmByLiftObj)),
     load: loadTakeaway(acwr),
     power: powerTakeaway(cmjSeries, broadJumpSeries),
     bodyweight: bodyweightTakeaway(rollingAvg),
@@ -202,8 +213,6 @@ export default async function AnalyticsPage({
   const currentPeriodLabel = periodLabel(periodStarts[periodStarts.length - 1], period);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
-      <SectionLabel>Analytics</SectionLabel>
       <AnalyticsView
         today={today}
         period={period}
@@ -241,6 +250,5 @@ export default async function AnalyticsPage({
           kcalTargetMin: computeKcalTarget(date).min,
         }))}
       />
-    </div>
   );
 }

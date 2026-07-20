@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { foodLogs, waterLogs, weighIns } from "@/lib/db/schema";
@@ -31,24 +31,32 @@ export async function logFoodAction(input: {
   });
   revalidatePath("/fuel");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function deleteFoodLogAction(id: number) {
   await db.delete(foodLogs).where(eq(foodLogs.id, id));
   revalidatePath("/fuel");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function logWaterAction(ml: number, date?: string) {
   await db.insert(waterLogs).values({ date: date ?? todayManilaISO(), ml });
   revalidatePath("/fuel");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function deleteWaterLogAction(id: number) {
   await db.delete(waterLogs).where(eq(waterLogs.id, id));
   revalidatePath("/fuel");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export type MealReviewSource = "ai" | "manual" | "quick";
@@ -151,6 +159,8 @@ export async function logMealBatchAction(
   );
   revalidatePath("/fuel");
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }
 
 export async function logWeighInAction(kg: number, date?: string) {
@@ -162,4 +172,6 @@ export async function logWeighInAction(kg: number, date?: string) {
   revalidatePath("/fuel");
   revalidatePath("/home");
   revalidatePath("/analytics");
+  updateTag("analytics-data");
+  updateTag("home-data");
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { businesses, businessTransactions, businessTasks, businessNotes } from "@/lib/db/schema";
@@ -53,16 +53,19 @@ export async function deleteTransactionAction(id: number, businessId: number) {
 export async function addTaskAction(input: { businessId: number; title: string; dueDate: string | null }) {
   await db.insert(businessTasks).values({ businessId: input.businessId, title: input.title, dueDate: input.dueDate });
   revalidatePath(`/business/${input.businessId}`);
+  updateTag("home-data");
 }
 
 export async function toggleTaskAction(id: number, businessId: number, done: boolean) {
   await db.update(businessTasks).set({ done }).where(eq(businessTasks.id, id));
   revalidatePath(`/business/${businessId}`);
+  updateTag("home-data");
 }
 
 export async function deleteTaskAction(id: number, businessId: number) {
   await db.delete(businessTasks).where(eq(businessTasks.id, id));
   revalidatePath(`/business/${businessId}`);
+  updateTag("home-data");
 }
 
 export async function addNoteAction(input: { businessId: number; body: string }) {

@@ -149,7 +149,7 @@ export function LoadSection({
               >
                 {t.label}
                 <span
-                  className="absolute left-1/2 bottom-0 w-1 h-1 rounded-full bg-white transition-all duration-150 ease-out"
+                  className="absolute left-1/2 bottom-0 w-1 h-1 rounded-full bg-white transition-[transform,opacity] duration-150 ease-out"
                   style={{
                     transform: tab === t.key ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0)",
                     opacity: tab === t.key ? 1 : 0,

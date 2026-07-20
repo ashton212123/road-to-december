@@ -45,7 +45,7 @@ export function SwimHero({
           <button
             key={ev}
             onClick={() => setEvent(ev)}
-            className="shrink-0 px-3 py-1.5 rounded-full text-subhead font-semibold transition-all duration-150 ease-out cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+            className="shrink-0 px-3 py-1.5 rounded-full text-subhead font-semibold transition-[background-color,color,transform] duration-150 ease-out cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{
               background: event === ev ? "var(--rtd-blue)" : "rgba(255,255,255,0.06)",
               color: event === ev ? "#fff" : "var(--rtd-text-secondary)",
@@ -59,7 +59,7 @@ export function SwimHero({
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="rtd-micro-label">Current best</div>
-          <div className="rtd-display text-large-title mt-1 transition-all duration-500">
+          <div className="rtd-display text-large-title mt-1 transition-[color,opacity] duration-500">
             {currentBest !== null ? formatSwimTime(currentBest) : "—"}
           </div>
         </div>

@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  /* DesignCode dark glass: flat translucent black, blurred on desktop only
-     (mobile trades the blur for slightly higher opacity -- same read,
-     without the scroll-jank cost of backdrop-filter on phones). */
-  --rtd-glass-bg-desktop: rgba(0, 0, 0, 0.5);
+  /* DesignCode dark glass: flat translucent black, no blur on grid cards at
+     any viewport (V4 P1 -- backdrop-filter on every card was the desktop
+     render-lag source). Desktop sits a touch more transparent than mobile
+     since the wallpaper's glows are meant to read through between cards. */
+  --rtd-glass-bg-desktop: rgba(10, 10, 12, 0.78);
   --rtd-glass-bg-mobile: rgba(12, 12, 14, 0.88);
   --rtd-hairline: rgba(255, 255, 255, 0.1);
   --rtd-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 30px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -137,11 +138,18 @@ body {
     radial-gradient(1000px 800px at 85% 10%, rgba(95, 197, 255, 0.09), transparent 60%),
     radial-gradient(900px 800px at 70% 105%, rgba(255, 172, 137, 0.06), transparent 60%),
     radial-gradient(900px 800px at 10% 90%, rgba(242, 98, 181, 0.05), transparent 60%);
+  /* Own compositor layer so scrolling the page never repaints this fixed
+     gradient field underneath every card (V4 P1 render-lag pass). */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
-/* DesignCode card material: flat translucent black, blurred on desktop so
-   the wallpaper's glows read through the glass; mobile trades the blur for
-   higher opacity (same read, no backdrop-filter scroll-jank on phones). */
+/* DesignCode card material: flat translucent black, no backdrop-filter on
+   any viewport -- blur on every grid card was the render-lag source on
+   desktop (V4 P1). Cards read against the wallpaper's glows through opacity
+   alone now; floating surfaces that still want the blurred-glass look
+   (dock, coach panel, dropdown menus, sheets) opt in explicitly via
+   .rtd-glass-blur alongside this class, never through it. */
 .rtd-glass {
   background-color: var(--rtd-glass-bg-mobile);
   border: 1px solid var(--rtd-hairline);
@@ -152,8 +160,6 @@ body {
 @media (min-width: 768px) {
   .rtd-glass {
     background-color: var(--rtd-glass-bg-desktop);
-    -webkit-backdrop-filter: blur(var(--rtd-blur));
-    backdrop-filter: blur(var(--rtd-blur));
   }
 }
 
