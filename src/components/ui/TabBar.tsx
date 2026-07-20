@@ -22,33 +22,50 @@ function isActive(item: TabItem, pathname: string) {
 
 export function TabBar({ items }: { items: TabItem[] }) {
   const pathname = usePathname();
+  const activeIndex = Math.max(0, items.findIndex((item) => isActive(item, pathname)));
+
   return (
     <nav
-      className="rtd-glass-blur fixed bottom-0 inset-x-0 z-30 md:hidden"
+      className="rtd-glass-blur fixed z-30 md:hidden rounded-full"
       style={{
-        background: "rgba(20,20,22,0.72)",
-        borderTop: "0.5px solid var(--rtd-hairline)",
-        paddingBottom: "env(safe-area-inset-bottom)",
+        left: 12,
+        right: 12,
+        bottom: "calc(env(safe-area-inset-bottom) + 12px)",
+        height: 64,
+        background: "rgba(10,10,12,0.82)",
+        border: "0.5px solid var(--rtd-hairline)",
+        boxShadow: "var(--rtd-shadow)",
       }}
     >
-      <div className="flex items-stretch px-1 pt-2 pb-1 max-w-[430px] mx-auto">
+      <div className="relative flex items-stretch h-full px-1.5">
+        {/* Sliding active pill -- percentage math against item count, same
+            technique as SegmentedControl's thumb, no ref measurement needed. */}
+        <div
+          aria-hidden="true"
+          className="absolute top-1.5 bottom-1.5 rounded-full bg-white/[0.12] transition-[left,width] duration-200"
+          style={{
+            left: `calc(${activeIndex} / ${items.length} * 100% + 6px)`,
+            width: `calc(100% / ${items.length} - 12px)`,
+            transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        />
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-1 px-0.5 py-1 cursor-pointer rounded-[8px] transition-colors duration-150 ease-out hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+              className="relative z-10 flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-0.5 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             >
               <span
-                className="rtd-tab-icon w-6 h-6 flex items-center justify-center"
+                className="rtd-tab-icon w-5 h-5 flex items-center justify-center transition-colors duration-150 ease-out"
                 data-active={active}
                 style={{ color: active ? "var(--rtd-blue)" : "var(--rtd-text-tertiary)" }}
               >
                 {item.icon}
               </span>
               <span
-                className="text-caption font-medium truncate max-w-full"
+                className="text-[10px] font-medium truncate max-w-full transition-colors duration-150 ease-out"
                 style={{ color: active ? "var(--rtd-blue)" : "var(--rtd-text-tertiary)" }}
               >
                 {item.label}

@@ -24,7 +24,7 @@ export function GlassCard({
     <Tag
       className={clsx(
         "rtd-glass",
-        padded && "p-4",
+        padded && "p-3.5 md:p-4",
         interactive &&
           "rtd-glass-interactive cursor-pointer transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2",
         className

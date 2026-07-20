@@ -430,7 +430,7 @@ export default async function HomePage() {
       </div>
 
       {/* Mobile: single-column stack, same modules, spec's priority order. */}
-      <div className="flex flex-col gap-3 md:hidden">
+      <div className="flex flex-col gap-2.5 md:hidden">
         <CountdownHero
           daysToNcaa={daysToNcaa}
           daysToAsean={daysToAsean}
@@ -446,7 +446,7 @@ export default async function HomePage() {
         <ReadinessCard overall={readinessOverall} signals={readinessSignals} />
         <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} />
         <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <StatCard
             label="Kcal today"
             numericValue={kcalToday}
@@ -471,7 +471,6 @@ export default async function HomePage() {
             domainColor="var(--rtd-cyan)"
             deltaPct={weightTrendPct}
             goodDirection="up"
-            sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
           />
           <StatCard
             label="Week completion"

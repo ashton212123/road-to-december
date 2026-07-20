@@ -34,7 +34,7 @@ export function GroupedListRow({
     </>
   );
   const className =
-    "flex items-center gap-3 min-h-[52px] px-4 hover:bg-white/[0.04] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 cursor-pointer";
+    "flex items-center gap-3 min-h-12 md:min-h-[52px] px-4 hover:bg-white/[0.04] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 cursor-pointer";
 
   if (href) {
     return (

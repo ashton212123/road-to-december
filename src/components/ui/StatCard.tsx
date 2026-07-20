@@ -52,7 +52,7 @@ export function StatCard({
       )}
       <span className="rtd-micro-label truncate relative">{label}</span>
       <div className="flex items-baseline gap-1.5 min-w-0 relative">
-        <span className="rtd-display rtd-nums leading-tight truncate" style={{ color, fontSize: "32px" }}>
+        <span className="rtd-display rtd-nums leading-tight truncate text-[28px] md:text-[32px]" style={{ color }}>
           {numericValue !== undefined ? <AnimatedNumber value={numericValue} decimals={decimals} suffix={suffix} /> : value}
         </span>
         {deltaPct !== undefined && <DeltaChip pct={deltaPct} goodDirection={goodDirection} />}

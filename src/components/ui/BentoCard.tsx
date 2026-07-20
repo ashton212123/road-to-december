@@ -34,7 +34,7 @@ export function BentoCard({
   const content = (
     <div
       className={clsx(
-        "rtd-glass rtd-bento-card h-full flex flex-col gap-2 p-5 min-w-0",
+        "rtd-glass rtd-bento-card h-full flex flex-col gap-2 p-3.5 md:p-5 min-w-0",
         href && "cursor-pointer",
         className
       )}
