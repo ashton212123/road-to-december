@@ -7,14 +7,12 @@ Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: re
 
 Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~20px radius, lilac/yellow accents, per-card period toggles (Today/Week/Month), month calendar with activity dots, glowing curve charts with dot markers, bubble stats.
 
-- [ ] Improvement matrix trailing-7-day windows (the Monday-morning fix): matrix cells compare trailing 7 days vs the 7 before, not calendar-week-to-date. (Split out of the tabs reorg, which shipped in iteration 5.)
 - [ ] **Liquid-glow color pass, app-wide**: no flat/static accent fills — rings become conic **gradients with soft outer glow** (fuel ring first), chart lines get gradient stroke + glowing endpoint dots, active states get gradient tints. Keep the perf rules: no backdrop-filter on grid cards, transform/opacity transitions only.
 - [ ] **Fitonist-style desktop Home** (mobile keeps the compact stack): per-card period toggles, month calendar card with training-day dots, bubble-style macro/age-range-like breakdown for fuel, glowing curve charts. Reverse-engineer layout from the reference, adapt to RTD's data.
 - [ ] **Coach memory (the "Hermes memory" ask, built into the app)**: persistent athlete-memory the coach reads and updates on every chat/brief — goals, injuries, preferences, patterns it noticed. Injected into the system prompt; visible/editable in Settings. (LOOP_PHASE2_PROMPT.md P6 — reuses existing ai_takeaways table, no schema change.)
 - [ ] **Model provider**: evaluate Nous Portal API (Hermes models, free tier) as the coach's LLM alongside/instead of Groq; keep whichever answers better, with fallback. No Telegram anywhere.
 - [ ] Self-host Inter font (next/font/google needs Google reachable at build time — one flaky network = failed deploy).
 
-- [ ] Analytics improvement matrix uses calendar-week-to-date, so Monday mornings show "needs more data — log a gym session" even when you trained Friday. Switch matrix cells to trailing-7-day windows (comparison vs the 7 days before), keeping the Week/Month toggle for the detail charts only.
 - [ ] Home renders every module twice (desktop bento grid + mobile stack both in DOM, CSS-hides one). Double hydration cost on phones. Restructure so each module renders once with responsive classes, or split server-side.
 - [ ] Verify every V4 phase actually shipped (P1–P6 acceptance bars in REVAMP_V4_PROMPT.md); create one backlog item per gap found instead of fixing inline.
 - [ ] Coach panel: confirm chat history persists across sessions and the panel restores scroll position; fix if not.
@@ -27,6 +25,8 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
 
 ## Done
+
+- [x] Improvement matrix trailing windows (iteration 10, the Monday-morning fix): current/previous/delta/progress/needsDataHint now compare a trailing N-day window ending today (7 for week, 28 for month) against the equal-length window before it, instead of calendar-period-to-date. A Friday session now counts on the following Monday. Sparkline/dot history unchanged (still calendar-period-aligned via periodStarts, still respects the offset stepper). Card label now reads "Improvement matrix · last 7/28 days vs previous".
 
 - [x] Learn progression polish + coach hook (iteration 9): first incomplete level per track gets an outline ring + full-white title (later incomplete levels dim to secondary text); track cards on /learn show an "Up next: {level}" caption ("Track complete 🎉" when done); each level row gets a sparkle button that deep-links to the coach with a pre-filled "teach me this + give me an exercise tonight" prompt. Also fixed a false premise in LOOP_PHASE2_PROMPT.md — the coach page did NOT already accept `?q=`; added real support (CoachChat auto-sends an `autoSend` prop once on mount, coach-ai/page.tsx reads `searchParams.q`).
 

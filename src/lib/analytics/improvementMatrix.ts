@@ -1,4 +1,4 @@
-import { aggregateByPeriod, pctChange, type Period, type AggType } from "@/lib/analytics/periods";
+import { aggregateByPeriod, aggregateByDateRange, pctChange, trailingWindows, type Period, type AggType } from "@/lib/analytics/periods";
 import type { DotStatus } from "@/components/ui/DotStrip";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 
@@ -37,6 +37,7 @@ function buildRow(params: {
   agg: AggType;
   period: Period;
   periodStarts: string[];
+  trailing: { current: [string, string]; previous: [string, string] };
   needsDataHint: string;
   isProgressMetric?: boolean;
   overIsGood?: boolean;
@@ -45,13 +46,18 @@ function buildRow(params: {
    * `current` is already a percentage (kcal/protein adherence). */
   targetForProgress?: number;
 }): MatrixRow {
+  // Sparkline/dots stay on the calendar-aligned period history (unaffected
+  // by this row's headline numbers) so the detail charts keep matching the
+  // Week/Month period selector exactly as before.
   const values = aggregateByPeriod(params.rows, params.period, params.periodStarts, params.agg);
-  const current = values[values.length - 1];
-  const previous = values[values.length - 2] ?? null;
-  // Progress-to-target rows (kcal/protein/water) only need a current-period
-  // value -- they never render a delta, so a missing/incomplete previous
-  // period isn't a blocker the way it is for true period-over-period rows.
-  const hasEnoughData = params.isProgressMetric ? current !== null : values.filter((v) => v !== null).length >= 2;
+
+  // current/previous/delta use a trailing window ending today instead of
+  // calendar-period-to-date -- a session from a few days ago still counts
+  // on a Monday morning, instead of a fresh (near-empty) calendar week
+  // making the row look like it needs more data.
+  const current = aggregateByDateRange(params.rows, params.trailing.current[0], params.trailing.current[1], params.agg);
+  const previous = aggregateByDateRange(params.rows, params.trailing.previous[0], params.trailing.previous[1], params.agg);
+  const hasEnoughData = current !== null;
 
   const dots: { status: DotStatus; label: string }[] = [];
   for (let i = 1; i < values.length; i++) {
@@ -104,6 +110,7 @@ export function buildImprovementMatrix(params: {
   waterTargetMl: number;
 }): MatrixRow[] {
   const { period, periodStarts } = params;
+  const trailing = trailingWindows(params.todayISO, period);
   const rows: MatrixRow[] = [];
 
   const TONNAGE_PATTERNS = new Set(["squat", "hinge", "press", "pull"]);
@@ -137,6 +144,7 @@ export function buildImprovementMatrix(params: {
         agg: "max",
         period,
         periodStarts,
+        trailing,
         needsDataHint: `needs more data — log ${lift.toLowerCase()} sets`,
       })
     );
@@ -160,6 +168,7 @@ export function buildImprovementMatrix(params: {
         agg: "min",
         period,
         periodStarts,
+        trailing,
         needsDataHint: `needs more data — log a ${event} time`,
       })
     );
@@ -176,6 +185,7 @@ export function buildImprovementMatrix(params: {
       agg: "avg",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log a weigh-in",
     })
   );
@@ -192,6 +202,7 @@ export function buildImprovementMatrix(params: {
       agg: "sum",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log gym sets",
     })
   );
@@ -208,6 +219,7 @@ export function buildImprovementMatrix(params: {
       agg: "sum",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log a gym session",
     })
   );
@@ -224,6 +236,7 @@ export function buildImprovementMatrix(params: {
       agg: "avg",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log meals",
       isProgressMetric: true,
     })
@@ -241,6 +254,7 @@ export function buildImprovementMatrix(params: {
       agg: "avg",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log meals",
       isProgressMetric: true,
     })
@@ -257,6 +271,7 @@ export function buildImprovementMatrix(params: {
       agg: "avg",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log sleep",
     })
   );
@@ -272,6 +287,7 @@ export function buildImprovementMatrix(params: {
       agg: "avg",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log water",
       isProgressMetric: true,
       overIsGood: true,
@@ -290,6 +306,7 @@ export function buildImprovementMatrix(params: {
       agg: "max",
       period,
       periodStarts,
+      trailing,
       needsDataHint: "needs more data — log a CMJ test",
     })
   );
