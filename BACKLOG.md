@@ -8,7 +8,6 @@ Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: re
 - [ ] Analytics improvement matrix uses calendar-week-to-date, so Monday mornings show "needs more data — log a gym session" even when you trained Friday. Switch matrix cells to trailing-7-day windows (comparison vs the 7 days before), keeping the Week/Month toggle for the detail charts only.
 - [ ] Audit every MCP tool write path (log_workout_set, log_meal, log_water, etc.): confirm each calls `revalidateTag("home-data")` + `revalidateTag("analytics-data")`. If not, logs via Claude/Hermes stay invisible in the UI until an unrelated in-app write flushes the cache.
 - [ ] Home renders every module twice (desktop bento grid + mobile stack both in DOM, CSS-hides one). Double hydration cost on phones. Restructure so each module renders once with responsive classes, or split server-side.
-- [ ] Add a Playwright smoke suite the loop can rely on: scripts + `npm run smoke` that loads /home, /train, /fuel, /analytics, /more logged-in at 390px and 1280px, asserts no error boundary and no console errors, saves screenshots to loop-artifacts/. (This is the loop's own safety net — do it first.)
 - [ ] Verify every V4 phase actually shipped (P1–P6 acceptance bars in REVAMP_V4_PROMPT.md); create one backlog item per gap found instead of fixing inline.
 - [ ] Coach panel: confirm chat history persists across sessions and the panel restores scroll position; fix if not.
 - [ ] Fuel: meal timeline rows — swipe/press delete affordance on mobile (currently only ✕ on desktop hover, if any).
@@ -21,4 +20,4 @@ Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: re
 
 ## Done
 
-(Hermes moves completed items here with preview URLs.)
+- [x] Smoke suite (iteration 2, adapted from the Playwright plan): `npm run smoke` boots the prod build (or targets a deployed origin via `SMOKE_BASE_URL`), mints a session with the app's own JWT signing (secret never printed), asserts every screen returns 200 with real content and no error boundary, plus auth-redirect still enforced. Zero new dependencies.

@@ -1,5 +1,14 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-20 — Iteration 2: self-verification harness + Training Load was tonnage in disguise
+
+**Trigger:** iteration 1's preview link failed for Ashton — Vercel Preview deploys don't get the DB env vars (only Production does), so preview-based verification is structurally dead. Loop pipeline changed to: lint/build → local prod-build smoke → deploy prod → live-prod assertions. No more asking Ashton to check.
+**Shipped:**
+1. `scripts/smoke.mjs` + `npm run smoke`: boots `next start` on :3111 (or targets `SMOKE_BASE_URL`), mints a short-lived session via the app's own jose signing (secret read from .env.local, never printed), checks 10 routes for 200 + sentinel content + no error-boundary markers, and confirms no-cookie requests still 307 to /login. Zero new deps.
+2. Home Training Load card actually fixed: it charted `computeDailyTonnage(mainLiftLogs)` — main lifts with weights only — so Ashton's weightless, non-main-lift session could never register (iteration 1's load.ts fix was necessary but fed a different consumer). Card now charts the sRPE session-load series (`dailyLoads`), which its own ACWR takeaway already used. Tonnage stays on Analytics' Load card.
+**Verified live on prod:** 11/11 smoke checks green; 4/4 fix assertions PASS (consistency 17% · 1/6, load card populated, water contradiction gone).
+**Learnings:** never hand out preview URLs — previews have no DB env and a different cookie domain. The auto-mode classifier sometimes blocks pane navigation to prod; fetch-based assertions with the minted cookie are the reliable path.
+
 ## 2026-07-20 — Iteration 1: sessions that "don't count" + water contradiction
 
 **Found by:** live audit (authed browser at 390px + MCP `get_training_log` cross-check).

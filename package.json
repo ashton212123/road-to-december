@@ -12,7 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/lib/db/seed.ts",
     "auth:hash": "tsx scripts/hash-password.ts",
-    "sync:vault": "tsx scripts/sync-vault.ts"
+    "sync:vault": "tsx scripts/sync-vault.ts",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

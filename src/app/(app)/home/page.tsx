@@ -44,7 +44,6 @@ import { withRetry } from "@/lib/db/withRetry";
 import { getDailyBrief } from "@/lib/coach/dailyBrief";
 import { computeReadinessSignals } from "@/lib/rules/readiness";
 import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
-import { computeDailyTonnage } from "@/lib/analytics/tonnage";
 import { loadTakeaway } from "@/lib/analytics/takeaways";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
@@ -341,9 +340,13 @@ export default async function HomePage() {
   // Training load: daily tonnage this week vs last week (dashed), same ACWR
   // takeaway Analytics uses. null (not 0) for days with no lift logged --
   // ComparisonLine breaks the line there instead of drawing a fake dip to zero.
-  const dailyTonnage = computeDailyTonnage(mainLiftLogs);
-  const thisWeekDaily = Array.from({ length: 7 }, (_, i) => dailyTonnage.get(addDaysISO(weekStart, i)) ?? null);
-  const lastWeekDaily = Array.from({ length: 7 }, (_, i) => dailyTonnage.get(addDaysISO(weekStart, i - 7)) ?? null);
+  // Chart session load (sRPE-based) -- the same series ACWR and the takeaway
+  // already use -- not main-lift tonnage. Tonnage required a weighted main
+  // lift, so bodyweight/unrated sessions read as "no sessions logged"; it
+  // still lives on Analytics' Load card.
+  const dailyLoadByDate = new Map(dailyLoads.map((d) => [d.date, d.load]));
+  const thisWeekDaily = Array.from({ length: 7 }, (_, i) => dailyLoadByDate.get(addDaysISO(weekStart, i)) ?? null);
+  const lastWeekDaily = Array.from({ length: 7 }, (_, i) => dailyLoadByDate.get(addDaysISO(weekStart, i - 7)) ?? null);
   const trainingLoadTakeaway = loadTakeaway(acwr);
 
   const recentPRs = findRecentPRs({ mainLiftLogs, swimTimes, cmjTests });
