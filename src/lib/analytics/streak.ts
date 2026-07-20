@@ -24,13 +24,18 @@ export function computeConsistencyPct(params: {
 
   for (let i = 0; i < 28; i++) {
     const date = addDaysISO(today, -i);
+    const excused = excusedFrom !== null && date >= excusedFrom;
     const phase = phases.find((p) => date >= p.startDate && date <= p.endDate);
-    if (!phase) continue;
-    if (!phase.sessions.some((s) => s.dayKey === dayKeyForDate(date))) continue;
-    if (excusedFrom !== null && date >= excusedFrom) continue;
-    planned++;
+    const isPlanned =
+      !excused && phase !== undefined && phase.sessions.some((s) => s.dayKey === dayKeyForDate(date));
+    if (isPlanned) planned++;
+    // Work done is work done: a session logged on an unplanned (or excused)
+    // day still counts toward done. Before this, training on the "wrong" day
+    // scored zero -- the same punish-the-athlete mechanic soft streaks were
+    // introduced to remove.
     if (loggedDates.has(date)) done++;
   }
 
-  return { pct: planned > 0 ? Math.round((done / planned) * 100) : null, done, planned };
+  const pct = planned > 0 ? Math.min(100, Math.round((done / planned) * 100)) : null;
+  return { pct, done, planned };
 }

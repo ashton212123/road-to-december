@@ -22,8 +22,11 @@ export function computeDailySessionLoads(
 
   const results: DailySessionLoad[] = [];
   for (const [date, { rpes, timestamps }] of byDate) {
-    if (rpes.length === 0 || timestamps.length === 0) continue;
-    const avgRpe = rpes.reduce((a, b) => a + b, 0) / rpes.length;
+    if (timestamps.length === 0) continue;
+    // sRPE fallback: a session logged without any RPE still happened -- assume
+    // moderate (5) rather than dropping the date, which made whole sessions
+    // vanish from load, ACWR, and the "first logged session" gate.
+    const avgRpe = rpes.length > 0 ? rpes.reduce((a, b) => a + b, 0) / rpes.length : 5;
     const spreadMinutes = Math.max(
       10, // floor so a handful of sets logged seconds apart doesn't read as zero load
       (Math.max(...timestamps) - Math.min(...timestamps)) / 60000

@@ -10,8 +10,11 @@ export function Sparkline({
   width?: number;
   height?: number;
 }) {
+  // Quiet spacer, not a message: callers (StatCard, ImprovementMatrix) carry
+  // their own empty-state copy, and "Not enough data yet" next to a live
+  // value reads as a contradiction (seen on the water matrix cell).
   if (points.length < 2) {
-    return <div style={{ width, height }} className="flex items-center text-caption text-[var(--rtd-text-tertiary)]">Not enough data yet</div>;
+    return <div style={{ width, height }} aria-hidden="true" />;
   }
 
   const min = Math.min(...points);

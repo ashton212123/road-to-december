@@ -43,3 +43,9 @@ mcp-token.txt
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent/tooling state
+/.claude/
+/.claude-flow/
+/supabase/.temp/
+/loop-artifacts/

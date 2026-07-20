@@ -43,6 +43,7 @@ export function TrainingStatusControl({ current, compact = false }: { current: T
             <button
               key={s.value}
               type="button"
+              aria-pressed={active}
               onClick={() => set(s.value)}
               className="flex flex-col items-center gap-1 rounded-[8px] py-2 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
               style={{

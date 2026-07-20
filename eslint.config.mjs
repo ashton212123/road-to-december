@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent worktrees/config live under .claude/ (untracked); their .next
+    // build output must never be linted as project source.
+    ".claude/**",
   ]),
 ]);
 
