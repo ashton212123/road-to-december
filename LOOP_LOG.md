@@ -1,5 +1,11 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-20 — Iteration 5: Analytics tabs + Swim tab (first liquid-gradient components)
+
+**Shipped:** URL-param tab bar (Overview | Train | Swim | Fuel | Recovery) — server-rendered Links, same sliding-thumb pattern as PeriodSelector, so caching/streaming is untouched. Overview slimmed to matrix + 4 takeaway link cards. Train = strength/load/power. Swim = NEW weekly-volume bars (cyan→indigo gradient fill + glow), NEW month dot calendar with legend (buckets: rest / <2k / 2–4k / 4k+, today ringed), NEW latest-imported-session interval card (W/U-W/D dimmed), + existing SwimSection. Fuel = adherence + bodyweight. Recovery = overlay card. Matrix rows deep-link to tabs (replaced #detail anchors). Home's existing `/analytics?tab=swim` link now actually works.
+**Verified:** local smoke 15/15 + burst; live prod smoke green (first run caught alias-propagation lag — the prod domain still served the old deploy seconds after READY; re-run clean); 9-point content assertions on live HTML incl. gradients in markup and overview/swim separation.
+**Learnings:** after `vercel deploy --prod`, wait/retry before smoking the domain (alias lag produced a false FAIL). Browser pane session expired — password entry is off-limits, so pane-based visual checks are dead until Ashton logs in there again; fetch-assertions with the minted cookie remain the reliable path. Weekly bars/dots are empty-state until real swim sessions exist — his DB has none with distance yet; the first Import lights them up.
+
 ## 2026-07-20 — Iteration 4: the "database connection hiccup" root cause
 
 **Trigger:** Ashton still hit the error boundary on his phone while my sequential fetch checks passed. Vercel logs during his live browsing showed the smoking gun: seven parallel `/train/p*` GETs in one second — Next.js prefetching every phase link on /train simultaneously.

@@ -7,8 +7,7 @@ Format: `- [ ] item` → `- [x] item (preview: url)` or `- [ ] item [blocked: re
 
 Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~20px radius, lilac/yellow accents, per-card period toggles (Today/Week/Month), month calendar with activity dots, glowing curve charts with dot markers, bubble stats.
 
-- [ ] **Analytics reorg into tabs**: pill tab bar at top — Overview | Train | Swim | Fuel | Recovery. Move existing cards into their domain tabs; Overview keeps the improvement matrix + one headline stat per domain. Fold in the Monday-morning fix: matrix cells use trailing-7-day windows, not calendar-week-to-date.
-- [ ] **Swim tab**: weekly swim load chart (distance + duration per week, ComparisonLine), pace-per-100 trend (from V4 import intervals), latest imported session's interval breakdown, and a **monthly view as a dot calendar with legend** (Fitonist month-grid pattern: dot intensity = that day's swim load).
+- [ ] Improvement matrix trailing-7-day windows (the Monday-morning fix): matrix cells compare trailing 7 days vs the 7 before, not calendar-week-to-date. (Split out of the tabs reorg, which shipped in iteration 5.)
 - [ ] **Liquid-glow color pass, app-wide**: no flat/static accent fills — rings become conic **gradients with soft outer glow** (fuel ring first), chart lines get gradient stroke + glowing endpoint dots, active states get gradient tints. Keep the perf rules: no backdrop-filter on grid cards, transform/opacity transitions only.
 - [ ] **Fitonist-style desktop Home** (mobile keeps the compact stack): per-card period toggles, month calendar card with training-day dots, bubble-style macro/age-range-like breakdown for fuel, glowing curve charts. Reverse-engineer layout from the reference, adapt to RTD's data.
 - [ ] **Learn tab (career learning space)**: new nav section with 5 GitHub curricula as leveled tracks — 30 Days of Python (Asabeneh), ML for Beginners (Microsoft), Build Your Own X (codecrafters-io), Project Based Learning (practical-tutorials), and the 19-day cybersecurity one (resolve exact repo). Track page shows levels/progression BEFORE opening a topic (locked → unlocked → done), each lesson links to the repo content, mark-done persists, progress % per track, "explain this lesson" button that opens the coach with lesson context. [needs schema: learning_progress]
@@ -29,6 +28,8 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
 
 ## Done
+
+- [x] Analytics tabs + Swim tab (iteration 5): pill tab bar Overview | Train | Swim | Fuel | Recovery (URL-param driven, server-rendered); Overview = matrix + per-domain takeaway link cards; Swim tab = weekly volume bars (gradient+glow), month dot calendar with legend (Fitonist pattern), latest imported session's interval breakdown, plus the existing SwimSection. Matrix rows now deep-link to their tab. Bodyweight lives with Fuel.
 
 - [x] Cache-invalidation audit (iteration 3): every write path already busts both caches — in-app server actions call `updateTag("home-data")`+`updateTag("analytics-data")` (fuel/train/import/analytics/more actions), MCP route calls `revalidateTag(..., {expire: 0})` after all 15+ write tools. Hermes/Claude Telegram logs WILL appear in the UI immediately. No fix needed.
 

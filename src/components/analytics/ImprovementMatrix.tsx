@@ -6,29 +6,22 @@ import { ProgressChip } from "@/components/ui/ProgressChip";
 import { DotStrip } from "@/components/ui/DotStrip";
 import { IconBolt } from "@/components/ui/icons";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
-
-function detailAnchor(key: string): string {
-  if (key.startsWith("strength-")) return "#detail-strength";
-  if (key.startsWith("swim-")) return "#detail-swim";
-  if (key === "bodyweight") return "#detail-body";
-  if (key === "tonnage" || key === "gym-sessions") return "#detail-load";
-  if (key === "protein-adherence" || key === "kcal-adherence") return "#detail-fuel";
-  return "#detail-recovery";
-}
+import { tabForMatrixKey } from "@/lib/analytics/tabs";
+import type { Period } from "@/lib/analytics/periods";
 
 function formatValue(v: number | null, unit: string, decimals: number): string {
   if (v === null) return "—";
   return `${v.toFixed(decimals)}${unit ? ` ${unit}` : ""}`;
 }
 
-export function ImprovementMatrix({ rows }: { rows: MatrixRow[] }) {
+export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[]; period: Period; offset: number }) {
   return (
     <BentoCard label="Improvement matrix" colSpan={12}>
       <div className="flex flex-col rtd-divide-y">
         {rows.map((row) => (
           <a
             key={row.key}
-            href={detailAnchor(row.key)}
+            href={`/analytics?tab=${tabForMatrixKey(row.key)}&period=${period}&offset=${offset}`}
             className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 hover:bg-white/[0.03] rounded-lg px-1.5 -mx-1.5 transition-colors duration-150 ease-out cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
           >
             <IconTile color={row.domainColor}>

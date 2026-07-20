@@ -4,7 +4,9 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AnalyticsView } from "@/components/analytics/AnalyticsView";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, addDaysISO } from "@/lib/time";
+import { todayManilaISO, addDaysISO, mondayOf } from "@/lib/time";
+import { parseAnalyticsTab } from "@/lib/analytics/tabs";
+import type { SwimWeek } from "@/components/analytics/SwimTrainingBlock";
 import { getSettingsRow } from "@/lib/db/queries";
 import { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { bestSetE1RM } from "@/lib/train/e1rm";
@@ -46,7 +48,7 @@ const getCachedStrengthTakeaway = unstable_cache(getStrengthTakeaway, ["strength
 export default function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; offset?: string }>;
+  searchParams: Promise<{ period?: string; offset?: string; tab?: string }>;
 }) {
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
@@ -65,11 +67,12 @@ export default function AnalyticsPage({
 async function AnalyticsContent({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; offset?: string }>;
+  searchParams: Promise<{ period?: string; offset?: string; tab?: string }>;
 }) {
-  const { period: periodParam, offset: offsetParam } = await searchParams;
+  const { period: periodParam, offset: offsetParam, tab: tabParam } = await searchParams;
   const period: Period = periodParam === "month" ? "month" : "week";
   const offset = Math.max(0, Number(offsetParam) || 0);
+  const tab = parseAnalyticsTab(tabParam);
 
   const today = todayManilaISO();
   const since = addDaysISO(today, -180);
@@ -197,7 +200,30 @@ async function AnalyticsContent({
   const waterByDate = new Map<string, number>();
   for (const w of waterLogs) waterByDate.set(w.date, (waterByDate.get(w.date) ?? 0) + w.ml);
 
+  // Swim training aggregates for the Swim tab: last 8 weeks of volume, the
+  // dot-calendar month (selected month when period=month, else current), and
+  // the latest session that has a structured interval breakdown.
+  const swimByWeek = new Map<string, SwimWeek>();
+  for (const s of swimSessions) {
+    const wk = mondayOf(s.date);
+    const cur = swimByWeek.get(wk) ?? { weekStart: wk, distanceM: 0, sessions: 0, loadSum: 0 };
+    cur.distanceM += s.parsedDistanceM ?? 0;
+    cur.sessions += 1;
+    cur.loadSum += s.loadRating;
+    swimByWeek.set(wk, cur);
+  }
+  const thisMonday = mondayOf(today);
+  const swimWeekly: SwimWeek[] = Array.from({ length: 8 }, (_, i) => {
+    const weekStart = addDaysISO(thisMonday, -7 * (7 - i));
+    return swimByWeek.get(weekStart) ?? { weekStart, distanceM: 0, sessions: 0, loadSum: 0 };
+  });
+  const latestSwimSession =
+    [...swimSessions]
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .find((s) => s.intervals && s.intervals.length > 0) ?? null;
+
   const periodStarts = recentPeriodStarts(today, period, 10, offset);
+  const monthStartISO = period === "month" ? periodStarts[periodStarts.length - 1] : `${today.slice(0, 7)}-01`;
   const matrixRows = buildImprovementMatrix({
     period,
     todayISO: today,
@@ -218,9 +244,22 @@ async function AnalyticsContent({
   return (
       <AnalyticsView
         today={today}
+        tab={tab}
         period={period}
         offset={offset}
         currentPeriodLabel={currentPeriodLabel}
+        swimWeekly={swimWeekly}
+        monthStartISO={monthStartISO}
+        latestSwimSession={
+          latestSwimSession
+            ? {
+                date: latestSwimSession.date,
+                parsedDistanceM: latestSwimSession.parsedDistanceM,
+                setsText: latestSwimSession.setsText,
+                intervals: latestSwimSession.intervals,
+              }
+            : null
+        }
         matrixRows={matrixRows}
         takeaways={takeaways}
         e1rmByLift={e1rmByLiftObj}
