@@ -170,7 +170,8 @@ export default async function FuelPage({
                 pct={(kcalToday / kcalTarget.mid) * 100}
                 size={72}
                 strokeWidth={7}
-                color="var(--rtd-orange)"
+                gradient={["var(--rtd-orange)", "#ff375f"]}
+                glow
                 ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`}
               />
               <div className="text-center">
@@ -183,7 +184,8 @@ export default async function FuelPage({
                 pct={(proteinToday / proteinTarget.mid) * 100}
                 size={72}
                 strokeWidth={7}
-                color="var(--rtd-green)"
+                gradient={["var(--rtd-green)", "var(--rtd-teal)"]}
+                glow
                 ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`}
               />
               <div className="text-center">
@@ -196,7 +198,8 @@ export default async function FuelPage({
                 pct={(waterToday / settingsRow.waterTargetMl) * 100}
                 size={72}
                 strokeWidth={7}
-                color="var(--rtd-cyan)"
+                gradient={["var(--rtd-cyan)", "var(--rtd-blue)"]}
+                glow
                 ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`}
               />
               <div className="text-center">
@@ -303,21 +306,21 @@ export default async function FuelPage({
         <div className="rtd-glass p-4 flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col items-center gap-1.5">
-              <ProgressRing pct={(kcalToday / kcalTarget.mid) * 100} size={68} strokeWidth={7} color="var(--rtd-orange)" ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`} />
+              <ProgressRing pct={(kcalToday / kcalTarget.mid) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-orange)", "#ff375f"]} glow ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`} />
               <div className="text-center">
                 <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={kcalToday} /></div>
                 <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {kcalTarget.min}-{kcalTarget.max}</div>
               </div>
             </div>
             <div className="flex flex-col items-center gap-1.5">
-              <ProgressRing pct={(proteinToday / proteinTarget.mid) * 100} size={68} strokeWidth={7} color="var(--rtd-green)" ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`} />
+              <ProgressRing pct={(proteinToday / proteinTarget.mid) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-green)", "var(--rtd-teal)"]} glow ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`} />
               <div className="text-center">
                 <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
                 <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {proteinTarget.min}-{proteinTarget.max}g</div>
               </div>
             </div>
             <div className="flex flex-col items-center gap-1.5">
-              <ProgressRing pct={(waterToday / settingsRow.waterTargetMl) * 100} size={68} strokeWidth={7} color="var(--rtd-cyan)" ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`} />
+              <ProgressRing pct={(waterToday / settingsRow.waterTargetMl) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-cyan)", "var(--rtd-blue)"]} glow ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`} />
               <div className="text-center">
                 <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
                 <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>

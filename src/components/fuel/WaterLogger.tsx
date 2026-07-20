@@ -23,7 +23,8 @@ export function WaterLogger({
         pct={(ml / targetMl) * 100}
         size={64}
         strokeWidth={7}
-        color="var(--rtd-cyan)"
+        gradient={["var(--rtd-cyan)", "var(--rtd-blue)"]}
+        glow
         ariaLabel={`Water: ${(ml / 1000).toFixed(2)} of ${(targetMl / 1000).toFixed(1)} liters`}
       />
       <div className="flex-1">

@@ -8,6 +8,13 @@ export function ProgressRing({
   strokeWidth = 7,
   color = "var(--rtd-blue)",
   trackColor = "rgba(255,255,255,0.08)",
+  /** Two-stop liquid gradient for the fill stroke -- opt-in; flat `color` is
+   * still used for the track and as the gradient's fallback. Pass e.g.
+   * `["var(--rtd-orange)", "#ff375f"]` for a warm fuel-ring look. */
+  gradient,
+  /** Soft breathing glow synced to the gradient's end color. Respects
+   * prefers-reduced-motion (settles to a static glow, no pulse). */
+  glow = false,
   label,
   sub,
   className,
@@ -18,6 +25,8 @@ export function ProgressRing({
   strokeWidth?: number;
   color?: string;
   trackColor?: string;
+  gradient?: [string, string];
+  glow?: boolean;
   label?: string;
   sub?: string;
   /** When set, sizes the ring via this class (e.g. responsive width/height utilities) instead of the fixed `size` px — `size` still drives the internal geometry/viewBox. */
@@ -29,6 +38,8 @@ export function ProgressRing({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const targetOffset = circumference * (1 - clamped / 100);
+  const gradientId = gradient ? `rtd-ring-grad-${gradient.join("").replace(/[^a-zA-Z0-9]/g, "")}` : undefined;
+  const glowColor = gradient?.[1] ?? color;
 
   // Renders at the final offset for SSR (no flash of an empty ring pre-hydration);
   // on mount, briefly resets to fully-empty so the CSS transition can reveal the
@@ -66,18 +77,30 @@ export function ProgressRing({
         className="-rotate-90"
         aria-hidden="true"
       >
+        {gradient && (
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2={size} y2={size} gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor={gradient[0]} />
+              <stop offset="100%" stopColor={gradient[1]} />
+            </linearGradient>
+          </defs>
+        )}
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={gradientId ? `url(#${gradientId})` : color}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(0.16, 1, 0.3, 1)" }}
+          className={glow ? "rtd-ring-glow" : undefined}
+          style={{
+            transition: "stroke-dashoffset 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            ...(glow ? ({ "--rtd-ring-glow-color": glowColor } as React.CSSProperties) : {}),
+          }}
         />
       </svg>
       {(label || sub) && (

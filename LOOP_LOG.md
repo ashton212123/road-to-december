@@ -1,5 +1,11 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-21 — Iteration 7: liquid-glow rings
+
+**Shipped:** ProgressRing gets opt-in `gradient: [string, string]` (diagonal linearGradient stroke, userSpaceOnUse so it isn't distorted by the -90° rotation) + `glow` (breathing drop-shadow keyed to the gradient's end color via `--rtd-ring-glow-color`, static under prefers-reduced-motion). Applied to all 6 kcal/protein/water rings app-wide (Home hero fuel ring, /fuel desktop + mobile blocks, WaterLogger quick-log ring) with consistent per-metric gradient pairs: kcal orange→raspberry, protein green→teal, water cyan→blue. Home's water capsule bar also went linear-gradient. No call site changed behavior — `color`/no-gradient path is untouched, so this was purely additive.
+**Verified live:** full smoke + burst green; 6 targeted assertions confirmed gradient defs, glow class, and exact color stops in the live HTML on both Home and Fuel.
+**Learnings:** ProgressRing is shared across 3 files/6 call sites — opt-in props (default off) let one component change light up the whole app without touching call-site logic, just the prop list.
+
 ## 2026-07-20 — Iteration 6: Fitonist lift — Swim top-level, desktop TopBar, design tokens
 
 **Direct user feedback driving this:** swim must be its own tab (not inside Analytics); Home must follow the Fitonist wireframe; everything reads bland (borders, letters, no design).

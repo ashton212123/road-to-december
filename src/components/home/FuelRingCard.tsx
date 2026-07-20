@@ -58,7 +58,8 @@ export function FuelRingCard({
           pct={kcalPct}
           size={88}
           strokeWidth={8}
-          color="var(--rtd-orange)"
+          gradient={["var(--rtd-orange)", "#ff375f"]}
+          glow
           label={`${Math.abs(Math.round(remaining)).toLocaleString()}`}
           sub={remaining >= 0 ? "left" : "over"}
           ariaLabel={`Calories: ${kcalToday} of ${kcalTargetMid}`}
@@ -75,7 +76,10 @@ export function FuelRingCard({
             </span>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden -mt-1">
-            <div className="h-full rounded-full" style={{ width: `${waterPct}%`, background: "var(--rtd-cyan)" }} />
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${waterPct}%`, background: "linear-gradient(90deg, var(--rtd-cyan), var(--rtd-blue))" }}
+            />
           </div>
         </div>
       </div>

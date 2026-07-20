@@ -380,6 +380,30 @@ body {
   color: #0b0b0d !important;
 }
 
+/* Liquid glowing ring stroke (ProgressRing's `glow` prop) -- a slow breathing
+   drop-shadow keyed to the gradient's end color, set via --rtd-ring-glow-color
+   inline. Settles to a static glow under reduced motion instead of pulsing. */
+@keyframes rtd-ring-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--rtd-ring-glow-color) 55%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 9px color-mix(in srgb, var(--rtd-ring-glow-color) 75%, transparent));
+  }
+}
+
+.rtd-ring-glow {
+  animation: rtd-ring-breathe 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtd-ring-glow {
+    animation: none;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--rtd-ring-glow-color) 65%, transparent));
+  }
+}
+
 /* The 12-col bento grid -- every desktop page body is this. Cards declare
    col-span-N row-span-N and must fill their area (h-full) so rows always
    end flush with no orphan gaps. */
