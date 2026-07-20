@@ -15,6 +15,15 @@ export type MatrixRow = {
   deltaPct: number | null;
   dots: { status: DotStatus; label: string }[];
   needsDataHint: string | null;
+  /** Intraday % accumulators (kcal/protein/water) never get a period-over-
+   * period delta -- comparing a partial current period to a complete prior
+   * one is what produced the old "-100%" chips. These get a progress-to-
+   * target chip instead, driven by progressPct (== current for rows already
+   * expressed as a %; converted from a raw unit like water's liters via
+   * targetForProgress otherwise). */
+  isProgressMetric?: boolean;
+  overIsGood?: boolean;
+  progressPct: number | null;
 };
 
 function buildRow(params: {
@@ -29,11 +38,20 @@ function buildRow(params: {
   period: Period;
   periodStarts: string[];
   needsDataHint: string;
+  isProgressMetric?: boolean;
+  overIsGood?: boolean;
+  /** For progress rows whose value isn't already a %, e.g. water's liters --
+   * progressPct becomes (current / targetForProgress) * 100. Omit when
+   * `current` is already a percentage (kcal/protein adherence). */
+  targetForProgress?: number;
 }): MatrixRow {
   const values = aggregateByPeriod(params.rows, params.period, params.periodStarts, params.agg);
   const current = values[values.length - 1];
   const previous = values[values.length - 2] ?? null;
-  const hasEnoughData = values.filter((v) => v !== null).length >= 2;
+  // Progress-to-target rows (kcal/protein/water) only need a current-period
+  // value -- they never render a delta, so a missing/incomplete previous
+  // period isn't a blocker the way it is for true period-over-period rows.
+  const hasEnoughData = params.isProgressMetric ? current !== null : values.filter((v) => v !== null).length >= 2;
 
   const dots: { status: DotStatus; label: string }[] = [];
   for (let i = 1; i < values.length; i++) {
@@ -60,6 +78,13 @@ function buildRow(params: {
     deltaPct: hasEnoughData ? pctChange(current, previous) : null,
     dots,
     needsDataHint: hasEnoughData ? null : params.needsDataHint,
+    isProgressMetric: params.isProgressMetric,
+    overIsGood: params.overIsGood,
+    progressPct: !hasEnoughData || current === null
+      ? null
+      : params.targetForProgress !== undefined
+        ? (current / params.targetForProgress) * 100
+        : current,
   };
 }
 
@@ -76,6 +101,7 @@ export function buildImprovementMatrix(params: {
   proteinAdherenceDaily: { date: string; pct: number }[];
   kcalAdherenceDaily: { date: string; pct: number }[];
   gymSessionDates: string[];
+  waterTargetMl: number;
 }): MatrixRow[] {
   const { period, periodStarts } = params;
   const rows: MatrixRow[] = [];
@@ -199,6 +225,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       needsDataHint: "needs more data — log meals",
+      isProgressMetric: true,
     })
   );
 
@@ -215,6 +242,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       needsDataHint: "needs more data — log meals",
+      isProgressMetric: true,
     })
   );
 
@@ -245,6 +273,9 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       needsDataHint: "needs more data — log water",
+      isProgressMetric: true,
+      overIsGood: true,
+      targetForProgress: params.waterTargetMl / 1000,
     })
   );
 

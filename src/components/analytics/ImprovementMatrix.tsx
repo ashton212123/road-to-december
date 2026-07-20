@@ -2,6 +2,7 @@ import { BentoCard } from "@/components/ui/BentoCard";
 import { IconTile } from "@/components/ui/IconTile";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { DeltaChip } from "@/components/ui/DeltaChip";
+import { ProgressChip } from "@/components/ui/ProgressChip";
 import { DotStrip } from "@/components/ui/DotStrip";
 import { IconBolt } from "@/components/ui/icons";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
@@ -49,7 +50,11 @@ export function ImprovementMatrix({ rows }: { rows: MatrixRow[] }) {
                   {formatValue(row.previous, row.unit, row.decimals)}
                 </span>
                 <div className="w-16 shrink-0 flex justify-end">
-                  <DeltaChip pct={row.deltaPct} goodDirection={row.goodDirection} />
+                  {row.isProgressMetric ? (
+                    <ProgressChip pct={row.progressPct} overIsGood={row.overIsGood} />
+                  ) : (
+                    <DeltaChip pct={row.deltaPct} goodDirection={row.goodDirection} />
+                  )}
                 </div>
                 <div className="w-24 shrink-0 hidden lg:flex justify-end">
                   <DotStrip periods={row.dots} />

@@ -15,9 +15,10 @@ import {
   getSleepLogs,
   getSorenessLogs,
   getWaterLogsSince,
+  getSettingsRow,
 } from "@/lib/db/queries";
 import { bestSetE1RM } from "@/lib/train/e1rm";
-import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
+import { computeDailySessionLoads, computeAcwr, computeWeeklySessions } from "@/lib/analytics/load";
 import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/tonnage";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { withRetry } from "@/lib/db/withRetry";
@@ -57,6 +58,7 @@ export default async function AnalyticsPage({
     sleepLogs,
     sorenessLogs,
     waterLogs,
+    settingsRow,
   ] = await withRetry(() =>
     Promise.all([
       // Unfiltered (every exercise, not just main lifts) -- also covers the
@@ -75,6 +77,7 @@ export default async function AnalyticsPage({
       getSleepLogs(180),
       getSorenessLogs(30),
       getWaterLogsSince(since),
+      getSettingsRow(),
     ]), { timeoutMs: 15000 }
   );
 
@@ -100,6 +103,7 @@ export default async function AnalyticsPage({
   const hardSets = computeWeeklyHardSets(mainLiftLogs);
   const dailyLoads = computeDailySessionLoads(mainLiftLogs);
   const acwr = computeAcwr(dailyLoads);
+  const weeklySessions = computeWeeklySessions(dailyLoads);
 
   const cmjSeries = [...cmjTests]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -193,6 +197,7 @@ export default async function AnalyticsPage({
     proteinAdherenceDaily,
     kcalAdherenceDaily,
     gymSessionDates: [...new Set(mainLiftLogs.map((l) => l.date))],
+    waterTargetMl: settingsRow.waterTargetMl,
   });
   const currentPeriodLabel = periodLabel(periodStarts[periodStarts.length - 1], period);
 
@@ -200,6 +205,7 @@ export default async function AnalyticsPage({
     <div className="flex flex-col gap-4 rtd-fade-in pt-1">
       <SectionLabel>Analytics</SectionLabel>
       <AnalyticsView
+        today={today}
         period={period}
         offset={offset}
         currentPeriodLabel={currentPeriodLabel}
@@ -211,6 +217,7 @@ export default async function AnalyticsPage({
         hardSets={hardSets}
         dailyLoads={dailyLoads}
         acwr={acwr}
+        weeklySessions={weeklySessions}
         cmjSeries={cmjSeries}
         broadJumpSeries={broadJumpSeries}
         weightSeries={rollingAvg}

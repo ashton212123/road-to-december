@@ -56,7 +56,7 @@ export function ComparisonLine({
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="overflow-visible">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.18" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -72,7 +72,7 @@ export function ComparisonLine({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+            style={{ filter: `drop-shadow(0 0 6px color-mix(in srgb, ${color} 40%, transparent))` }}
           />
         )}
       </svg>
@@ -87,17 +87,37 @@ export function ComparisonLine({
   );
 }
 
-/** Legend pills for a ComparisonLine -- "This week" solid dot, "Last week" ring dot. */
-export function ComparisonLegend({ currentLabel, previousLabel, color }: { currentLabel: string; previousLabel: string; color: string }) {
+/** Legend pills for a ComparisonLine -- "This week" solid dot, "Last week"
+ * ring dot, each in its own white/6% rounded-full pill. When the previous
+ * series has no data at all, the second pill goes muted with "No previous
+ * data" instead of a ring dot -- never a fake mirrored line pretending
+ * there's a comparison. */
+export function ComparisonLegend({
+  currentLabel,
+  previousLabel,
+  color,
+  previousAvailable = true,
+}: {
+  currentLabel: string;
+  previousLabel: string;
+  color: string;
+  previousAvailable?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-3 text-caption text-[var(--rtd-text-tertiary)]">
-      <span className="inline-flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+    <div className="flex items-center justify-end gap-1.5">
+      <span className="inline-flex items-center gap-1.5 text-caption text-[var(--rtd-text-secondary)] bg-white/[0.06] rounded-full px-2 py-1">
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
         {currentLabel}
       </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full" style={{ border: `1.5px solid ${color}`, opacity: 0.6 }} />
-        {previousLabel}
+      <span className="inline-flex items-center gap-1.5 text-caption bg-white/[0.06] rounded-full px-2 py-1 text-[var(--rtd-text-tertiary)]">
+        {previousAvailable ? (
+          <>
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ border: `1.5px solid ${color}`, opacity: 0.6 }} />
+            {previousLabel}
+          </>
+        ) : (
+          "No previous data"
+        )}
       </span>
     </div>
   );

@@ -19,6 +19,7 @@ export function DeltaChip({
   const isGood = goodDirection === "up" ? isUp : !isUp;
   const color = isGood ? "var(--rtd-green)" : "var(--rtd-red)";
   const bg = isGood ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)";
+  const capped = Math.max(-99, Math.min(99, pct));
 
   return (
     <span
@@ -26,7 +27,7 @@ export function DeltaChip({
       style={{ color, backgroundColor: bg, fontSize: "12px" }}
     >
       {isUp ? "↗" : "↘"} {isUp ? "+" : ""}
-      {pct.toFixed(1)}%
+      {capped.toFixed(1)}%
     </span>
   );
 }

@@ -1,3 +1,5 @@
+import { mondayOf } from "@/lib/time";
+
 export type DailySessionLoad = { date: string; load: number };
 
 /**
@@ -29,6 +31,18 @@ export function computeDailySessionLoads(
     results.push({ date, load: Math.round(avgRpe * spreadMinutes) });
   }
   return results.sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+/** Distinct logged-session dates bucketed by Monday-of-week -- same weekStart
+ * cadence as computeWeeklyTonnage/computeWeeklyHardSets, so the Load card's
+ * Tonnage | Hard sets | Sessions tabs share one x-axis. */
+export function computeWeeklySessions(dailyLoads: DailySessionLoad[]): { weekStart: string; count: number }[] {
+  const byWeek = new Map<string, number>();
+  for (const { date } of dailyLoads) {
+    const weekStart = mondayOf(date);
+    byWeek.set(weekStart, (byWeek.get(weekStart) ?? 0) + 1);
+  }
+  return [...byWeek.entries()].map(([weekStart, count]) => ({ weekStart, count })).sort((a, b) => (a.weekStart < b.weekStart ? -1 : 1));
 }
 
 export type AcwrPoint = { date: string; acute: number; chronic: number; ratio: number | null };

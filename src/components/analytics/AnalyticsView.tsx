@@ -15,6 +15,7 @@ import type { Period } from "@/lib/analytics/periods";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
 
 export function AnalyticsView(props: {
+  today: string;
   period: Period;
   offset: number;
   currentPeriodLabel: string;
@@ -26,6 +27,7 @@ export function AnalyticsView(props: {
   hardSets: HardSetRow[];
   dailyLoads: DailySessionLoad[];
   acwr: AcwrPoint[];
+  weeklySessions: { weekStart: string; count: number }[];
   cmjSeries: { date: string; cm: number }[];
   broadJumpSeries: { date: string; cm: number }[];
   weightSeries: { date: string; kg: number; avg7: number }[];
@@ -64,7 +66,13 @@ export function AnalyticsView(props: {
           {props.takeaways.strength && (
             <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.strength}</p>
           )}
-          <StrengthSection e1rmByLift={props.e1rmByLift} liftTargets={props.liftTargets} tonnage={props.tonnage} hardSets={props.hardSets} />
+          <StrengthSection
+            e1rmByLift={props.e1rmByLift}
+            liftTargets={props.liftTargets}
+            today={props.today}
+            period={props.period}
+            offset={props.offset}
+          />
         </div>
 
         <div id="detail-load" className="flex flex-col gap-2">
@@ -86,7 +94,16 @@ export function AnalyticsView(props: {
               />
             </div>
           )}
-          <LoadSection dailyLoads={props.dailyLoads} acwr={props.acwr} />
+          <LoadSection
+            dailyLoads={props.dailyLoads}
+            acwr={props.acwr}
+            tonnage={props.tonnage}
+            hardSets={props.hardSets}
+            weeklySessions={props.weeklySessions}
+            today={props.today}
+            period={props.period}
+            offset={props.offset}
+          />
         </div>
 
         <div id="detail-power" className="flex flex-col gap-2">
@@ -100,7 +117,7 @@ export function AnalyticsView(props: {
           {props.takeaways.bodyweight && (
             <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.bodyweight}</p>
           )}
-          <BodyweightSection weightSeries={props.weightSeries} />
+          <BodyweightSection weightSeries={props.weightSeries} today={props.today} period={props.period} offset={props.offset} />
         </div>
 
         <div id="detail-swim" className="flex flex-col gap-2 lg:col-span-2">
@@ -122,7 +139,14 @@ export function AnalyticsView(props: {
         </div>
 
         <FuelAdherenceCard days={props.foodAdherenceByDate} />
-        <RecoveryOverlayCard sleepLogs={props.sleepLogs} cmjSeries={props.cmjSeries} sorenessLogs={props.sorenessLogs} />
+        <RecoveryOverlayCard
+          sleepLogs={props.sleepLogs}
+          cmjSeries={props.cmjSeries}
+          sorenessLogs={props.sorenessLogs}
+          today={props.today}
+          period={props.period}
+          offset={props.offset}
+        />
       </div>
     </div>
   );
