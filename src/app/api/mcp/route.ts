@@ -483,14 +483,15 @@ const handler = createMcpHandler(
       "update_settings",
       {
         description:
-          "Update app settings: ASEAN confirmation status, daily water target, or preferred weight unit. Only the fields provided are changed.",
+          "Update app settings: ASEAN confirmation status, daily water target, preferred weight unit, or training status (healthy/sick/injured/break -- while non-healthy, missed sessions are excused app-wide). Only the fields provided are changed.",
         inputSchema: {
           asean_confirmed: z.boolean().nullable().optional().describe("true=confirmed, false=cancelled, null=unknown"),
           water_target_ml: z.number().optional(),
           weight_unit: z.enum(["kg", "lb"]).optional(),
+          training_status: z.enum(["healthy", "sick", "injured", "break"]).optional(),
         },
       },
-      async ({ asean_confirmed, water_target_ml, weight_unit }) => {
+      async ({ asean_confirmed, water_target_ml, weight_unit, training_status }) => {
         const current = await getSettingsRow();
         await db
           .update(settings)
@@ -498,6 +499,13 @@ const handler = createMcpHandler(
             aseanConfirmed: asean_confirmed !== undefined ? asean_confirmed : current.aseanConfirmed,
             waterTargetMl: water_target_ml ?? current.waterTargetMl,
             weightUnit: weight_unit ?? current.weightUnit,
+            trainingStatus: training_status ?? current.trainingStatus,
+            trainingStatusSince:
+              training_status !== undefined
+                ? training_status === "healthy"
+                  ? null
+                  : todayManilaISO()
+                : current.trainingStatusSince,
           })
           .where(eq(settings.id, "singleton"));
         revalidateTraining();

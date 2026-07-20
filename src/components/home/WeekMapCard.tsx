@@ -7,6 +7,7 @@ const CELL_COLOR: Record<string, string> = {
   missed: "var(--rtd-red)",
   future: "rgba(255,255,255,0.10)",
   rest: "rgba(255,255,255,0.05)",
+  excused: "rgba(255,255,255,0.05)",
 };
 
 export function WeekMapCard({ days, rows }: { days: { iso: string; short: string }[]; rows: WeekMapRow[] }) {

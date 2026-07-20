@@ -37,6 +37,7 @@ export async function getSettingsRow() {
       aseanConfirmed: seasonData.meta.targets.aseanConfirmed,
       waterTargetMl: 3000,
       weightUnit: "kg",
+      trainingStatus: "healthy",
     })
     .returning();
   return created;

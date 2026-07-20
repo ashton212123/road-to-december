@@ -11,7 +11,7 @@ export function quickPromptsForPath(pathname: string): string[] {
     return ["Why am I plateauing?", "Which lift needs the most attention?", "Am I on track for my next meet?"];
   }
   if (pathname.startsWith("/home") || pathname === "/") {
-    return ["How ready am I this week?", "What's my biggest gap right now?", "How's my training streak?"];
+    return ["How ready am I this week?", "What's my biggest gap right now?", "How's my consistency lately?"];
   }
   return ["How's my training this week?", "What should I focus on today?", "Anything I'm missing?"];
 }

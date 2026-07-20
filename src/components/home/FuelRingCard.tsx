@@ -1,0 +1,84 @@
+import { BentoCard } from "@/components/ui/BentoCard";
+import { ProgressRing } from "@/components/ui/ProgressRing";
+
+function MacroBar({ label, current, targetG, color }: { label: string; current: number; targetG: number; color: string }) {
+  const pct = targetG > 0 ? Math.min(100, (current / targetG) * 100) : 0;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center justify-between text-caption">
+        <span className="text-[var(--rtd-text-tertiary)]">{label}</span>
+        <span className="text-[var(--rtd-text-secondary)] rtd-nums">
+          {Math.round(current)}/{Math.round(targetG)}g
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+/** Whoop-style unified fuel card (V4 P3) -- replaces the separate Kcal/
+ * Protein StatCards. One ring carries the headline number (kcal remaining);
+ * P/C/F + water are secondary, slim capsule bars beside it. Taps through to
+ * the detailed rings on /fuel. */
+export function FuelRingCard({
+  kcalToday,
+  kcalTargetMid,
+  proteinToday,
+  proteinTargetG,
+  carbsToday,
+  carbsTargetG,
+  fatToday,
+  fatTargetG,
+  waterMl,
+  waterTargetMl,
+  className,
+}: {
+  kcalToday: number;
+  kcalTargetMid: number;
+  proteinToday: number;
+  proteinTargetG: number;
+  carbsToday: number;
+  carbsTargetG: number;
+  fatToday: number;
+  fatTargetG: number;
+  waterMl: number;
+  waterTargetMl: number;
+  className?: string;
+}) {
+  const remaining = kcalTargetMid - kcalToday;
+  const kcalPct = kcalTargetMid > 0 ? (kcalToday / kcalTargetMid) * 100 : 0;
+  const waterPct = waterTargetMl > 0 ? Math.min(100, (waterMl / waterTargetMl) * 100) : 0;
+
+  return (
+    <BentoCard href="/fuel" label="Fuel" className={className}>
+      <div className="flex items-center gap-4 flex-1 min-h-0">
+        <ProgressRing
+          pct={kcalPct}
+          size={88}
+          strokeWidth={8}
+          color="var(--rtd-orange)"
+          label={`${Math.abs(Math.round(remaining)).toLocaleString()}`}
+          sub={remaining >= 0 ? "left" : "over"}
+          ariaLabel={`Calories: ${kcalToday} of ${kcalTargetMid}`}
+          className="shrink-0"
+        />
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <MacroBar label="Protein" current={proteinToday} targetG={proteinTargetG} color="var(--rtd-green)" />
+          <MacroBar label="Carbs" current={carbsToday} targetG={carbsTargetG} color="var(--rtd-blue)" />
+          <MacroBar label="Fat" current={fatToday} targetG={fatTargetG} color="var(--rtd-purple)" />
+          <div className="flex items-center justify-between text-caption">
+            <span className="text-[var(--rtd-text-tertiary)]">Water</span>
+            <span className="text-[var(--rtd-text-secondary)] rtd-nums">
+              {(waterMl / 1000).toFixed(1)}/{(waterTargetMl / 1000).toFixed(1)}L
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden -mt-1">
+            <div className="h-full rounded-full" style={{ width: `${waterPct}%`, background: "var(--rtd-cyan)" }} />
+          </div>
+        </div>
+      </div>
+    </BentoCard>
+  );
+}

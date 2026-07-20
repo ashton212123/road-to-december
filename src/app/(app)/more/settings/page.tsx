@@ -1,6 +1,7 @@
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SettingsForm } from "@/components/more/SettingsForm";
+import { TrainingStatusControl } from "@/components/more/TrainingStatusControl";
 import { getSettingsRow } from "@/lib/db/queries";
 import { withRetry } from "@/lib/db/withRetry";
 
@@ -10,6 +11,9 @@ export default async function SettingsPage() {
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
       <SectionLabel>Settings</SectionLabel>
+      <GlassCard>
+        <TrainingStatusControl current={settingsRow.trainingStatus} />
+      </GlassCard>
       <SettingsForm
         initialAsean={settingsRow.aseanConfirmed}
         initialWaterTargetMl={settingsRow.waterTargetMl}

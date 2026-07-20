@@ -229,6 +229,16 @@ body {
   border: none;
 }
 
+/* Vertical counterpart -- zone separator inside a single wide card (the
+   merged countdown/readiness hero band) instead of a hard border, so it
+   reads as one surface, not boxes-in-boxes. */
+.rtd-divider-v {
+  width: 1px;
+  align-self: stretch;
+  background: radial-gradient(100% 50% at 50% 50%, rgba(255, 255, 255, 0.2), transparent);
+  border: none;
+}
+
 /* Same fade, but as a drop-in replacement for Tailwind's divide-y (a
    pseudo-element per child instead of a border, since border can't do a
    radial fade) -- apply to the same flex/grid list container. */

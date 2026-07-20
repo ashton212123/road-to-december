@@ -4,6 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { sleepLogs, sorenessLogs, settings, cmjTests, jumpTests } from "@/lib/db/schema";
+import type { Settings } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
 
 export async function logSleepAction(input: { hours: number; bedtime: string; onTime: boolean | null }) {
@@ -50,6 +51,26 @@ export async function updateSettingsAction(input: {
       aseanConfirmed: input.aseanConfirmed,
       waterTargetMl: input.waterTargetMl,
       weightUnit: input.weightUnit,
+    })
+    .where(eq(settings.id, "singleton"));
+  revalidatePath("/", "layout");
+  updateTag("analytics-data");
+  updateTag("home-data");
+}
+
+export type TrainingStatus = Settings["trainingStatus"];
+
+/** Gentler Streak-style status switch, reachable from Settings and Home's
+ * avatar menu. trainingStatusSince stamps the day the athlete went
+ * non-healthy so the week map/consistency %/coach brief can all reference
+ * "since when" -- it clears back to null the moment status returns to
+ * healthy, since "since" only means something for an excused stretch. */
+export async function updateTrainingStatusAction(status: TrainingStatus) {
+  await db
+    .update(settings)
+    .set({
+      trainingStatus: status,
+      trainingStatusSince: status === "healthy" ? null : todayManilaISO(),
     })
     .where(eq(settings.id, "singleton"));
   revalidatePath("/", "layout");

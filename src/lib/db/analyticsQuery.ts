@@ -125,7 +125,8 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
       ) t) as "waterLogs",
 
       (select row_to_json(t) from (
-        select id, asean_confirmed as "aseanConfirmed", water_target_ml as "waterTargetMl", weight_unit as "weightUnit"
+        select id, asean_confirmed as "aseanConfirmed", water_target_ml as "waterTargetMl", weight_unit as "weightUnit",
+               training_status as "trainingStatus", training_status_since as "trainingStatusSince"
         from settings where id = 'singleton'
       ) t) as "settingsRow"
   `);

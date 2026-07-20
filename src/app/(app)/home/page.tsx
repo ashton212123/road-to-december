@@ -3,15 +3,15 @@ import { unstable_cache } from "next/cache";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { MoreMenuButton } from "@/components/home/MoreMenuButton";
-import { CountdownHero } from "@/components/home/CountdownHero";
-import { ReadinessCard } from "@/components/home/ReadinessCard";
+import { HomeHeroBand } from "@/components/home/HomeHeroBand";
+import { FuelRingCard } from "@/components/home/FuelRingCard";
 import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
 import { CoachBriefCard } from "@/components/home/CoachBriefCard";
 import { WeekMapCard } from "@/components/home/WeekMapCard";
 import { TrainingLoadCard } from "@/components/home/TrainingLoadCard";
 import { RecentPRsCard } from "@/components/home/RecentPRsCard";
 import { StatCard } from "@/components/ui/StatCard";
-import { IconFuel, IconTrain } from "@/components/ui/icons";
+import { IconTrain } from "@/components/ui/icons";
 import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, todayDayKey, dayKeyForDate, daysBetween, addDaysISO, manilaHourNow, mondayOf } from "@/lib/time";
 import {
@@ -21,6 +21,7 @@ import {
   getWeighIns,
   getFoodLogsForDate,
   getFoodLogsSince,
+  getWaterLogsForDate,
   getSettingsRow,
   getUndoneBusinessTasks,
   getWorkoutLogsSince,
@@ -30,10 +31,11 @@ import {
   getSwimTimes,
   getMainLiftLogHistory,
 } from "@/lib/db/queries";
-import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
-import { computeTrainingStreak } from "@/lib/analytics/streak";
+import { computeConsistencyPct } from "@/lib/analytics/streak";
+import { applyTrainingStatusCap, readinessActionLine } from "@/lib/rules/readinessTone";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 import { buildWeekMap } from "@/lib/dashboard/weekMap";
 import { findRecentPRs } from "@/lib/dashboard/recentPRs";
@@ -61,14 +63,6 @@ const MORE_ROW_ITEMS = [
   { href: "/more/settings", label: "Settings", icon: "⚙️" },
 ];
 
-/** % of target for an intraday metric (kcal/protein so far today) -- never
- * vs-yesterday. Null (not -100%) when nothing's logged yet: zero logged
- * isn't "100% under target", it's "no signal yet, don't show a chip." */
-function intradayDeltaPct(current: number, targetMin: number): number | null {
-  if (current <= 0 || targetMin <= 0) return null;
-  return ((current - targetMin) / targetMin) * 100;
-}
-
 // Every DB read Home needs, cached and tagged "home-data" -- every log-
 // writing server action revalidates this tag. evaluateAlerts is
 // deliberately NOT called in here: it reads the wall-clock hour internally
@@ -84,6 +78,7 @@ const getCachedHomeData = unstable_cache(
       latestWeighIn,
       weighInHistory,
       todaysFood,
+      todaysWater,
       settingsRow,
       undoneTasks,
       recentWorkoutLogs,
@@ -98,6 +93,7 @@ const getCachedHomeData = unstable_cache(
       getLatestWeighIn(),
       getWeighIns(21),
       getFoodLogsForDate(today),
+      getWaterLogsForDate(today),
       getSettingsRow(),
       getUndoneBusinessTasks(5),
       getWorkoutLogsSince(addDaysISO(today, -150)),
@@ -115,6 +111,7 @@ const getCachedHomeData = unstable_cache(
       latestWeighIn,
       weighInHistory,
       todaysFood,
+      todaysWater,
       settingsRow,
       undoneTasks,
       recentWorkoutLogs,
@@ -141,6 +138,7 @@ export default async function HomePage() {
     latestWeighIn,
     weighInHistory,
     todaysFood,
+    todaysWater,
     settingsRow,
     undoneTasks,
     recentWorkoutLogs,
@@ -165,10 +163,11 @@ export default async function HomePage() {
   const urgentAssignments = getUrgentAssignments(canvas.assignments)
     .filter((a) => !criticalIds.has(a.id))
     .slice(0, 5);
-  const trainingStreak = computeTrainingStreak({
+  const consistency = computeConsistencyPct({
     today,
     phases: allPhases,
     loggedDates: new Set(recentWorkoutLogs.map((l) => l.date)),
+    excusedFromISO: settingsRow.trainingStatus === "healthy" ? null : settingsRow.trainingStatusSince,
   });
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
@@ -197,6 +196,10 @@ export default async function HomePage() {
   const proteinTarget = computeProteinTargetG(proteinAvgWeight);
   const kcalToday = todaysFood.reduce((sum, f) => sum + f.kcal, 0);
   const proteinToday = todaysFood.reduce((sum, f) => sum + Number(f.proteinG), 0);
+  const carbsToday = todaysFood.reduce((sum, f) => sum + Number(f.carbsG ?? 0), 0);
+  const fatToday = todaysFood.reduce((sum, f) => sum + Number(f.fatG ?? 0), 0);
+  const carbsFatTarget = computeCarbsAndFatTargetG(kcalTarget.mid, proteinTarget.mid);
+  const waterToday = todaysWater.reduce((sum, w) => sum + w.ml, 0);
 
   const weightSeries = [...weighInHistory].sort((a, b) => (a.date < b.date ? -1 : 1));
   const weightTrend =
@@ -231,11 +234,13 @@ export default async function HomePage() {
       kcalTargetMax: kcalTarget.max,
       proteinToday,
       proteinTargetMin: proteinTarget.min,
-      trainingStreak,
+      consistencyPct: consistency.pct,
       todaySessionTitle: todaySession?.title ?? null,
       todaySwim: weekDay.swim ?? null,
       daysToNcaa,
       daysToAsean: settingsRow.aseanConfirmed === false ? null : daysToAsean,
+      trainingStatus: settingsRow.trainingStatus,
+      trainingStatusSince: settingsRow.trainingStatusSince,
       phaseTag: currentPhase.tag,
       phaseName: currentPhase.name,
       loggedWorkoutToday,
@@ -259,11 +264,13 @@ export default async function HomePage() {
   const acwr = computeAcwr(dailyLoads);
   const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
   const readinessSignals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio });
-  const readinessOverall = readinessSignals.some((s) => s.light === "red")
+  const readinessComputed = readinessSignals.some((s) => s.light === "red")
     ? "red"
     : readinessSignals.some((s) => s.light === "yellow")
       ? "yellow"
       : ("green" as const);
+  const readinessOverall = applyTrainingStatusCap(readinessComputed, settingsRow.trainingStatus);
+  const readinessActionLineText = readinessActionLine(readinessComputed, settingsRow.trainingStatus);
 
   // Today's plan rows -- status reflects real logged state, never fabricated.
   const planRows = [];
@@ -327,6 +334,7 @@ export default async function HomePage() {
     loggedGymDates: new Set(recentWorkoutLogs.map((l) => l.date)),
     loggedFoodDates: new Set(weekFoodLogs.map((f) => f.date)),
     loggedSleepDates: new Set(recentSleepLogs.map((s) => s.date)),
+    excusedFromISO: settingsRow.trainingStatus === "healthy" ? null : settingsRow.trainingStatusSince,
   });
 
   // Training load: daily tonnage this week vs last week (dashed), same ACWR
@@ -339,11 +347,6 @@ export default async function HomePage() {
 
   const recentPRs = findRecentPRs({ mainLiftLogs, swimTimes, cmjTests });
 
-  const weekSessionsPlanned = currentPhase.sessions.length;
-  const weekSessionsDone = new Set(
-    [...recentWorkoutLogs.map((l) => l.date)].filter((d) => d >= weekStart && d <= today)
-  ).size;
-
   const followUps = [
     todaySession ? `What should I focus on in ${todaySession.title}?` : "How's my training this week?",
     "How's my nutrition looking today?",
@@ -353,7 +356,7 @@ export default async function HomePage() {
   // surfaced as bullets so the brief text is never the only place the data
   // behind it shows up.
   const coachBriefBullets = [
-    `${trainingStreak}-day training streak`,
+    consistency.pct !== null ? `${consistency.pct}% consistency · 4wk` : "New to the plan — no consistency data yet",
     todaySession ? `Today: ${todaySession.title}` : weekDay.swim ? "Today: Swim" : "Today: Rest day",
     `${daysToNcaa}d to NCAA`,
   ];
@@ -362,13 +365,13 @@ export default async function HomePage() {
     <div className="flex flex-col gap-3 rtd-fade-in pt-1">
       <div className="flex items-center justify-between md:hidden">
         <span className="text-title-3 font-semibold text-[var(--rtd-text)]">Home</span>
-        <MoreMenuButton />
+        <MoreMenuButton trainingStatus={settingsRow.trainingStatus} />
       </div>
 
       <AlertCardList alerts={alerts} />
 
       <div className="rtd-bento-grid">
-        <CountdownHero
+        <HomeHeroBand
           daysToNcaa={daysToNcaa}
           daysToAsean={daysToAsean}
           aseanLabel={aseanLabel}
@@ -378,27 +381,23 @@ export default async function HomePage() {
           phaseTag={currentPhase.tag}
           phaseName={currentPhase.name}
           weekNumber={weekNumber}
-          trainingStreak={trainingStreak}
+          readinessOverall={readinessOverall}
+          readinessSignals={readinessSignals}
+          actionLine={readinessActionLineText}
         />
-        <ReadinessCard overall={readinessOverall} signals={readinessSignals} />
 
-        <StatCard
-          label="Kcal today"
-          numericValue={kcalToday}
-          domainColor="var(--rtd-domain-fuel)"
-          icon={<IconFuel />}
-          sub={`of ${kcalTarget.min}–${kcalTarget.max}`}
-          deltaPct={intradayDeltaPct(kcalToday, kcalTarget.min)}
-          className="col-span-3 row-span-2"
-        />
-        <StatCard
-          label="Protein today"
-          numericValue={Math.round(proteinToday)}
-          suffix="g"
-          domainColor="var(--rtd-green)"
-          sub={`of ${proteinTarget.min}–${proteinTarget.max}g`}
-          deltaPct={intradayDeltaPct(proteinToday, proteinTarget.min)}
-          className="col-span-3 row-span-2"
+        <FuelRingCard
+          kcalToday={kcalToday}
+          kcalTargetMid={kcalTarget.mid}
+          proteinToday={proteinToday}
+          proteinTargetG={proteinTarget.mid}
+          carbsToday={carbsToday}
+          carbsTargetG={carbsFatTarget.carbsG}
+          fatToday={fatToday}
+          fatTargetG={carbsFatTarget.fatG}
+          waterMl={waterToday}
+          waterTargetMl={settingsRow.waterTargetMl}
+          className="col-span-6 row-span-2"
         />
         <StatCard
           label="Bodyweight (7d)"
@@ -412,11 +411,11 @@ export default async function HomePage() {
           className="col-span-3 row-span-2"
         />
         <StatCard
-          label="Week completion"
-          value={`${weekSessionsDone}/${weekSessionsPlanned}`}
+          label="Consistency"
+          value={consistency.pct !== null ? `${consistency.pct}%` : "—"}
           domainColor="var(--rtd-blue)"
           icon={<IconTrain />}
-          sub={`${trainingStreak} day streak`}
+          sub={consistency.pct !== null ? `${consistency.done}/${consistency.planned} · 4wk` : "no data yet"}
           className="col-span-3 row-span-2"
         />
 
@@ -431,7 +430,7 @@ export default async function HomePage() {
 
       {/* Mobile: single-column stack, same modules, spec's priority order. */}
       <div className="flex flex-col gap-2.5 md:hidden">
-        <CountdownHero
+        <HomeHeroBand
           daysToNcaa={daysToNcaa}
           daysToAsean={daysToAsean}
           aseanLabel={aseanLabel}
@@ -441,28 +440,25 @@ export default async function HomePage() {
           phaseTag={currentPhase.tag}
           phaseName={currentPhase.name}
           weekNumber={weekNumber}
-          trainingStreak={trainingStreak}
+          readinessOverall={readinessOverall}
+          readinessSignals={readinessSignals}
+          actionLine={readinessActionLineText}
         />
-        <ReadinessCard overall={readinessOverall} signals={readinessSignals} />
         <TodaysPlanCard rows={planRows} startHref={startHref} tomorrow={tomorrowPreview} />
         <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} />
+        <FuelRingCard
+          kcalToday={kcalToday}
+          kcalTargetMid={kcalTarget.mid}
+          proteinToday={proteinToday}
+          proteinTargetG={proteinTarget.mid}
+          carbsToday={carbsToday}
+          carbsTargetG={carbsFatTarget.carbsG}
+          fatToday={fatToday}
+          fatTargetG={carbsFatTarget.fatG}
+          waterMl={waterToday}
+          waterTargetMl={settingsRow.waterTargetMl}
+        />
         <div className="grid grid-cols-2 gap-2.5">
-          <StatCard
-            label="Kcal today"
-            numericValue={kcalToday}
-            domainColor="var(--rtd-domain-fuel)"
-            icon={<IconFuel />}
-            sub={`of ${kcalTarget.min}–${kcalTarget.max}`}
-            deltaPct={intradayDeltaPct(kcalToday, kcalTarget.min)}
-          />
-          <StatCard
-            label="Protein today"
-            numericValue={Math.round(proteinToday)}
-            suffix="g"
-            domainColor="var(--rtd-green)"
-            sub={`of ${proteinTarget.min}–${proteinTarget.max}g`}
-            deltaPct={intradayDeltaPct(proteinToday, proteinTarget.min)}
-          />
           <StatCard
             label="Bodyweight (7d)"
             numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
@@ -473,11 +469,11 @@ export default async function HomePage() {
             goodDirection="up"
           />
           <StatCard
-            label="Week completion"
-            value={`${weekSessionsDone}/${weekSessionsPlanned}`}
+            label="Consistency"
+            value={consistency.pct !== null ? `${consistency.pct}%` : "—"}
             domainColor="var(--rtd-blue)"
             icon={<IconTrain />}
-            sub={`${trainingStreak} day streak`}
+            sub={consistency.pct !== null ? `${consistency.done}/${consistency.planned} · 4wk` : "no data yet"}
           />
         </div>
         <NeedsAttentionList items={needsAttention} />

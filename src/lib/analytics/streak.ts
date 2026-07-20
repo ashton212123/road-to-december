@@ -3,35 +3,34 @@ import { addDaysISO, dayKeyForDate } from "@/lib/time";
 type PhaseWithSessions = { startDate: string; endDate: string; sessions: { dayKey: string }[] };
 
 /**
- * Consecutive scheduled gym training days (per the periodized program) with
- * at least one logged set. Rest days don't break it. Today doesn't break it
- * either if not yet logged — you just haven't trained yet today.
+ * Rolling 4-week (28-day) training consistency: scheduled gym sessions
+ * logged vs planned. Replaces the old run-length streak (V4 P3) -- streaks
+ * that reset to zero on one missed day are a documented top reason fitness
+ * apps get abandoned, and this number can't crater from a single miss the
+ * way a streak count does. Days from `excusedFromISO` on (a non-healthy
+ * trainingStatus) are dropped from the denominator entirely -- being sick/
+ * injured/on a break can't drag the % down.
  */
-export function computeTrainingStreak(params: {
+export function computeConsistencyPct(params: {
   today: string;
   phases: PhaseWithSessions[];
   loggedDates: Set<string>;
-}): number {
+  excusedFromISO?: string | null;
+}): { pct: number | null; done: number; planned: number } {
   const { today, phases, loggedDates } = params;
-  let streak = 0;
-  let cursor = today;
+  const excusedFrom = params.excusedFromISO ?? null;
+  let done = 0;
+  let planned = 0;
 
-  for (let i = 0; i < 400; i++) {
-    const phase = phases.find((p) => cursor >= p.startDate && cursor <= p.endDate);
-    if (!phase) break;
-
-    const isScheduledGymDay = phase.sessions.some((s) => s.dayKey === dayKeyForDate(cursor));
-    if (isScheduledGymDay) {
-      if (loggedDates.has(cursor)) {
-        streak++;
-      } else if (cursor === today) {
-        // Grace period: today isn't over yet.
-      } else {
-        break;
-      }
-    }
-    cursor = addDaysISO(cursor, -1);
+  for (let i = 0; i < 28; i++) {
+    const date = addDaysISO(today, -i);
+    const phase = phases.find((p) => date >= p.startDate && date <= p.endDate);
+    if (!phase) continue;
+    if (!phase.sessions.some((s) => s.dayKey === dayKeyForDate(date))) continue;
+    if (excusedFrom !== null && date >= excusedFrom) continue;
+    planned++;
+    if (loggedDates.has(date)) done++;
   }
 
-  return streak;
+  return { pct: planned > 0 ? Math.round((done / planned) * 100) : null, done, planned };
 }

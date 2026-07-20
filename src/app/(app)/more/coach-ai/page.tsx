@@ -13,7 +13,7 @@ function buildQuickPrompts(ctx: Awaited<ReturnType<typeof getCoachAppContext>>):
     if (worst) prompts.push(`Am I on track for ${worst.event} at ${nextMeet.name}?`);
   }
   prompts.push(`How's my nutrition looking today?`);
-  prompts.push(`How's my training streak and recovery?`);
+  prompts.push(`How's my consistency and recovery?`);
   return prompts.slice(0, 4);
 }
 

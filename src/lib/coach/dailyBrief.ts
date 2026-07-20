@@ -12,7 +12,8 @@ export type DailyBriefContext = {
   kcalTargetMax: number;
   proteinToday: number;
   proteinTargetMin: number;
-  trainingStreak: number;
+  /** Rolling 4-week consistency %, null if nothing's been planned yet (V4 P3 -- replaces the old run-length streak). */
+  consistencyPct: number | null;
   todaySessionTitle: string | null;
   todaySwim: string | null;
   daysToNcaa: number;
@@ -22,13 +23,16 @@ export type DailyBriefContext = {
   loggedWorkoutToday: boolean;
   loggedSwimToday: boolean;
   activeAlertHeadlines: string[];
+  trainingStatus: "healthy" | "sick" | "injured" | "break";
+  trainingStatusSince: string | null;
 };
 
 const SYSTEM_PROMPT = `You are the in-app coach voice for a competitive swimmer's training tracker. Every morning you write ONE short brief (1-2 sentences, under 220 characters) that greets the athlete with something concrete and specific from today's data -- never generic motivational filler like "you've got this" or "keep pushing."
 
 Rules:
-- Reference at least one specific number or fact from the context (streak, days to meet, a trend, today's session name).
+- Reference at least one specific number or fact from the context (consistency %, days to meet, a trend, today's session name).
 - If activeAlertHeadlines is non-empty, don't contradict them (e.g. don't praise nutrition if a "no food logged" alert is active) -- either acknowledge the gap briefly or steer clear of that topic entirely.
+- If athleteStatus is not "healthy", the tone is recovery-first and there is zero pressure about missed sessions -- do not mention consistency %, streaks, or "getting back on track." Talk about the season/goal instead, warmly.
 - Warm but direct, like a coach who knows the athlete's numbers, not a chatbot. No emoji, no exclamation-point stacking.
 - Plain text only, no markdown, no quotes around the output.`;
 
@@ -37,7 +41,7 @@ function buildUserContent(ctx: DailyBriefContext): string {
     daysToNcaa: ctx.daysToNcaa,
     daysToAsean: ctx.daysToAsean,
     phase: `${ctx.phaseTag} · ${ctx.phaseName}`,
-    trainingStreakDays: ctx.trainingStreak,
+    consistencyPct: ctx.consistencyPct,
     weightKg: ctx.athleteWeightKg,
     weightTrendKg: ctx.weightTrendKg,
     kcalToday: ctx.kcalToday,
@@ -49,6 +53,10 @@ function buildUserContent(ctx: DailyBriefContext): string {
     loggedWorkoutToday: ctx.loggedWorkoutToday,
     loggedSwimToday: ctx.loggedSwimToday,
     activeAlertHeadlines: ctx.activeAlertHeadlines,
+    athleteStatus:
+      ctx.trainingStatus === "healthy"
+        ? "healthy"
+        : `${ctx.trainingStatus} since ${ctx.trainingStatusSince} -- adjust tone: recovery-first, zero pressure about missed sessions`,
   });
 }
 

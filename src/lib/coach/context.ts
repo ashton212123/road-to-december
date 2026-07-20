@@ -13,7 +13,7 @@ import {
   getSwimTimes,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
-import { computeTrainingStreak } from "@/lib/analytics/streak";
+import { computeConsistencyPct } from "@/lib/analytics/streak";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { addDaysISO } from "@/lib/time";
 
@@ -64,10 +64,11 @@ export async function getCoachAppContext() {
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
   const todaySession = currentPhase?.sessions.find((s) => s.dayKey === todayKey) ?? null;
-  const trainingStreak = computeTrainingStreak({
+  const consistency = computeConsistencyPct({
     today,
     phases: allPhases,
     loggedDates: new Set(recentWorkoutLogs.map((l) => l.date)),
+    excusedFromISO: settingsRow.trainingStatus === "healthy" ? null : settingsRow.trainingStatusSince,
   });
   const kcalTarget = computeKcalTarget(today);
   const proteinTarget = computeProteinTargetG(latestWeighIn ? Number(latestWeighIn.kg) : 63);
@@ -93,7 +94,9 @@ export async function getCoachAppContext() {
     today,
     phase: currentPhase ? `${currentPhase.tag} · ${currentPhase.name}` : null,
     todaySessionTitle: todaySession?.title ?? null,
-    trainingStreakDays: trainingStreak,
+    consistencyPct: consistency.pct,
+    trainingStatus: settingsRow.trainingStatus,
+    trainingStatusSince: settingsRow.trainingStatusSince,
     weightKg: latestWeighIn ? Number(latestWeighIn.kg) : null,
     kcalToday,
     kcalTarget: [kcalTarget.min, kcalTarget.max],

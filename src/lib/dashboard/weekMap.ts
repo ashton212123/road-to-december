@@ -2,14 +2,17 @@ import { addDaysISO } from "@/lib/time";
 
 export type WeekMapRow = {
   label: string;
-  cells: ("logged" | "missed" | "future" | "rest")[];
+  cells: ("logged" | "missed" | "future" | "rest" | "excused")[];
   adherencePct: number | null;
 };
 
 /** Builds the 7-day x N-category dot grid for Home's Week Map -- Mon..Sun of
  * the current week, each cell green/red/gray from whether that category was
  * logged that day. Adherence % only counts days that have already happened
- * and weren't rest days. */
+ * and weren't rest days. `excusedFromISO` (the athlete's non-healthy
+ * trainingStatusSince) grays out every day from that date on instead of
+ * marking it a red "missed" -- excused days never count toward adherence
+ * either, so being sick/injured/on a break can't drag the % down. */
 export function buildWeekMap(params: {
   today: string;
   weekStartISO: string; // Monday of the current week
@@ -19,9 +22,11 @@ export function buildWeekMap(params: {
   loggedGymDates: Set<string>;
   loggedFoodDates: Set<string>;
   loggedSleepDates: Set<string>;
+  excusedFromISO?: string | null;
 }): { days: { iso: string; short: string }[]; rows: WeekMapRow[] } {
   const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const days = dayLabels.map((short, i) => ({ iso: addDaysISO(params.weekStartISO, i), short }));
+  const excusedFrom = params.excusedFromISO ?? null;
 
   function buildRow(label: string, scheduled: Set<string> | null, logged: Set<string>): WeekMapRow {
     let countable = 0;
@@ -31,6 +36,7 @@ export function buildWeekMap(params: {
       const isScheduled = scheduled === null || scheduled.has(iso);
       if (!isScheduled) return "rest" as const;
       if (isFuture) return "future" as const;
+      if (excusedFrom !== null && iso >= excusedFrom) return "excused" as const;
       countable++;
       if (logged.has(iso)) {
         hit++;

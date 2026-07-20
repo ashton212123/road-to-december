@@ -178,6 +178,12 @@ export const settings = pgTable("settings", {
   aseanConfirmed: boolean("asean_confirmed"), // null = unknown, true = confirmed, false = cancelled
   waterTargetMl: integer("water_target_ml").notNull().default(3000),
   weightUnit: text("weight_unit").notNull().default("kg"), // 'kg' | 'lb'
+  // Gentler Streak-style status flag (V4 P3): while non-"healthy", missed
+  // sessions are excused everywhere (week map, consistency %, readiness,
+  // coach brief tone) instead of penalized. trainingStatusSince is null
+  // exactly when status is "healthy".
+  trainingStatus: text("training_status").notNull().default("healthy").$type<"healthy" | "sick" | "injured" | "break">(),
+  trainingStatusSince: date("training_status_since"),
 });
 
 // ---------- Business tracker ----------
