@@ -126,9 +126,9 @@ export function IconMoon() {
   );
 }
 
-export function IconSparkle() {
+export function IconSparkle({ size = 20 }: { size?: number } = {}) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z" />
     </svg>
   );

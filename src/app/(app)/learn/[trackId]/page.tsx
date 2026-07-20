@@ -17,6 +17,7 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
 
   const progress = await withRetry(() => getCachedProgress());
   const done = new Set(progress.filter((p) => p.trackId === trackId).map((p) => p.levelKey));
+  const upNextKey = track.levels.find((l) => !done.has(l.key))?.key;
 
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
@@ -37,7 +38,15 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
       <BentoCard>
         <div className="flex flex-col rtd-divide-y">
           {track.levels.map((level) => (
-            <LearnLevelRow key={level.key} trackId={track.id} level={level} initialCompleted={done.has(level.key)} gradient={track.gradient} />
+            <LearnLevelRow
+              key={level.key}
+              trackId={track.id}
+              trackTitle={track.title}
+              level={level}
+              initialCompleted={done.has(level.key)}
+              isUpNext={level.key === upNextKey}
+              gradient={track.gradient}
+            />
           ))}
         </div>
       </BentoCard>

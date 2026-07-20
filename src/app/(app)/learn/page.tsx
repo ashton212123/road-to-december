@@ -20,9 +20,11 @@ export default async function LearnPage() {
       <SectionLabel>Learn</SectionLabel>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {LEARN_TRACKS.map((track) => {
-          const done = doneByTrack.get(track.id)?.size ?? 0;
+          const doneSet = doneByTrack.get(track.id);
+          const done = doneSet?.size ?? 0;
           const total = track.levels.length;
           const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          const upNext = track.levels.find((l) => !doneSet?.has(l.key));
           return (
             <Link
               key={track.id}
@@ -48,6 +50,9 @@ export default async function LearnPage() {
                   style={{ width: `${Math.max(pct > 0 ? 3 : 0, pct)}%`, background: `linear-gradient(90deg, ${track.gradient[0]}, ${track.gradient[1]})` }}
                 />
               </div>
+              <span className="text-caption text-[var(--rtd-text-tertiary)] truncate">
+                {upNext ? `Up next: ${upNext.title}${upNext.sub ? ` — ${upNext.sub}` : ""}` : "Track complete 🎉"}
+              </span>
             </Link>
           );
         })}

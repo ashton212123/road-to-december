@@ -17,10 +17,11 @@ function buildQuickPrompts(ctx: Awaited<ReturnType<typeof getCoachAppContext>>):
   return prompts.slice(0, 4);
 }
 
-export default async function CoachAiPage() {
-  const [initialMessages, appContext] = await withRetry(() =>
-    Promise.all([getRecentCoachMessages(20), getCoachAppContext()])
-  );
+export default async function CoachAiPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const [[initialMessages, appContext], { q }] = await Promise.all([
+    withRetry(() => Promise.all([getRecentCoachMessages(20), getCoachAppContext()])),
+    searchParams,
+  ]);
 
   return (
     <div className="flex flex-col gap-3 rtd-fade-in pt-1 h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-6rem)] md:max-w-2xl md:mx-auto">
@@ -28,6 +29,7 @@ export default async function CoachAiPage() {
       <CoachChat
         initialMessages={initialMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))}
         quickPrompts={buildQuickPrompts(appContext)}
+        autoSend={q}
       />
     </div>
   );

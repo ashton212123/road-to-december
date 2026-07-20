@@ -8,19 +8,32 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 export function CoachChat({
   initialMessages,
   quickPrompts,
+  autoSend,
 }: {
   initialMessages: ChatMessage[];
   quickPrompts: string[];
+  autoSend?: string;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const autoSentRef = useRef(false);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Deep-links (e.g. from Learn's "ask coach" button) land here with a
+  // pre-filled question via ?q= -- send it once on arrival instead of
+  // making the user retype and hit send themselves.
+  useEffect(() => {
+    if (!autoSend || autoSentRef.current) return;
+    autoSentRef.current = true;
+    send(autoSend);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSend]);
 
   async function send(text: string) {
     const trimmed = text.trim();
