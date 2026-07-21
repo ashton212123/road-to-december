@@ -81,6 +81,7 @@ export function SettingsForm({
             { value: "lb", label: "lb" },
           ]}
         />
+        <p className="text-caption text-[var(--rtd-text-tertiary)]">Applies to gym logging + history display. Stored in kg.</p>
       </GlassCard>
 
       <Button onClick={save} disabled={pending} className="md:w-auto md:self-end md:px-8">

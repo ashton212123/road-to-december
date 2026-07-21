@@ -7,6 +7,24 @@ import { IconBolt, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { logSetAction, deleteSetAction, updateSetAction } from "@/app/(app)/train/actions";
 import type { ProgressionSuggestion } from "@/lib/train/progression";
 import type { ActiveRest } from "./WorkoutSession";
+import { kgToDisplay, displayToKg, type WeightUnit } from "@/lib/train/units";
+
+/** Renders only the parts of a set that actually exist -- a checkbox-completed
+ * bodyweight exercise (no weight) used to read "–kg × 6 @ RPE –", which looks
+ * broken rather than intentional. */
+function formatSetParts(weightDisplay: number | null, reps: number | null, rpe: string | null, unit: WeightUnit): string {
+  const parts: string[] = [];
+  if (weightDisplay !== null) parts.push(`${weightDisplay}${unit} × ${reps ?? "–"}`);
+  else if (reps !== null) parts.push(`${reps} reps`);
+  if (rpe !== null) parts.push(`RPE ${rpe}`);
+  return parts.length > 0 ? parts.join(" · ") : "—";
+}
+
+function formatPastSet(s: PastSet, unit: WeightUnit): string {
+  const weightKg = s.weightKg !== null ? Number(s.weightKg) : null;
+  const weightDisplay = weightKg !== null ? kgToDisplay(weightKg, unit) : null;
+  return formatSetParts(weightDisplay, s.reps, s.rpe, unit);
+}
 
 export type LoggedSet = {
   id: number;
@@ -45,6 +63,7 @@ export function ExerciseCard({
   activeRest,
   now,
   onRestStarted,
+  weightUnit,
 }: {
   exercise: ExerciseSummary;
   phaseId: string;
@@ -65,6 +84,9 @@ export function ExerciseCard({
   activeRest: ActiveRest | null;
   now: number | null;
   onRestStarted: (startedAt: number) => void;
+  /** Storage is always kg (DB, actions, e1RM, tonnage never change) --
+   * display and input convert at this component's edge only. */
+  weightUnit: WeightUnit;
 }) {
   const [pending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
@@ -79,19 +101,25 @@ export function ExerciseCard({
   // placeholder text so nothing in the workout flow ever starts genuinely
   // blank. Confirming an untouched field logs the ghost value; typing
   // overrides it. Weight: prescribed -> progression -> last session's top
-  // weight (same chain checkbox-complete uses). Reps: prescribed range,
-  // falling back to last session's last set. RPE: last session's last set
-  // only -- there's no "prescribed RPE" concept here.
+  // weight (same chain checkbox-complete uses), converted to the athlete's
+  // display unit. Reps: prescribed range, falling back to last session's
+  // last set. RPE: last session's last set only -- there's no "prescribed
+  // RPE" concept here.
   const lastSet = lastSessionSets[lastSessionSets.length - 1];
-  const ghostWeight = resolvedDefaultWeightKg !== null ? String(resolvedDefaultWeightKg) : (lastSet?.weightKg ?? "");
+  const lastSetWeightKg = lastSet?.weightKg !== null && lastSet?.weightKg !== undefined ? Number(lastSet.weightKg) : null;
+  const ghostWeightKg = resolvedDefaultWeightKg ?? lastSetWeightKg;
+  const ghostWeight = ghostWeightKg !== null ? String(kgToDisplay(ghostWeightKg, weightUnit)) : "";
   const ghostReps = String(exercise.targetRepsMax ?? exercise.targetRepsMin ?? lastSet?.reps ?? "");
   const ghostRpe = lastSet?.rpe ?? "";
 
   function handleAddSet() {
     const restSeconds = isActiveRestHere ? Math.floor((Date.now() - (activeRest?.startedAt ?? 0)) / 1000) : null;
     const setNumber = todaysSets.length + 1;
+    const startedAt = Date.now();
+    navigator.vibrate?.(50);
     startTransition(async () => {
-      const usedWeight = weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
+      const usedWeightDisplay = weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
+      const usedWeight = usedWeightDisplay !== null ? displayToKg(usedWeightDisplay, weightUnit) : null;
       const usedReps = reps ? Number(reps) : ghostReps ? Number(ghostReps) : null;
       const usedRpe = rpe ? Number(rpe) : ghostRpe ? Number(ghostRpe) : null;
       await logSetAction({
@@ -103,7 +131,7 @@ export function ExerciseCard({
         restSeconds,
         phaseId,
       });
-      onRestStarted(Date.now());
+      onRestStarted(startedAt);
       setWeight("");
       setReps("");
       setRpe("");
@@ -177,7 +205,7 @@ export function ExerciseCard({
 
       {!expanded && lastSessionSets.length > 0 && (
         <div className="text-footnote text-[var(--rtd-text-secondary)]">
-          Last session: {lastSessionSets.map((s) => `${s.weightKg ?? "–"}×${s.reps ?? "–"}@${s.rpe ?? "–"}`).join("  ·  ")}
+          Last session: {lastSessionSets.map((s) => formatPastSet(s, weightUnit)).join("  ·  ")}
         </div>
       )}
 
@@ -191,14 +219,14 @@ export function ExerciseCard({
         <div className="flex flex-col gap-3 rtd-fade-in">
           {lastSessionSets.length > 0 && (
             <div className="text-footnote text-[var(--rtd-text-secondary)]">
-              Last session: {lastSessionSets.map((s) => `${s.weightKg ?? "–"}×${s.reps ?? "–"}@${s.rpe ?? "–"}`).join("  ·  ")}
+              Last session: {lastSessionSets.map((s) => formatPastSet(s, weightUnit)).join("  ·  ")}
             </div>
           )}
 
           {todaysSets.length > 0 && (
             <div className="flex flex-col gap-1">
               {todaysSets.map((s) => (
-                <SetRow key={s.id} set={s} phaseId={phaseId} />
+                <SetRow key={s.id} set={s} phaseId={phaseId} weightUnit={weightUnit} />
               ))}
             </div>
           )}
@@ -237,7 +265,7 @@ export function ExerciseCard({
 
           <div className="grid grid-cols-4 gap-2 items-end">
             <label className="flex flex-col gap-1 col-span-1">
-              <span className="rtd-micro-label">kg</span>
+              <span className="rtd-micro-label">{weightUnit}</span>
               <input
                 inputMode="decimal"
                 value={weight}
@@ -276,10 +304,11 @@ export function ExerciseCard({
   );
 }
 
-function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
+function SetRow({ set, phaseId, weightUnit }: { set: LoggedSet; phaseId: string; weightUnit: WeightUnit }) {
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
-  const [weight, setWeight] = useState(set.weightKg ?? "");
+  const initialWeightKg = set.weightKg !== null ? Number(set.weightKg) : null;
+  const [weight, setWeight] = useState(initialWeightKg !== null ? String(kgToDisplay(initialWeightKg, weightUnit)) : "");
   const [reps, setReps] = useState(set.reps !== null ? String(set.reps) : "");
   const [rpe, setRpe] = useState(set.rpe ?? "");
   const [notes, setNotes] = useState(set.notes ?? "");
@@ -288,7 +317,7 @@ function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
     startTransition(async () => {
       await updateSetAction({
         logId: set.id,
-        weightKg: weight ? Number(weight) : null,
+        weightKg: weight ? displayToKg(Number(weight), weightUnit) : null,
         reps: reps ? Number(reps) : null,
         rpe: rpe ? Number(rpe) : null,
         notes: notes || null,
@@ -304,7 +333,7 @@ function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
         <div className="grid grid-cols-3 gap-2">
           <input
             inputMode="decimal"
-            placeholder="kg"
+            placeholder={weightUnit}
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
@@ -351,7 +380,7 @@ function SetRow({ set, phaseId }: { set: LoggedSet; phaseId: string }) {
       >
         <span className="text-[var(--rtd-text-secondary)]">Set {set.setNumber}</span>{" "}
         <span className="text-[var(--rtd-text)]">
-          {set.weightKg ?? "–"}kg × {set.reps ?? "–"} @ RPE {set.rpe ?? "–"}
+          {formatSetParts(initialWeightKg !== null ? kgToDisplay(initialWeightKg, weightUnit) : null, set.reps, set.rpe, weightUnit)}
           {set.restSeconds !== null && <span className="text-[var(--rtd-text-secondary)]"> · rest {set.restSeconds}s</span>}
           {set.notes && <span className="text-[var(--rtd-text-secondary)]"> · {set.notes}</span>}
         </span>

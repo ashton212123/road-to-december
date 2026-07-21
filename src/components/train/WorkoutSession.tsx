@@ -27,10 +27,12 @@ export function WorkoutSession({
   phaseId,
   sessionTitle,
   exercises,
+  weightUnit,
 }: {
   phaseId: string;
   sessionTitle: string;
   exercises: SessionExerciseEntry[];
+  weightUnit: "kg" | "lb";
 }) {
   const initialCompleted = new Map(exercises.map((e) => [e.exercise.id, e.todaysSets.length > 0]));
   const [optimisticCompleted, setOptimisticCompleted] = useOptimistic(
@@ -150,6 +152,7 @@ export function WorkoutSession({
           activeRest={activeRest}
           now={now}
           onRestStarted={(startedAt) => handleRestStarted(entry, startedAt)}
+          weightUnit={weightUnit}
         />
       ))}
 

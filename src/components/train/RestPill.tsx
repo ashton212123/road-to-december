@@ -47,11 +47,19 @@ export function RestPill({
         ? "over-mild"
         : "over-hard";
 
-  const label = !activeRest.targetSec
-    ? formatMMSS(elapsed)
-    : !isOver
-      ? formatMMSS(remaining ?? 0)
-      : `+${formatMMSS(overSec)} over`;
+  // The athlete finished a set with no idea a rest timer existed -- for the
+  // first couple ticks, announce that it started (with the full target)
+  // instead of immediately showing a countdown that's easy to miss glancing
+  // past. Driven off the same elapsed clock, no extra timer.
+  const justStarted = elapsed < 3;
+  const label =
+    justStarted && activeRest.targetSec
+      ? `Rest started — ${formatMMSS(activeRest.targetSec)}`
+      : !activeRest.targetSec
+        ? formatMMSS(elapsed)
+        : !isOver
+          ? formatMMSS(remaining ?? 0)
+          : `+${formatMMSS(overSec)} over`;
 
   const color =
     severity === "over-hard"

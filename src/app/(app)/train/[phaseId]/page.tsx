@@ -61,16 +61,19 @@ export default async function PhaseSessionPage({
 
   const weekStart = mondayOf(today);
 
-  // Two queries total for the whole session, not two per exercise, plus one
-  // more for the week-dots widget -- still one batched round trip.
-  const [{ todaysByExercise, lastSessionByExercise }, weekLogs] = await withRetry(() =>
+  // Three queries total for the whole session, not two per exercise, plus
+  // one more for the week-dots widget and one for the unit preference --
+  // still one batched round trip.
+  const [{ todaysByExercise, lastSessionByExercise }, weekLogs, settingsRow] = await withRetry(() =>
     Promise.all([
       session
         ? getSessionWorkoutData(session.exercises.map((e) => e.id), today)
         : Promise.resolve({ todaysByExercise: new Map<number, WorkoutLogRow[]>(), lastSessionByExercise: new Map<number, WorkoutLogRow[]>() }),
       getWorkoutLogsSince(weekStart),
+      getSettingsRow(),
     ])
   );
+  const weightUnit = settingsRow.weightUnit as "kg" | "lb";
   const loggedDatesThisWeek = new Set(weekLogs.map((l) => l.date));
   const scheduledDayIndexes = new Set(phase.sessions.map((s) => DAY_KEY_TO_INDEX[s.dayKey]));
   const weekScheduled = [0, 1, 2, 3, 4, 5, 6].map((i) => scheduledDayIndexes.has(i));
@@ -152,7 +155,7 @@ export default async function PhaseSessionPage({
               />
             )}
           </div>
-          <WorkoutSession phaseId={phase.id} sessionTitle={session.title} exercises={exerciseData} />
+          <WorkoutSession phaseId={phase.id} sessionTitle={session.title} exercises={exerciseData} weightUnit={weightUnit} />
         </>
       ) : (
         <EmptyState title="No session for this day" body="Pick another day above." />
