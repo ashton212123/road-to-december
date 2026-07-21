@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
+import { useKeyboardOpen } from "@/lib/useKeyboardOpen";
 
 export type TabItem = {
   href: string;
@@ -23,6 +24,11 @@ function isActive(item: TabItem, pathname: string) {
 export function TabBar({ items }: { items: TabItem[] }) {
   const pathname = usePathname();
   const activeIndex = Math.max(0, items.findIndex((item) => isActive(item, pathname)));
+  const keyboardOpen = useKeyboardOpen();
+
+  // The keyboard replaces the bottom third of the screen -- a fixed dock
+  // sitting on top of it just floats mid-content until dismissed.
+  if (keyboardOpen) return null;
 
   return (
     <nav

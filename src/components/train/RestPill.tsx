@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import clsx from "clsx";
 import type { ActiveRest } from "./WorkoutSession";
+import { useKeyboardOpen } from "@/lib/useKeyboardOpen";
 
 function formatMMSS(totalSec: number) {
   const s = Math.max(0, Math.round(totalSec));
@@ -26,12 +27,16 @@ export function RestPill({
   const elapsed = activeRest && now !== null ? Math.floor((now - activeRest.startedAt) / 1000) : null;
   const remaining = elapsed !== null && activeRest?.targetSec ? activeRest.targetSec - elapsed : null;
   const isOver = remaining !== null && remaining <= 0;
+  const keyboardOpen = useKeyboardOpen();
 
   useEffect(() => {
     if (isOver) navigator.vibrate?.(200);
   }, [isOver]);
 
-  if (!activeRest || elapsed === null) return null;
+  // The keyboard only opens here via a set/rep/RPE input mid-rest -- the
+  // pill would otherwise float on top of the keyboard or the field being
+  // typed into.
+  if (!activeRest || elapsed === null || keyboardOpen) return null;
 
   const overSec = remaining !== null ? -remaining : 0;
   const severity: "neutral" | "on-target" | "over-mild" | "over-hard" = !activeRest.targetSec
@@ -61,7 +66,9 @@ export function RestPill({
       onClick={onDismiss}
       aria-label={`Rest timer for ${activeRest.exerciseName}: ${label}. Tap to dismiss.`}
       className={clsx(
-        "fixed z-40 left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom)+84px)] md:left-6 md:translate-x-0 md:bottom-6",
+        // Left-aligned on mobile (not centered) so it never overlaps the
+        // coach FAB parked at right-4 -- max-width leaves that corridor clear.
+        "fixed z-40 left-4 right-auto translate-x-0 bottom-[calc(env(safe-area-inset-bottom)+84px)] max-w-[calc(100vw-96px)] md:left-6 md:bottom-6 md:max-w-none",
         "flex items-center gap-2.5 rounded-full px-4 py-2.5 cursor-pointer active:scale-95 transition-transform duration-150 ease-out rtd-fade-in",
         isOver && "rtd-rest-pulse"
       )}

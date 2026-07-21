@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CoachChat } from "./CoachChat";
 import { IconSparkle } from "@/components/ui/icons";
 import { quickPromptsForPath } from "@/lib/coach/quickPrompts";
+import { useKeyboardOpen } from "@/lib/useKeyboardOpen";
 
 export const OPEN_COACH_EVENT = "rtd:open-coach";
 
@@ -20,6 +21,11 @@ export function CoachPanel() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const pathname = usePathname();
+  // The full-screen coach page has its own Send button in roughly this same
+  // corner -- the FAB would sit on top of it. That page IS the coach, so a
+  // shortcut button to open it makes no sense there anyway.
+  const onCoachPage = pathname?.startsWith("/more/coach-ai") ?? false;
+  const keyboardOpen = useKeyboardOpen();
 
   useEffect(() => {
     function handleOpen() {
@@ -69,22 +75,25 @@ export function CoachPanel() {
 
       {/* Mobile: the desktop slide-over doesn't render below md, so this
           links straight to the full-screen coach page instead of opening
-          a panel that isn't there. Fixed above the bottom dock. */}
-      <Link
-        href="/more/coach-ai"
-        aria-label="Open coach"
-        className="md:hidden fixed right-4 z-40 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer text-[var(--rtd-purple)] active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-        style={{
-          bottom: "calc(env(safe-area-inset-bottom) + 92px)",
-          background: "rgba(0,0,0,0.5)",
-          border: "1px solid var(--rtd-hairline)",
-          boxShadow: "0 0 24px rgba(129,85,255,0.25), var(--rtd-shadow)",
-          backdropFilter: "blur(var(--rtd-blur))",
-          WebkitBackdropFilter: "blur(var(--rtd-blur))",
-        }}
-      >
-        <IconSparkle />
-      </Link>
+          a panel that isn't there. Fixed above the bottom dock. Suppressed
+          on the coach page itself -- see onCoachPage above. */}
+      {!onCoachPage && !keyboardOpen && (
+        <Link
+          href="/more/coach-ai"
+          aria-label="Open coach"
+          className="md:hidden fixed right-4 z-40 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer text-[var(--rtd-purple)] active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom) + 92px)",
+            background: "rgba(0,0,0,0.5)",
+            border: "1px solid var(--rtd-hairline)",
+            boxShadow: "0 0 24px rgba(129,85,255,0.25), var(--rtd-shadow)",
+            backdropFilter: "blur(var(--rtd-blur))",
+            WebkitBackdropFilter: "blur(var(--rtd-blur))",
+          }}
+        >
+          <IconSparkle />
+        </Link>
+      )}
 
       {open && (
         <div className="hidden md:block fixed inset-0 z-50">

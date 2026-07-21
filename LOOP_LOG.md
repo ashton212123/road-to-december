@@ -1,5 +1,13 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-21 — Iteration 21: mobile chrome collisions (LOOP_PHASE4_PROMPT.md P2)
+
+**Why:** the athlete's screenshots from their real training session showed the floating coach button sitting directly on top of the coach chat's own Send button, and the bottom nav dock floating mid-screen when the iOS keyboard was open. Nothing fixed should ever cover something interactive.
+
+**Shipped:** `CoachPanel.tsx`'s mobile FAB now checks `usePathname()` and renders nothing on `/more/coach-ai` — that page IS the coach, so a shortcut button to open it (that happens to sit exactly where its own Send button is) makes no sense there. New `src/lib/useKeyboardOpen.ts`: a client hook using `window.visualViewport`'s `resize` event (keyboard considered open when the visual viewport shrinks below 75% of `window.innerHeight`) — wired into the mobile `TabBar`, the coach FAB, and `RestPill`, all three now render `null` while the keyboard is open instead of floating over whatever the keyboard is now covering. `RestPill` also switched from `left-1/2` centered to `left-4` left-aligned on mobile with a `max-w-[calc(100vw-96px)]` cap, so it structurally can't overlap the FAB's corridor on the right during a rest (the old centered position could, on a 375px screen). Main content's mobile bottom padding went from 92px to 96px to fully clear the dock.
+
+**Verified live:** full 18-route smoke + burst green, local and prod. Live-HTML assertions on prod: `/more/coach-ai` contains no `<a href="/more/coach-ai" aria-label="Open coach">` (the mobile FAB link, matched attribute-order-independent since React doesn't serialize attributes in source order); `/home` still contains that same link (confirms the suppression is page-specific, not global — an early version of the assertion was too broad and also matched the harmless CSS-hidden desktop button, which legitimately renders in every page's HTML via `hidden md:flex`, not JS-conditional). The keyboard-open behavior itself is client-runtime (no server HTML difference to assert on) — verified by re-reading the hook wiring in all three consumers instead; needs the athlete's phone for final visual sign-off next session.
+
 ## 2026-07-21 — Iteration 20: metric truth + reliability (LOOP_PHASE4_PROMPT.md P1)
 
 **Why this phase exists:** the athlete used the app for a real training day (Tuesday swim + gym) for the first time and hit a false alarm — the app told them to "back off intensity" based on an ACWR of exactly 4.00, which is a mathematical certainty (not a real signal) for any new logger whose entire history sits inside the acute window. This phase is entirely about restoring trust in the numbers before touching anything visual.

@@ -36,7 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // <main> alone so content centers on ultra-wide displays.
     <div className="flex-1 flex flex-col w-full px-3 md:px-6 lg:px-10 md:py-6">
       <TopBar items={PRIMARY_ITEMS} extras={EXTRA_ITEMS} />
-      <main className="flex-1 min-w-0 max-w-[1600px] w-full mx-auto pb-[calc(env(safe-area-inset-bottom)+92px)] md:pb-6 pt-[calc(env(safe-area-inset-top)+16px)] md:pt-0">
+      <main className="flex-1 min-w-0 max-w-[1600px] w-full mx-auto pb-[calc(env(safe-area-inset-bottom)+96px)] md:pb-6 pt-[calc(env(safe-area-inset-top)+16px)] md:pt-0">
         {children}
       </main>
       <TabBar items={TAB_BAR_ITEMS} />
