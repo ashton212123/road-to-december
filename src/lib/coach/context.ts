@@ -17,6 +17,7 @@ import { computeConsistencyPct } from "@/lib/analytics/streak";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { addDaysISO } from "@/lib/time";
 import { getAthleteModel } from "@/lib/coach/athleteModel";
+import { withFallback } from "@/lib/db/withFallback";
 
 const KNOWLEDGE_STOPWORDS = new Set(["this", "that", "with", "have", "what", "when", "your", "about", "from", "just"]);
 
@@ -46,6 +47,15 @@ export async function retrieveRelevantNotes(query: string, limit = 4) {
   return [...all].sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime()).slice(0, limit);
 }
 
+const FALLBACK_SETTINGS = {
+  id: "singleton",
+  aseanConfirmed: null,
+  waterTargetMl: 3000,
+  weightUnit: "kg" as const,
+  trainingStatus: "healthy" as const,
+  trainingStatusSince: null,
+};
+
 /** A compact snapshot of today's live training/nutrition/meet state, the same kind of data the MCP tools expose, assembled fresh for each chat turn. */
 export async function getCoachAppContext() {
   const today = todayManilaISO();
@@ -53,15 +63,15 @@ export async function getCoachAppContext() {
 
   const [allPhases, latestWeighIn, todaysFood, todaysWater, settingsRow, recentWorkoutLogs, meetsWithEvents, swimTimes, athleteModel] =
     await Promise.all([
-      getAllPhasesWithSessions(),
-      getLatestWeighIn(),
-      getFoodLogsForDate(today),
-      getWaterLogsForDate(today),
-      getSettingsRow(),
-      getWorkoutLogsSince(addDaysISO(today, -150)),
-      getAllMeetsWithEvents(),
-      getSwimTimes(50),
-      getAthleteModel(),
+      withFallback(getAllPhasesWithSessions(), []),
+      withFallback(getLatestWeighIn(), null),
+      withFallback(getFoodLogsForDate(today), []),
+      withFallback(getWaterLogsForDate(today), []),
+      withFallback(getSettingsRow(), FALLBACK_SETTINGS),
+      withFallback(getWorkoutLogsSince(addDaysISO(today, -150)), []),
+      withFallback(getAllMeetsWithEvents(), []),
+      withFallback(getSwimTimes(50), []),
+      withFallback(getAthleteModel(), null),
     ]);
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];

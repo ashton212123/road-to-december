@@ -312,10 +312,27 @@ export async function getMeetEvents(meetId: number) {
   return db.select().from(meetEvents).where(eq(meetEvents.meetId, meetId)).orderBy(asc(meetEvents.id));
 }
 
+/** One left-joined round trip instead of two sequential ones -- under this
+ * pool's deliberately tiny `max: 3` (see lib/db/index.ts), a caller that
+ * needs to re-acquire a connection mid-function competes against every
+ * other concurrent query for the same 3 slots twice instead of once. In
+ * getCoachAppContext's 9-way Promise.all this was enough to starve the
+ * second query indefinitely rather than just queue it like the others --
+ * found via per-query timing when the athlete-facing coach chat endpoint
+ * was hanging past Vercel's 60s function cap with no error. */
 export async function getAllMeetsWithEvents() {
-  const allMeets = await getMeets();
-  const allEvents = await db.select().from(meetEvents);
-  return allMeets.map((m) => ({ ...m, events: allEvents.filter((e) => e.meetId === m.id) }));
+  const rows = await db
+    .select({ meet: meets, event: meetEvents })
+    .from(meets)
+    .leftJoin(meetEvents, eq(meetEvents.meetId, meets.id))
+    .orderBy(asc(meets.date));
+
+  const byMeetId = new Map<number, { id: number; name: string; date: string; createdAt: Date; events: (typeof meetEvents.$inferSelect)[] }>();
+  for (const { meet, event } of rows) {
+    if (!byMeetId.has(meet.id)) byMeetId.set(meet.id, { ...meet, events: [] });
+    if (event) byMeetId.get(meet.id)!.events.push(event);
+  }
+  return [...byMeetId.values()];
 }
 
 export async function getSwimSessions(limit = 60) {

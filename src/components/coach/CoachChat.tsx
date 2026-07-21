@@ -19,11 +19,27 @@ export function CoachChat({
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoSentRef = useRef(false);
+
+  // 1->4 rows, growing with content -- multi-line input (a whole swim
+  // session pasted in) used to stay cramped in a single fixed row.
+  const MAX_TEXTAREA_HEIGHT = 112;
+  function resizeTextarea(el: HTMLTextAreaElement) {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
+  }
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Reset the grown height back to one row once a send clears the input --
+  // resizeTextarea only runs from the onChange DOM event, which doesn't
+  // fire for a programmatic setInput("").
+  useEffect(() => {
+    if (input === "" && textareaRef.current) textareaRef.current.style.height = "auto";
+  }, [input]);
 
   // Deep-links (e.g. from Learn's "ask coach" button) land here with a
   // pre-filled question via ?q= -- send it once on arrival instead of
@@ -120,8 +136,12 @@ export function CoachChat({
         className="flex items-end gap-2 pt-1"
       >
         <textarea
+          ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            resizeTextarea(e.target);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -131,6 +151,7 @@ export function CoachChat({
           placeholder="Ask your coach…"
           aria-label="Message your coach"
           rows={1}
+          style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
           className="flex-1 min-w-0 rounded-[8px] bg-white/[0.06] px-3.5 py-2.5 text-subhead outline-none resize-none focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         />
         <Button type="submit" disabled={streaming || !input.trim()} className="shrink-0">
