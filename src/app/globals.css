@@ -300,6 +300,26 @@ body {
   animation: rtd-session-complete 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* RestPill's one-shot buzz at zero -- a single scale pop, not a loop (the
+   pill's text already recolors to signal "over" continuously). */
+@keyframes rtd-rest-pulse {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rtd-rest-pulse {
+    animation: rtd-rest-pulse 0.4s ease-out;
+  }
+}
+
 /* Staggered entrance for card lists — each direct child fades/slides in
    30ms after the previous one. Items past the 12th share the last delay. */
 .rtd-stagger > * {

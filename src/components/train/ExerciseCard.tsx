@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { IconBolt, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { logSetAction, deleteSetAction, updateSetAction } from "@/app/(app)/train/actions";
 import type { ProgressionSuggestion } from "@/lib/train/progression";
+import type { ActiveRest } from "./WorkoutSession";
 
 export type LoggedSet = {
   id: number;
@@ -41,6 +42,9 @@ export function ExerciseCard({
   completed,
   onToggleCompleted,
   togglePending,
+  activeRest,
+  now,
+  onRestStarted,
 }: {
   exercise: ExerciseSummary;
   phaseId: string;
@@ -55,14 +59,21 @@ export function ExerciseCard({
   completed: boolean;
   onToggleCompleted: () => void;
   togglePending: boolean;
+  /** Rest timer state is owned by WorkoutSession (one shared timer, one
+   * sticky RestPill) instead of per-card -- these three come straight from
+   * the parent's single tick interval. */
+  activeRest: ActiveRest | null;
+  now: number | null;
+  onRestStarted: (startedAt: number) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [rpe, setRpe] = useState("");
-  const [restElapsed, setRestElapsed] = useState<number | null>(null);
-  const lastLogAt = useRef<number | null>(null);
+
+  const isActiveRestHere = activeRest?.exerciseId === exercise.id;
+  const elapsed = isActiveRestHere && now !== null ? Math.floor((now - (activeRest?.startedAt ?? 0)) / 1000) : null;
 
   // Ghost defaults (Hevy pattern, V4 P5): every field arrives pre-filled as
   // placeholder text so nothing in the workout flow ever starts genuinely
@@ -76,18 +87,8 @@ export function ExerciseCard({
   const ghostReps = String(exercise.targetRepsMax ?? exercise.targetRepsMin ?? lastSet?.reps ?? "");
   const ghostRpe = lastSet?.rpe ?? "";
 
-  useEffect(() => {
-    if (restElapsed === null) return;
-    const interval = setInterval(() => {
-      if (lastLogAt.current) {
-        setRestElapsed(Math.floor((Date.now() - lastLogAt.current) / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [restElapsed]);
-
   function handleAddSet() {
-    const restSeconds = lastLogAt.current ? Math.floor((Date.now() - lastLogAt.current) / 1000) : null;
+    const restSeconds = isActiveRestHere ? Math.floor((Date.now() - (activeRest?.startedAt ?? 0)) / 1000) : null;
     const setNumber = todaysSets.length + 1;
     startTransition(async () => {
       const usedWeight = weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
@@ -102,8 +103,7 @@ export function ExerciseCard({
         restSeconds,
         phaseId,
       });
-      lastLogAt.current = Date.now();
-      setRestElapsed(0);
+      onRestStarted(Date.now());
       setWeight("");
       setReps("");
       setRpe("");
@@ -111,14 +111,13 @@ export function ExerciseCard({
   }
 
   const restPrescribed = exercise.restSecondsPrescribed;
-  const restCompare =
-    restElapsed !== null && restPrescribed
-      ? restElapsed < restPrescribed
-        ? "under"
-        : restElapsed > restPrescribed * 1.3
-          ? "over"
-          : "on-target"
-      : null;
+  const remaining = elapsed !== null && restPrescribed ? restPrescribed - elapsed : null;
+  const isOver = remaining !== null && remaining <= 0;
+  // Countdown coloring: green while still counting down; once it flips past
+  // zero, orange (mild) then red (past 1.3x target) -- not the old count-up
+  // scheme where orange meant "still resting."
+  const restSeverity: "on-target" | "over-mild" | "over-hard" | null =
+    elapsed === null ? null : !restPrescribed ? "on-target" : !isOver ? "on-target" : elapsed > restPrescribed * 1.3 ? "over-hard" : "over-mild";
 
   return (
     <GlassCard className="flex flex-col gap-3">
@@ -204,26 +203,35 @@ export function ExerciseCard({
             </div>
           )}
 
-          {restElapsed !== null && (
+          {elapsed !== null && (
             <div
               className="text-center text-footnote rounded-[8px] py-2"
               style={{
                 background:
-                  restCompare === "under"
+                  restSeverity === "over-mild"
                     ? "rgba(255,159,10,0.12)"
-                    : restCompare === "over"
+                    : restSeverity === "over-hard"
                       ? "rgba(255,69,58,0.12)"
                       : "rgba(48,209,88,0.12)",
                 color:
-                  restCompare === "under"
+                  restSeverity === "over-mild"
                     ? "var(--rtd-orange)"
-                    : restCompare === "over"
+                    : restSeverity === "over-hard"
                       ? "var(--rtd-red)"
                       : "var(--rtd-green)",
               }}
             >
-              Rest: {Math.floor(restElapsed / 60)}:{String(restElapsed % 60).padStart(2, "0")}
-              {restPrescribed && <span className="opacity-70"> / target {Math.round(restPrescribed / 60)}min</span>}
+              {restPrescribed ? (
+                !isOver ? (
+                  <>Rest: {Math.floor((remaining ?? 0) / 60)}:{String((remaining ?? 0) % 60).padStart(2, "0")} left</>
+                ) : (
+                  <>
+                    Rest: +{Math.floor(Math.abs(remaining ?? 0) / 60)}:{String(Math.abs(remaining ?? 0) % 60).padStart(2, "0")} over
+                  </>
+                )
+              ) : (
+                <>Rest: {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}</>
+              )}
             </div>
           )}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { ExerciseCard, type ExerciseSummary, type LoggedSet, type PastSet } from "./ExerciseCard";
+import { RestPill } from "./RestPill";
 import { SessionCompleteSummary } from "./SessionCompleteSummary";
 import { completeExerciseAction, uncompleteExerciseAction } from "@/app/(app)/train/actions";
 import type { ProgressionSuggestion } from "@/lib/train/progression";
@@ -13,6 +14,12 @@ export type SessionExerciseEntry = {
   progression: ProgressionSuggestion | null;
   resolvedDefaultWeightKg: number | null;
 };
+
+export type ActiveRest = { exerciseId: number; exerciseName: string; startedAt: number; targetSec: number | null };
+
+// 5 minutes past a prescribed target with no new set logged -- the athlete
+// moved on without tapping the pill away; stop nagging.
+const AUTO_DISMISS_PAST_TARGET_SEC = 300;
 
 /** Owns completion state for the whole session (not per-card) so it can tell
  * the moment every exercise flips to done and show the completion summary. */
@@ -39,10 +46,44 @@ export function WorkoutSession({
   const [showSummary, setShowSummary] = useState(false);
   const [durationMin, setDurationMin] = useState(1);
   const startedAtRef = useRef<number | null>(null);
+  const [activeRest, setActiveRest] = useState<ActiveRest | null>(null);
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     startedAtRef.current = Date.now();
   }, []);
+
+  // One tick interval for the whole session (not one per card) -- only runs
+  // while a rest is actually active. Both setState calls happen inside the
+  // interval callback (an external-timer subscription), never synchronously
+  // in the effect body, and auto-dismisses well past target so a forgotten
+  // pill doesn't nag indefinitely.
+  useEffect(() => {
+    if (!activeRest) return;
+    const interval = setInterval(() => {
+      const nowTs = Date.now();
+      setNow(nowTs);
+      if (activeRest.targetSec && Math.floor((nowTs - activeRest.startedAt) / 1000) > activeRest.targetSec + AUTO_DISMISS_PAST_TARGET_SEC) {
+        setActiveRest(null);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeRest]);
+
+  // startedAt is computed by the caller (ExerciseCard's own event handler,
+  // where Date.now() is already established as safe) rather than here --
+  // this function isn't wired as a direct JSX handler, so a Date.now() call
+  // in its own body reads as a possible impure-during-render call to the
+  // compiler's purity check.
+  function handleRestStarted(entry: SessionExerciseEntry, startedAt: number) {
+    setActiveRest({
+      exerciseId: entry.exercise.id,
+      exerciseName: entry.exercise.name,
+      startedAt,
+      targetSec: entry.exercise.restSecondsPrescribed,
+    });
+    setNow(startedAt);
+  }
 
   const totalCount = exercises.length;
   const completedCount = [...optimisticCompleted.values()].filter(Boolean).length;
@@ -106,6 +147,9 @@ export function WorkoutSession({
           completed={optimisticCompleted.get(entry.exercise.id) ?? false}
           onToggleCompleted={() => handleToggle(entry)}
           togglePending={pendingId === entry.exercise.id}
+          activeRest={activeRest}
+          now={now}
+          onRestStarted={(startedAt) => handleRestStarted(entry, startedAt)}
         />
       ))}
 
@@ -117,6 +161,8 @@ export function WorkoutSession({
           onDismiss={() => setShowSummary(false)}
         />
       )}
+
+      <RestPill activeRest={activeRest} now={now} onDismiss={() => setActiveRest(null)} />
     </div>
   );
 }
