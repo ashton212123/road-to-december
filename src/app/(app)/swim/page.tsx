@@ -1,14 +1,21 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
-import { SwimSection } from "@/components/analytics/SwimSection";
 import { SwimWeeklyVolumeCard, SwimMonthDotsCard, SwimLatestSessionCard, SwimMeetReadinessCard } from "@/components/analytics/SwimTrainingBlock";
 import { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { buildSwimViewModel } from "@/lib/swim/viewModel";
 import { withRetry } from "@/lib/db/withRetry";
 import { todayManilaISO, addDaysISO } from "@/lib/time";
 import { seasonData } from "@/lib/data/season-data";
+
+// SwimSection is the only recharts consumer on this page -- code-split so
+// the weekly-volume/month-dots/meet-readiness cards above it (zero charts,
+// often the only thing glanced at) don't wait on the chart bundle.
+const SwimSection = dynamic(() => import("@/components/analytics/SwimSection").then((m) => m.SwimSection), {
+  loading: () => <div className="rtd-glass" style={{ height: 220 }} />,
+});
 
 // Same batch + tag as Analytics: one cached round trip feeds both pages, and
 // every log write revalidates it.

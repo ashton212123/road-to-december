@@ -1,8 +1,6 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { StrengthSection } from "./StrengthSection";
-import { LoadSection } from "./LoadSection";
-import { PowerSection } from "./PowerSection";
-import { BodyweightSection } from "./BodyweightSection";
 import { PeriodSelector } from "./PeriodSelector";
 import { ImprovementMatrix } from "./ImprovementMatrix";
 import { FuelAdherenceCard } from "./FuelAdherenceCard";
@@ -14,6 +12,15 @@ import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
 import type { Period } from "@/lib/analytics/periods";
 import type { MatrixRow } from "@/lib/analytics/improvementMatrix";
 import type { AnalyticsTab } from "@/lib/analytics/tabs";
+
+// recharts is a heavy dependency only these three sections need -- code-split
+// so the Overview tab (matrix + takeaway cards, zero charts) doesn't ship it.
+// SSR stays on (no ssr:false): the win is the separate chunk only loading
+// when the section actually renders, not skipping server rendering.
+const chartFallback = <div className="rtd-glass" style={{ height: 220 }} />;
+const LoadSection = dynamic(() => import("./LoadSection").then((m) => m.LoadSection), { loading: () => chartFallback });
+const PowerSection = dynamic(() => import("./PowerSection").then((m) => m.PowerSection), { loading: () => chartFallback });
+const BodyweightSection = dynamic(() => import("./BodyweightSection").then((m) => m.BodyweightSection), { loading: () => chartFallback });
 
 export function AnalyticsView(props: {
   today: string;
