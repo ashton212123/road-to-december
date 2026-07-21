@@ -1,136 +1,33 @@
 "use client";
 
-import { useTransition } from "react";
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
 import { chartTheme } from "./chart-theme";
-import { SwimTimeLogger } from "./SwimTimeLogger";
-import { SwimHero } from "./SwimHero";
-import { AddMeetForm } from "./AddMeetForm";
-import { MeetsList } from "./MeetsList";
-import { SwimSessionLogger } from "./SwimSessionLogger";
-import { SwimSessionList } from "./SwimSessionList";
-import { deleteSwimTimeAction } from "@/app/(app)/analytics/actions";
-import { formatSwimTime } from "@/lib/swim/format";
-import type { ReadinessResult } from "@/lib/swim/readiness";
-import { ComparisonLine } from "@/components/ui/ComparisonLine";
-import type { PacePoint } from "@/lib/swim/pace";
 
-type RecentSwimTime = { id: number; date: string; event: string; timeMs: number; meetName: string | null };
-type MeetWithEvents = {
-  id: number;
-  name: string;
-  date: string;
-  events: { id: number; event: string; currentTimeMs: number | null; targetTimeMs: number; readiness: ReadinessResult }[];
-};
-type SwimSessionRow = { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null };
-
-export function SwimSection({
+/** The recharts-dependent half of the old monolithic SwimSection, split out
+ * so /swim only ever loads the recharts bundle when the Analysis view is
+ * actually opened (next/dynamic import site: swim/page.tsx). Log and Meets
+ * views never touch this module. */
+export function SwimAnalysisView({
   pbRows,
   targets,
   splitBars,
   splitAutopsy,
   timeTo15m,
-  recentTimes,
-  allSwimTimesByEvent,
-  meets,
-  latestTimeByEvent,
-  swimSessions,
-  paceSeries,
-  paceTakeaway,
 }: {
   pbRows: SeedPbRow[];
   targets: SeedTarget[];
   splitBars: SeedSplitBar[];
   splitAutopsy: { date: string; splits: number[]; strokeCounts: number[] }[];
   timeTo15m: { date: string; seconds: number; condition: string }[];
-  recentTimes: RecentSwimTime[];
-  allSwimTimesByEvent: Record<string, { date: string; timeMs: number }[]>;
-  meets: MeetWithEvents[];
-  latestTimeByEvent: Record<string, number>;
-  swimSessions: SwimSessionRow[];
-  paceSeries: PacePoint[];
-  paceTakeaway: string | null;
 }) {
   const swimTarget = targets.find((t) => t.id === "swim_200br_200im");
-  const [pending, startTransition] = useTransition();
-
-  const meetEventsFlat = meets.flatMap((m) =>
-    m.events.map((e) => ({ event: e.event, targetTimeMs: e.targetTimeMs, readiness: e.readiness, meetName: m.name, meetDate: m.date }))
-  );
 
   return (
     <div className="flex flex-col gap-4">
-      <SwimHero allSwimTimesByEvent={allSwimTimesByEvent} meetEventsFlat={meetEventsFlat} />
-
-      <div>
-        <SectionLabel>Meets & targets</SectionLabel>
-        <div className="flex flex-col gap-3">
-          <MeetsList meets={meets} />
-          <AddMeetForm latestTimeByEvent={latestTimeByEvent} />
-        </div>
-      </div>
-
-      <div>
-        <SectionLabel>Swim training log</SectionLabel>
-        <div className="flex flex-col gap-3">
-          <SwimSessionLogger />
-          <SwimSessionList sessions={swimSessions} />
-        </div>
-      </div>
-
-      {paceSeries.length > 0 && (
-        <div>
-          <SectionLabel>Pace per 100 (from imported sessions)</SectionLabel>
-          <GlassCard className="flex flex-col gap-2">
-            {paceTakeaway && <p className="text-caption text-[var(--rtd-text-secondary)]">{paceTakeaway}</p>}
-            <ComparisonLine
-              current={paceSeries.map((p) => p.paceSecPer100)}
-              previous={paceSeries.map(() => null)}
-              color="var(--rtd-cyan)"
-              height={100}
-              labels={paceSeries.map((p) => p.date.slice(5))}
-            />
-          </GlassCard>
-        </div>
-      )}
-
-      <SwimTimeLogger />
-
-      <div>
-        <SectionLabel>Recent logged times</SectionLabel>
-        <GlassCard className="flex flex-col gap-2">
-          {recentTimes.length === 0 ? (
-            <EmptyState title="No times logged yet" body="Log one above after your next set or meet." />
-          ) : (
-            recentTimes.map((t) => (
-              <div key={t.id} className="flex items-center justify-between text-footnote">
-                <div className="min-w-0">
-                  <span className="text-[var(--rtd-text)] font-medium">{t.event}</span>{" "}
-                  <span className="text-[var(--rtd-text-secondary)]">{formatSwimTime(t.timeMs)}</span>
-                  <div className="text-caption text-[var(--rtd-text-secondary)]">
-                    {t.date}
-                    {t.meetName ? ` · ${t.meetName}` : ""}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => startTransition(() => deleteSwimTimeAction(t.id))}
-                  className="rtd-tap-target text-[var(--rtd-red)] ml-2 shrink-0 cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-                  aria-label="Delete swim time"
-                >
-                  ✕
-                </button>
-              </div>
-            ))
-          )}
-        </GlassCard>
-      </div>
-
       <div>
         <SectionLabel>Personal bests vs goal</SectionLabel>
         <GlassCard className="flex flex-col gap-2">

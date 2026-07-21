@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
 import { formatSwimTime } from "@/lib/swim/format";
@@ -253,35 +254,47 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
   return (
     <BentoCard label="Meet readiness" colSpan={12}>
       <div className="flex flex-col gap-4">
-        {upcoming.map((meet) => (
-          <div key={meet.id} className="flex flex-col gap-1.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-subhead font-semibold text-[var(--rtd-text)] truncate">{meet.name}</span>
-              <span className="shrink-0 text-caption font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] rtd-nums">
-                {daysOut(today, meet.date)}d out
-              </span>
+        {upcoming.map((meet) => {
+          const hasAnyTime = meet.events.some((ev) => ev.readiness.currentBestMs !== null);
+          return (
+            <div key={meet.id} className="flex flex-col gap-1.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-subhead font-semibold text-[var(--rtd-text)] truncate">{meet.name}</span>
+                <span className="shrink-0 text-caption font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] rtd-nums">
+                  {daysOut(today, meet.date)}d out
+                </span>
+              </div>
+              {!hasAnyTime ? (
+                <Link
+                  href="/swim?view=meets#log-time"
+                  className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110"
+                >
+                  Log your first times to project readiness →
+                </Link>
+              ) : (
+                <div className="flex flex-col rtd-divide-y">
+                  {meet.events.map((ev) => {
+                    const currentBestMs = ev.readiness.currentBestMs;
+                    const gapMs = currentBestMs !== null ? currentBestMs - ev.targetTimeMs : null;
+                    return (
+                      <div key={ev.id} className="flex items-center gap-2 py-1.5 first:pt-0 last:pb-0">
+                        <span className="text-subhead text-[var(--rtd-text)] flex-1 truncate">{ev.event}</span>
+                        <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">
+                          {currentBestMs !== null ? formatSwimTime(currentBestMs) : "—"}
+                        </span>
+                        <span className="text-caption text-[var(--rtd-text-tertiary)]" aria-hidden="true">
+                          →
+                        </span>
+                        <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">{formatSwimTime(ev.targetTimeMs)}</span>
+                        <GapChip gapMs={gapMs} />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <div className="flex flex-col rtd-divide-y">
-              {meet.events.map((ev) => {
-                const currentBestMs = ev.readiness.currentBestMs;
-                const gapMs = currentBestMs !== null ? currentBestMs - ev.targetTimeMs : null;
-                return (
-                  <div key={ev.id} className="flex items-center gap-2 py-1.5 first:pt-0 last:pb-0">
-                    <span className="text-subhead text-[var(--rtd-text)] flex-1 truncate">{ev.event}</span>
-                    <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">
-                      {currentBestMs !== null ? formatSwimTime(currentBestMs) : "—"}
-                    </span>
-                    <span className="text-caption text-[var(--rtd-text-tertiary)]" aria-hidden="true">
-                      →
-                    </span>
-                    <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">{formatSwimTime(ev.targetTimeMs)}</span>
-                    <GapChip gapMs={gapMs} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </BentoCard>
   );

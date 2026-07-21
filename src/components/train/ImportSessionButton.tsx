@@ -9,6 +9,7 @@ import {
   checkStravaConfiguredAction,
   sendSessionToStravaAction,
 } from "@/app/(app)/train/importActions";
+import { logSwimSessionAction } from "@/app/(app)/analytics/actions";
 import type { ParseSessionResult, ParsedSwimInterval, ParsedGymExercise } from "@/lib/train/importSession";
 
 type TodayExercise = { id: number; name: string };
@@ -58,6 +59,8 @@ export function ImportSessionButton({
   const [estimating, startEstimate] = useTransition();
   const [saving, startSave] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [unstructuredLoad, setUnstructuredLoad] = useState(5);
+  const [savingUnstructured, startSaveUnstructured] = useTransition();
   const [stravaConfigured, setStravaConfigured] = useState(false);
   const [stravaState, setStravaState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
   const [, startStrava] = useTransition();
@@ -101,6 +104,17 @@ export function ImportSessionButton({
     return swimIntervals
       .map((iv) => `${iv.note ? `${iv.note} ` : ""}${iv.reps}x${iv.distanceM} ${iv.stroke}${iv.targetInterval ? ` @${iv.targetInterval}` : ""}`)
       .join(", ");
+  }
+
+  // Logging must never dead-end on a parse failure -- if AI structuring
+  // fails, the raw text still saves as-is (distance/pace just won't parse
+  // from it), same swim-session table `logSwimSessionAction` already writes
+  // to from the manual logger.
+  function saveUnstructured() {
+    startSaveUnstructured(async () => {
+      await logSwimSessionAction({ loadRating: unstructuredLoad, setsText: text.trim() || null });
+      setSaved(true);
+    });
   }
 
   function save() {
@@ -204,7 +218,7 @@ export function ImportSessionButton({
             {result === "error" && (
               <>
                 <div className="rtd-strip" style={{ background: "rgba(255,159,10,0.12)", color: "var(--rtd-orange)" }}>
-                  Couldn&apos;t parse this session — try again, or log it manually in Train.
+                  Couldn&apos;t parse this session — try again, or save it as-is below.
                 </div>
                 <textarea
                   value={text}
@@ -214,6 +228,21 @@ export function ImportSessionButton({
                 />
                 <Button onClick={estimate} disabled={estimating || !text.trim()}>
                   {estimating ? "Reading it…" : "Try again"}
+                </Button>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-caption text-[var(--rtd-text-secondary)]">Session load</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={unstructuredLoad}
+                    onChange={(e) => setUnstructuredLoad(Math.max(1, Math.min(10, Number(e.target.value) || 5)))}
+                    className="w-14 rounded bg-white/[0.06] px-1.5 py-1 text-caption outline-none rtd-nums"
+                  />
+                  <span className="text-caption text-[var(--rtd-text-tertiary)]">/10</span>
+                </div>
+                <Button variant="secondary" onClick={saveUnstructured} disabled={savingUnstructured || !text.trim()}>
+                  {savingUnstructured ? "Saving…" : "Save as unstructured"}
                 </Button>
               </>
             )}
