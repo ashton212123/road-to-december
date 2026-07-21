@@ -1,5 +1,8 @@
 import { BentoCard } from "@/components/ui/BentoCard";
+import { ImportSessionButton } from "@/components/train/ImportSessionButton";
+import { formatSwimTime } from "@/lib/swim/format";
 import type { SwimSessionInterval } from "@/lib/db/schema";
+import type { ReadinessResult } from "@/lib/swim/readiness";
 
 // The swim-training trio: weekly volume, month dot calendar, latest imported
 // session breakdown. First components on the liquid-gradient direction --
@@ -26,7 +29,10 @@ export function SwimWeeklyVolumeCard({ weeks }: { weeks: SwimWeek[] }) {
   return (
     <BentoCard label="Weekly swim volume" colSpan={6}>
       {!hasAny ? (
-        <p className="text-caption text-[var(--rtd-text-tertiary)]">Import or log a swim session and weekly volume starts tracking here.</p>
+        <div className="flex flex-col gap-2 items-start">
+          <p className="text-caption text-[var(--rtd-text-tertiary)]">Import or log a swim session and weekly volume starts tracking here.</p>
+          <ImportSessionButton phaseId={null} todayExercises={[]} compact />
+        </div>
       ) : (
         <div className="flex flex-col gap-2">
           {weeks.map((w) => (
@@ -156,9 +162,12 @@ export function SwimLatestSessionCard({
   return (
     <BentoCard label="Latest imported session" colSpan={12}>
       {!session || !session.intervals || session.intervals.length === 0 ? (
-        <p className="text-caption text-[var(--rtd-text-tertiary)]">
-          Paste a session through Import on Train and its interval breakdown lands here.
-        </p>
+        <div className="flex flex-col gap-2 items-start">
+          <p className="text-caption text-[var(--rtd-text-tertiary)]">
+            Paste a session and its interval breakdown lands here.
+          </p>
+          <ImportSessionButton phaseId={null} todayExercises={[]} compact />
+        </div>
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
@@ -188,6 +197,92 @@ export function SwimLatestSessionCard({
           </div>
         </div>
       )}
+    </BentoCard>
+  );
+}
+
+export type MeetReadinessMeet = {
+  id: number;
+  name: string;
+  date: string;
+  events: {
+    id: number;
+    event: string;
+    targetTimeMs: number;
+    readiness: Pick<ReadinessResult, "currentBestMs" | "confidence">;
+  }[];
+};
+
+function daysOut(todayISO: string, dateISO: string): number {
+  const from = new Date(`${todayISO}T00:00:00Z`).getTime();
+  const to = new Date(`${dateISO}T00:00:00Z`).getTime();
+  return Math.round((to - from) / 86_400_000);
+}
+
+// Same visual language as DeltaChip (solid pill, dark text -- a stamped
+// verdict, not a tint) but for a raw time gap instead of a percentage:
+// negative/zero (at or under target) reads green, still-slower reads red.
+function GapChip({ gapMs }: { gapMs: number | null }) {
+  if (gapMs === null) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] rtd-nums text-caption">
+        —
+      </span>
+    );
+  }
+  const isAhead = gapMs <= 0;
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full font-semibold rtd-nums text-caption"
+      style={{ color: "#0b0b0d", backgroundColor: isAhead ? "#4ade80" : "#f87171" }}
+    >
+      {gapMs > 0 ? "+" : "-"}
+      {formatSwimTime(Math.abs(gapMs))}
+    </span>
+  );
+}
+
+/** Upcoming meets (max 2) vs their event targets -- the same readiness math
+ * the coach already reasons about (lib/swim/readiness.ts), just never shown
+ * anywhere in the UI before. Omitted entirely (no empty shell) if there's no
+ * meet on the calendar. */
+export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMeet[]; today: string }) {
+  const upcoming = meets.filter((m) => m.date >= today).slice(0, 2);
+  if (upcoming.length === 0) return null;
+
+  return (
+    <BentoCard label="Meet readiness" colSpan={12}>
+      <div className="flex flex-col gap-4">
+        {upcoming.map((meet) => (
+          <div key={meet.id} className="flex flex-col gap-1.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-subhead font-semibold text-[var(--rtd-text)] truncate">{meet.name}</span>
+              <span className="shrink-0 text-caption font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] rtd-nums">
+                {daysOut(today, meet.date)}d out
+              </span>
+            </div>
+            <div className="flex flex-col rtd-divide-y">
+              {meet.events.map((ev) => {
+                const currentBestMs = ev.readiness.currentBestMs;
+                const gapMs = currentBestMs !== null ? currentBestMs - ev.targetTimeMs : null;
+                return (
+                  <div key={ev.id} className="flex items-center gap-2 py-1.5 first:pt-0 last:pb-0">
+                    <span className="text-subhead text-[var(--rtd-text)] flex-1 truncate">{ev.event}</span>
+                    <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">
+                      {currentBestMs !== null ? formatSwimTime(currentBestMs) : "—"}
+                    </span>
+                    <span className="text-caption text-[var(--rtd-text-tertiary)]" aria-hidden="true">
+                      →
+                    </span>
+                    <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">{formatSwimTime(ev.targetTimeMs)}</span>
+                    <GapChip gapMs={gapMs} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </BentoCard>
   );
 }

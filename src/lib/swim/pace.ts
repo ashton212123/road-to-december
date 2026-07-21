@@ -1,7 +1,7 @@
 import type { SwimSessionInterval } from "@/lib/db/schema";
 import { addDaysISO } from "@/lib/time";
 
-const EXCLUDE_MARKERS = ["w/u", "w/d", "warm-up", "warm up", "warmup", "cooldown", "cool-down", "cool down", "drill"];
+const EXCLUDE_MARKERS = ["w/u", "w/d", "warm-up", "warm up", "warmup", "cooldown", "cool-down", "cool down", "drill", "kick", "pull"];
 
 function isExcluded(iv: SwimSessionInterval): boolean {
   const note = (iv.note ?? "").toLowerCase();

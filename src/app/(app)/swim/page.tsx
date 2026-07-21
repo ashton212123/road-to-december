@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import { SwimSection } from "@/components/analytics/SwimSection";
-import { SwimWeeklyVolumeCard, SwimMonthDotsCard, SwimLatestSessionCard } from "@/components/analytics/SwimTrainingBlock";
+import { SwimWeeklyVolumeCard, SwimMonthDotsCard, SwimLatestSessionCard, SwimMeetReadinessCard } from "@/components/analytics/SwimTrainingBlock";
 import { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { buildSwimViewModel } from "@/lib/swim/viewModel";
 import { withRetry } from "@/lib/db/withRetry";
@@ -44,6 +44,7 @@ async function SwimContent() {
           sessions={raw.swimSessions.map((s) => ({ date: s.date, parsedDistanceM: s.parsedDistanceM }))}
         />
       </div>
+      <SwimMeetReadinessCard meets={vm.meetsWithReadiness} today={today} />
       <SwimLatestSessionCard
         session={
           vm.latestSwimSession
