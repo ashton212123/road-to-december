@@ -12,8 +12,12 @@ export const OPEN_COACH_EVENT = "rtd:open-coach";
  * the app layout level so it's available on every desktop page. Reuses the
  * same /api/coach/chat backend and context assembly as the full /more/
  * coach-ai page -- this is a quick-access surface, not a separate brain. */
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
 export function CoachPanel() {
   const [open, setOpen] = useState(false);
+  const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -34,6 +38,15 @@ export function CoachPanel() {
       window.removeEventListener("keydown", handleKeydown);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open || historyLoaded) return;
+    fetch("/api/coach/chat")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setHistory(Array.isArray(data) ? data : []))
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoaded(true));
+  }, [open, historyLoaded]);
 
   return (
     <>
@@ -84,7 +97,9 @@ export function CoachPanel() {
               </button>
             </div>
             <div className="flex-1 min-h-0">
-              <CoachChat initialMessages={[]} quickPrompts={quickPromptsForPath(pathname ?? "/")} />
+              {historyLoaded && (
+                <CoachChat initialMessages={history} quickPrompts={quickPromptsForPath(pathname ?? "/")} />
+              )}
             </div>
           </div>
         </div>

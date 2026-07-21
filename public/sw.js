@@ -1,4 +1,5 @@
-const CACHE_VERSION = "rtd-v1";
+const CACHE_VERSION = "rtd-v2";
+const RUNTIME_CACHE_MAX_ENTRIES = 60;
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline";
@@ -38,6 +39,18 @@ function isNavigationRequest(request) {
   return request.mode === "navigate";
 }
 
+// Runtime cache grows forever otherwise on a daily-driver PWA -- trim back
+// to the max after every write, oldest entries first (insertion order).
+async function trimRuntimeCache() {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const keys = await cache.keys();
+  if (keys.length <= RUNTIME_CACHE_MAX_ENTRIES) return;
+  const excess = keys.length - RUNTIME_CACHE_MAX_ENTRIES;
+  for (let i = 0; i < excess; i++) {
+    await cache.delete(keys[i]);
+  }
+}
+
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith("/_next/static/") ||
@@ -61,7 +74,7 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy).then(trimRuntimeCache));
           return response;
         })
         .catch(() => caches.match(request))
@@ -74,7 +87,7 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy).then(trimRuntimeCache));
           return response;
         })
         .catch(async () => {

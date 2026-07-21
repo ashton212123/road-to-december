@@ -10,19 +10,21 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] **Liquid-glow color pass, app-wide**: no flat/static accent fills — rings become conic **gradients with soft outer glow** (fuel ring first), chart lines get gradient stroke + glowing endpoint dots, active states get gradient tints. Keep the perf rules: no backdrop-filter on grid cards, transform/opacity transitions only.
 - [ ] **Fitonist-style desktop Home** (mobile keeps the compact stack): per-card period toggles, month calendar card with training-day dots, bubble-style macro/age-range-like breakdown for fuel, glowing curve charts. Reverse-engineer layout from the reference, adapt to RTD's data.
 - [ ] **Model provider**: evaluate Nous Portal API (Hermes models, free tier) as the coach's LLM alongside/instead of Groq; keep whichever answers better, with fallback. No Telegram anywhere.
-- [ ] Self-host Inter font (next/font/google needs Google reachable at build time — one flaky network = failed deploy).
 
 - [ ] Verify every V4 phase actually shipped (P1–P6 acceptance bars in REVAMP_V4_PROMPT.md); create one backlog item per gap found instead of fixing inline.
-- [ ] Coach panel: confirm chat history persists across sessions and the panel restores scroll position; fix if not.
-- [ ] Fuel: meal timeline rows — swipe/press delete affordance on mobile (currently only ✕ on desktop hover, if any).
-- [ ] Analytics month view: stepping offset back past data start shows a sane empty state, not blank charts.
-- [ ] Import parser: handle kick/drill/pull notation ("4x50 kick @1:10", "200 drill") — parse to intervals with note, excluded from pace-per-100.
+- [ ] Import parser: "kick"/"pull" markers still missing from pace-per-100 exclusion (w/u, w/d, drill already excluded) — two-word fix, queued for LOOP_PHASE3_PROMPT.md P4.
 - [ ] Lighthouse mobile pass on /home and /analytics: performance ≥ 90; fix the top offender if below.
-- [ ] Empty states audit: every empty card app-wide has a CTA that routes to where the data gets logged.
-- [ ] Water logging from the "+" quick-log sheet: verify the one-tap +500ml logs correctly and ticks visually without closing the sheet.
-- [ ] Coach memory visible/editable in Settings: the athlete model (iteration 13) persists and is injected into chat/brief, but there's no UI to read or correct it yet — surface the latest model text on /more/settings with a way to fix a wrong fact.
+- [ ] Empty states audit: every empty card app-wide has a CTA that routes to where the data gets logged — partially done (Learn, Home cards); full app-wide sweep queued for LOOP_PHASE3_PROMPT.md P4c/P5c.
+- [ ] Coach memory visible/editable in Settings: the athlete model (iteration 13) persists and is injected into chat/brief, but there's no UI to read or correct it yet — queued for LOOP_PHASE3_PROMPT.md P2c.
 
 ## Done
+
+- [x] Self-host Inter font (iteration 14): `next/font/google` needed Google reachable at build time — one flaky network = failed deploy (it happened in loop 4). Now `next/font/local` loading `src/app/fonts/InterVariable.woff2` (rsms.me's official variable build), zero build-time network dependency.
+- [x] Coach panel chat history (iteration 14, real bug found in phase-3 audit): `CoachPanel.tsx`'s desktop slide-over hardcoded `initialMessages={[]}` on every open despite full history existing in the DB and being used server-side by the POST route to build prompt context — so it visually looked amnesiac even though the coach itself remembered everything. Added a `GET /api/coach/chat` handler + panel now fetches history on open before rendering `CoachChat`.
+- [x] Service worker runtime cache bound (iteration 14): `RUNTIME_CACHE` grew forever on a daily-driver PWA; now trimmed to 60 entries after every write. `CACHE_VERSION` bumped to `rtd-v2` so old unbounded caches get purged via the existing activate handler.
+- [x] Fuel meal-row delete affordance on mobile — verified already implemented (phase-3 audit): `MealSlot.tsx` renders an always-visible ✕ with `rtd-tap-target` on every logged item, mobile and desktop, gated only by `readOnly`. No code needed.
+- [x] Water +500ml quick-log verify — verified already implemented (phase-3 audit): `QuickLogSheet.tsx`'s `logWater()` shows an inline ✓ for 1.5s and does not close the sheet. Already the wished behavior.
+- [x] Analytics month view offset past data start — dropped, not deferred (phase-3 audit): the improvement matrix now uses trailing windows (iteration 10), which are offset-independent and always have data; each detail chart already renders its own "needs more data" state. No fix needed.
 
 - [x] Persistent coach memory (iteration 13, the "Hermes memory" ask): a durable athlete model (soreness patterns, exercise preferences, schedule constraints, nutrition habits, injury history, motivators) now persists via the existing `ai_takeaways` table (key `athlete-model`, no schema change) and refreshes once/day, piggybacked on the daily brief's first-generation-of-the-day gate. Injected as an `ATHLETE MODEL (persistent):` section into both the coach chat's system prompt (`lib/coach/context.ts` → `route.ts`) and the daily brief's system prompt (`lib/coach/dailyBrief.ts`). Groq/DB failures keep the previous model and never block the brief. No Telegram, no schema migration.
 

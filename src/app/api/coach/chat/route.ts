@@ -5,6 +5,11 @@ import { getRecentCoachMessages, saveCoachMessage } from "@/lib/coach/messages";
 
 export const maxDuration = 60;
 
+export async function GET() {
+  const history = await getRecentCoachMessages(20);
+  return Response.json(history.map((m) => ({ role: m.role, content: m.content })));
+}
+
 const SYSTEM_PROMPT = `You are the in-app AI coach for Road to December, a competitive swimmer's personal training tracker. You have the athlete's live training/nutrition/meet state and relevant notes from their own second-brain vault (Obsidian) below -- use them, cite specifics, don't be generic.
 
 You are read-only and advisory: you cannot log anything or change data (a separate MCP connector handles that via the athlete's own Claude account). If asked to log or change something, say so plainly and suggest they use Quick Log or the Claude connector instead.

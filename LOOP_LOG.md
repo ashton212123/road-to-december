@@ -1,5 +1,12 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-21 — Iteration 14: reliability foundation (LOOP_PHASE3_PROMPT.md P1)
+
+**Shipped:** self-hosted Inter (`next/font/local` loading `src/app/fonts/InterVariable.woff2` from rsms.me's official variable build) so a flaky network at build time — the loop-4 root cause — can never fail a deploy again; fixed a real bug found in the phase-3 pre-planning audit — `CoachPanel.tsx`'s desktop slide-over hardcoded `initialMessages={[]}` on every open despite the DB holding full chat history and the POST route already using it for prompt context, so the panel *looked* amnesiac even though the coach itself remembered everything (added `GET /api/coach/chat`, panel now fetches history on open, gated behind a `historyLoaded` flag so `CoachChat` doesn't render with a flash-of-empty before the fetch resolves); bounded the service worker's `RUNTIME_CACHE` (was unbounded on a daily-driver PWA — now trimmed to 60 entries after every write, `CACHE_VERSION` bumped to `rtd-v2` so old caches purge via the existing activate handler).
+**Backlog corrections applied:** closed 3 stale BACKLOG items the phase-3 audit found already-implemented (meal-row delete affordance, water +500ml inline-confirm-no-close) or moot (analytics month-view offset, superseded by iteration 10's trailing windows).
+**Verified live:** full 18-route smoke + burst green, local and prod. 5 targeted live assertions: `/home` HTML has zero `gstatic.com` references and a real `/_next/static/media/*.woff2` preload; `GET /api/coach/chat` returns 200 + a JSON array; `/sw.js` fetched live contains `rtd-v2`. All 5 passed first run.
+**Learnings:** `src/middleware.ts` doesn't exist in this app — the auth gate lives in `src/proxy.ts` (a `PUBLIC_PATHS` allowlist + JWT cookie check), and `/api/coach/chat` was never in that allowlist, so the new GET handler inherited the exact same auth coverage as the existing POST with zero extra code — confirmed by reading `proxy.ts` before assuming a second auth layer was needed.
+
 ## 2026-07-21 — LOOP_PHASE2_PROMPT.md complete: 6 phases, iterations 8–13
 
 All six phases of the plan written at the end of the prior session are shipped, deployed, and live-verified — nothing left pending. Summary for anyone picking this up:

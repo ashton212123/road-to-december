@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/system/ServiceWorkerRegister";
 
-const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
+// Self-hosted (not next/font/google) so a flaky network at build time can
+// never fail the deploy -- it did once, in loop 4.
+const inter = localFont({ src: "./fonts/InterVariable.woff2", display: "swap", variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Road to December",
