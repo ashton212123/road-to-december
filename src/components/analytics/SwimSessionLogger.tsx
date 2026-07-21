@@ -34,10 +34,11 @@ export function SwimSessionLogger() {
               setLoad(l);
               setDone(false);
             }}
-            className="rtd-tap-target py-2 rounded-lg text-subhead font-semibold cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+            className="rtd-tap-target py-2 rounded-lg text-subhead font-semibold cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{
-              background: load === l ? "var(--rtd-cyan)" : "rgba(255,255,255,0.06)",
-              color: load === l ? "#001a1f" : "var(--rtd-text-secondary)",
+              background: load === l ? "rgba(90,200,250,0.18)" : "rgba(255,255,255,0.06)",
+              border: load === l ? "1px solid var(--rtd-cyan)" : "1px solid transparent",
+              color: load === l ? "var(--rtd-cyan)" : "var(--rtd-text-secondary)",
             }}
           >
             {l}

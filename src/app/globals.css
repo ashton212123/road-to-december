@@ -183,6 +183,26 @@ body {
   background-color: rgba(255, 255, 255, 0.06);
 }
 
+/* Shared "active tab/pill" treatment -- every sliding-thumb selector
+   (TabBar, TopBar nav, AnalyticsTabs, PeriodSelector, SegmentedControl) used
+   to position a separate absolutely-positioned white pill behind the active
+   item via a percentage-of-index formula that ignored the flex `gap`
+   between items, so the pill drifted further off-center the higher the
+   active index was. Styling the active item itself as the pill (this class,
+   applied directly to that item, no sibling element) makes drift
+   structurally impossible -- there's nothing left to mis-position. Glass,
+   not solid: matches the standing "no flat solid fills" direction. Backdrop
+   blur is safe here (unlike grid cards, V4 P1) since at most one pill is
+   ever mounted per selector, not dozens re-rendering in a scroll list. */
+.rtd-pill-active {
+  background-color: rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--rtd-hairline);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(var(--rtd-blur));
+  backdrop-filter: blur(var(--rtd-blur));
+  color: #fff;
+}
+
 /* Signature move, hero surfaces only (countdown, readiness, session-complete,
    coach panel header) -- never on ordinary grid cards. A pre-blurred glow
    layer behind the card via overlapping radial gradients (soft stops do the

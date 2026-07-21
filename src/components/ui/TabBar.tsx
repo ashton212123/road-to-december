@@ -23,7 +23,6 @@ function isActive(item: TabItem, pathname: string) {
 
 export function TabBar({ items }: { items: TabItem[] }) {
   const pathname = usePathname();
-  const activeIndex = Math.max(0, items.findIndex((item) => isActive(item, pathname)));
   const keyboardOpen = useKeyboardOpen();
 
   // The keyboard replaces the bottom third of the screen -- a fixed dock
@@ -43,37 +42,28 @@ export function TabBar({ items }: { items: TabItem[] }) {
         boxShadow: "var(--rtd-shadow)",
       }}
     >
-      <div className="relative flex items-stretch h-full px-1.5">
-        {/* Sliding active pill -- percentage math against item count, same
-            technique as SegmentedControl's thumb, no ref measurement needed. */}
-        {/* Fitonist active state: solid white pill, near-black icon+label. */}
-        <div
-          aria-hidden="true"
-          className="absolute top-1.5 bottom-1.5 rounded-full bg-white transition-[left,width] duration-200"
-          style={{
-            left: `calc(${activeIndex} / ${items.length} * 100% + 6px)`,
-            width: `calc(100% / ${items.length} - 12px)`,
-            transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-        />
+      <div className="flex items-stretch h-full px-1.5 gap-1">
+        {/* Active item styles itself (rtd-pill-active) instead of a sibling
+            absolutely-positioned thumb -- see the class comment in
+            globals.css for why the old approach drifted off-center. */}
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="relative z-10 flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-0.5 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+              className={`flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-0.5 cursor-pointer rounded-full transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 ${active ? "rtd-pill-active" : ""}`}
             >
               <span
                 className="rtd-tab-icon w-5 h-5 flex items-center justify-center transition-colors duration-150 ease-out"
                 data-active={active}
-                style={{ color: active ? "#0b0b0d" : "var(--rtd-text-tertiary)" }}
+                style={{ color: active ? "#fff" : "var(--rtd-text-tertiary)" }}
               >
                 {item.icon}
               </span>
               <span
                 className="text-[10px] font-semibold truncate max-w-full transition-colors duration-150 ease-out"
-                style={{ color: active ? "#0b0b0d" : "var(--rtd-text-tertiary)" }}
+                style={{ color: active ? "#fff" : "var(--rtd-text-tertiary)" }}
               >
                 {item.label}
               </span>
@@ -90,7 +80,6 @@ export function TabBar({ items }: { items: TabItem[] }) {
  * the content field below runs full width like the reference dashboard. */
 export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] }) {
   const pathname = usePathname();
-  const activeIndex = items.findIndex((item) => isActive(item, pathname));
 
   return (
     <header className="hidden md:flex items-center justify-between gap-4 w-full mb-6">
@@ -99,25 +88,15 @@ export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] 
         <span className="text-title-3 font-extrabold tracking-tight text-[var(--rtd-lilac)]">2dec</span>
       </Link>
 
-      <nav className="relative flex p-1 gap-0.5 rounded-full bg-white/[0.05] border border-[var(--rtd-border)]" aria-label="Primary">
-        {activeIndex >= 0 && (
-          <div
-            aria-hidden="true"
-            className="absolute top-1 bottom-1 rounded-full bg-white transition-[left,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style={{
-              left: `calc(${activeIndex} / ${items.length} * 100% + 4px)`,
-              width: `calc(100% / ${items.length} - 8px)`,
-            }}
-          />
-        )}
+      <nav className="flex p-1 gap-1 rounded-full bg-white/[0.05] border border-[var(--rtd-border)]" aria-label="Primary">
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="relative z-10 min-h-10 px-5 rounded-full text-subhead font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-              style={{ color: active ? "#0b0b0d" : "var(--rtd-text-secondary)" }}
+              className={`min-h-10 px-5 rounded-full text-subhead font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 ${active ? "rtd-pill-active" : ""}`}
+              style={{ color: active ? "#fff" : "var(--rtd-text-secondary)" }}
             >
               {item.label}
             </Link>
@@ -128,9 +107,8 @@ export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] 
       <div className="flex items-center gap-1.5 shrink-0">
         {extras.map((item) => {
           const active = !item.dispatchEvent && isActive(item, pathname);
-          const cls =
-            "w-10 h-10 flex items-center justify-center rounded-full border border-[var(--rtd-border)] cursor-pointer transition-colors duration-150 ease-out hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2";
-          const style = { background: active ? "#fff" : "rgba(255,255,255,0.05)", color: active ? "#0b0b0d" : "var(--rtd-text-secondary)" };
+          const cls = `w-10 h-10 flex items-center justify-center rounded-full border border-[var(--rtd-border)] cursor-pointer transition-colors duration-150 ease-out hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 ${active ? "rtd-pill-active" : ""}`;
+          const style = { color: active ? "#fff" : "var(--rtd-text-secondary)" };
           if (item.dispatchEvent) {
             return (
               <button key={item.href} type="button" title={item.label} aria-label={item.label} onClick={() => window.dispatchEvent(new CustomEvent(item.dispatchEvent!))} className={cls} style={style}>
