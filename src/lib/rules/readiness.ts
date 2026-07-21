@@ -43,7 +43,7 @@ export function computeReadinessSignals(input: {
   }
 
   if (input.acwrRatio === null) {
-    signals.push({ label: "Acute:chronic ratio", light: "yellow", detail: "Not enough training history yet." });
+    signals.push({ label: "Acute:chronic ratio", light: "yellow", detail: "Building baseline — needs ~2 weeks of history." });
   } else if (input.acwrRatio <= 1.3) {
     signals.push({ label: "Acute:chronic ratio", light: "green", detail: `${input.acwrRatio.toFixed(2)} — sustainable.` });
   } else if (input.acwrRatio <= 1.5) {

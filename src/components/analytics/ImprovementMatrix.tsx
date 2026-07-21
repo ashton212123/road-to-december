@@ -31,14 +31,15 @@ export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[];
             <span className="w-36 shrink-0 text-subhead font-medium text-[var(--rtd-text)] truncate">{row.label}</span>
 
             {row.needsDataHint ? (
-              <span className="flex-1 text-caption text-[var(--rtd-text-tertiary)] truncate">{row.needsDataHint}</span>
+              <span className="flex-1 text-caption text-[var(--rtd-text-tertiary)] leading-snug">Needs data — {row.needsDataHint}</span>
             ) : (
               <>
                 <div className="w-24 shrink-0 hidden sm:block">
                   <Sparkline points={row.sparkline} color={row.domainColor} width={90} height={28} endDot />
                 </div>
                 <span className="w-20 shrink-0 text-subhead rtd-nums text-right text-[var(--rtd-text)]">
-                  {formatValue(row.current, row.unit, row.decimals)}
+                  {/* % progress rows already restate this exact number in the ProgressChip below -- showing it twice ("135 %" then "135%") reads as a display bug, not confirmation. Non-% progress rows (water, in L) keep both since the units differ. */}
+                  {row.isProgressMetric && row.unit === "%" ? "" : formatValue(row.current, row.unit, row.decimals)}
                 </span>
                 <span className="w-20 shrink-0 text-caption rtd-nums text-right text-[var(--rtd-text-tertiary)] hidden md:inline">
                   {formatValue(row.previous, row.unit, row.decimals)}

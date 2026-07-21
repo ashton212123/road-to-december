@@ -61,7 +61,13 @@ export function computeAcwr(dailyLoads: DailySessionLoad[]): AcwrPoint[] {
     const chronicWindow = windowSum(loadByDate, date, 28);
     const acute = acuteWindow.sum / 7;
     const chronic = chronicWindow.days > 0 ? chronicWindow.sum / 28 : 0;
-    const ratio = chronic > 0 ? acute / chronic : null;
+    // A ratio needs an actual chronic baseline distinct from the acute
+    // window -- if every day of logged history falls inside the last 7
+    // days, chronic == acute and the ratio is a guaranteed (and
+    // meaningless) 4.00 for any brand-new logger. Only trust the ratio once
+    // there's at least one day of data older than the acute window.
+    const olderDays = chronicWindow.days - acuteWindow.days;
+    const ratio = chronic > 0 && olderDays > 0 ? acute / chronic : null;
     return { date, acute: Math.round(acute), chronic: Math.round(chronic), ratio };
   });
 }

@@ -8,7 +8,12 @@ import type { ReadinessResult } from "@/lib/swim/readiness";
 
 export function loadTakeaway(acwr: AcwrPoint[]): string | null {
   const latest = [...acwr].reverse().find((p) => p.ratio !== null);
-  if (!latest || latest.ratio === null) return null;
+  if (!latest || latest.ratio === null) {
+    // Sessions exist (acwr is non-empty) but none are old enough for a real
+    // chronic baseline yet -- explain the gap instead of showing nothing.
+    if (acwr.length > 0) return "Building your load baseline — ACWR needs about two weeks of logged sessions before it means anything.";
+    return null;
+  }
   const r = latest.ratio;
   if (r > 1.5) return `ACWR is ${r.toFixed(2)} — acute load is spiking well above your 28-day baseline. Back off intensity this week.`;
   if (r > 1.3) return `ACWR is ${r.toFixed(2)} — trending high. Watch soreness and sleep over the next few days.`;

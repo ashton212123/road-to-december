@@ -1,5 +1,15 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-21 — Iteration 20: metric truth + reliability (LOOP_PHASE4_PROMPT.md P1)
+
+**Why this phase exists:** the athlete used the app for a real training day (Tuesday swim + gym) for the first time and hit a false alarm — the app told them to "back off intensity" based on an ACWR of exactly 4.00, which is a mathematical certainty (not a real signal) for any new logger whose entire history sits inside the acute window. This phase is entirely about restoring trust in the numbers before touching anything visual.
+
+**Shipped:** `computeAcwr` (`lib/analytics/load.ts`) now requires at least one day of logged load OLDER than the 7-day acute window before it will compute a ratio at all — otherwise `ratio: null`, same shape the UI already handled for "not enough data" elsewhere. `loadTakeaway` and the readiness signal's copy both now explain this as baseline-building rather than either going silent or (worse) alarming. Protein adherence gained `overIsGood: true` (135% is success on a hardgainer phase, not a warning) and the matrix's duplicate `"135 % [135%]"` display collapsed to just the chip for `%`-unit progress rows. Every `needsDataHint` string got shorter and the row switched from truncating to wrapping. The `(app)/error.tsx` boundary now self-heals with one silent 800ms retry before showing the wall (transient Supabase pooler hiccups were showing the athlete a scary card that a plain refresh would have fixed). `WaterLogger` gained a manual amount input next to the three presets.
+
+**A lint pattern worth keeping:** the error-boundary retry needed 2 pieces of state driven by real async work (a retry-window check reading `sessionStorage`, then an 800ms delayed `reset()`) — following this session's established React Compiler rule (`react-hooks/set-state-in-effect` rejects bare `setState` calls as effect-body statements even for legitimate cases), every `setState` was nested inside a `setTimeout` callback rather than called directly in the effect body. `npm run lint` confirmed this shape is clean on the first attempt — worth reusing as the default template for any future one-shot-delayed-effect code in this app instead of re-deriving it each time.
+
+**Verified live:** full 18-route smoke + burst green, local and prod. Targeted live assertions on the deployed prod origin: `/home` contains "Building your load baseline" and does NOT contain "Back off intensity" (confirms the athlete's exact false alarm is gone, checked against their real current data — sessions only this week, nothing older); `/analytics?tab=overview` loads with the Improvement matrix present and contains no leftover "needs more data —" prefix text; `/fuel` contains the new manual water input. Commit `loop 20`.
+
 ## 2026-07-21 — LOOP_PHASE3_PROMPT.md complete: 6 phases, iterations 14–19
 
 All six phases of the "senior Apple developer, rethink everything" plan — written at the end of the prior session after a fresh code audit — are shipped, deployed, and live-verified. Summary for anyone picking this up:

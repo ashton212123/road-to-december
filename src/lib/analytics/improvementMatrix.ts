@@ -145,7 +145,7 @@ export function buildImprovementMatrix(params: {
         period,
         periodStarts,
         trailing,
-        needsDataHint: `needs more data — log ${lift.toLowerCase()} sets`,
+        needsDataHint: `log ${lift.toLowerCase()} sets`,
       })
     );
   }
@@ -169,7 +169,7 @@ export function buildImprovementMatrix(params: {
         period,
         periodStarts,
         trailing,
-        needsDataHint: `needs more data — log a ${event} time`,
+        needsDataHint: `log a ${event} time`,
       })
     );
   }
@@ -186,7 +186,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log a weigh-in",
+      needsDataHint: "log a weigh-in",
     })
   );
 
@@ -203,7 +203,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log gym sets",
+      needsDataHint: "log gym sets",
     })
   );
 
@@ -220,7 +220,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log a gym session",
+      needsDataHint: "log a gym session",
     })
   );
 
@@ -237,8 +237,10 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log meals",
+      needsDataHint: "log meals",
       isProgressMetric: true,
+      // Hardgainer phase: 135% protein isn't a warning, it's the plan working.
+      overIsGood: true,
     })
   );
 
@@ -255,7 +257,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log meals",
+      needsDataHint: "log meals",
       isProgressMetric: true,
     })
   );
@@ -272,7 +274,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log sleep",
+      needsDataHint: "log sleep",
     })
   );
 
@@ -288,7 +290,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log water",
+      needsDataHint: "log water",
       isProgressMetric: true,
       overIsGood: true,
       targetForProgress: params.waterTargetMl / 1000,
@@ -307,7 +309,7 @@ export function buildImprovementMatrix(params: {
       period,
       periodStarts,
       trailing,
-      needsDataHint: "needs more data — log a CMJ test",
+      needsDataHint: "log a CMJ test",
     })
   );
 
