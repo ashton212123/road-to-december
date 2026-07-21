@@ -7,14 +7,18 @@ export type ReadinessSignal = {
 };
 
 /**
- * Three transparent inputs, no invented composite score (per spec):
- * last night's sleep vs the 8-9h target, this week's CMJ trend, and the
- * acute:chronic load ratio. Each gets its own traffic light.
+ * Transparent inputs, no invented composite score (per spec): last night's
+ * sleep vs the 8-9h target, this week's CMJ trend, the acute:chronic load
+ * ratio, and (when there's a recent log to reason about) soreness. Each
+ * gets its own traffic light -- soreness isn't logged daily, so unlike the
+ * other three it's omitted entirely rather than shown as an unknown-yellow
+ * when there's nothing recent to go on.
  */
 export function computeReadinessSignals(input: {
   lastSleepHours: number | null;
   cmjTrend: "up" | "flat" | "down" | "insufficient-data";
   acwrRatio: number | null;
+  recentSoreness?: { rating: number; area: string; date: string } | null;
 }): ReadinessSignal[] {
   const signals: ReadinessSignal[] = [];
 
@@ -46,6 +50,15 @@ export function computeReadinessSignals(input: {
     signals.push({ label: "Acute:chronic ratio", light: "yellow", detail: `${input.acwrRatio.toFixed(2)} — watch this week.` });
   } else {
     signals.push({ label: "Acute:chronic ratio", light: "red", detail: `${input.acwrRatio.toFixed(2)} — above 1.5, trim volume.` });
+  }
+
+  if (input.recentSoreness) {
+    const { rating, area, date } = input.recentSoreness;
+    signals.push({
+      label: "Soreness",
+      light: rating >= 4 ? "red" : rating === 3 ? "yellow" : "green",
+      detail: rating >= 4 ? `${area} soreness ${rating}/5 — logged ${date}.` : `Mild — ${area} ${rating}/5, logged ${date}.`,
+    });
   }
 
   return signals;

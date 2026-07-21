@@ -42,7 +42,12 @@ export default async function RecoveryPage() {
   const acwr = computeAcwr(dailyLoads);
   const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
 
-  const signals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio });
+  const latestSoreness = sorenessLogs[0];
+  const recentSoreness =
+    latestSoreness && (latestSoreness.date === today || latestSoreness.date === addDaysISO(today, -1))
+      ? { rating: latestSoreness.rating1to5, area: latestSoreness.area, date: latestSoreness.date }
+      : null;
+  const signals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio, recentSoreness });
   const overall: ReadinessLight = signals.some((s) => s.light === "red")
     ? "red"
     : signals.some((s) => s.light === "yellow")
@@ -56,7 +61,7 @@ export default async function RecoveryPage() {
       <GlassCard className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <span className="w-4 h-4 rounded-full shrink-0" style={{ background: LIGHT_COLOR[overall] }} />
-          <div className="text-body font-semibold">Readiness — three transparent inputs, no invented score</div>
+          <div className="text-body font-semibold">Readiness — transparent inputs, no invented score</div>
         </div>
         <div className="flex flex-col gap-2">
           {signals.map((s) => (

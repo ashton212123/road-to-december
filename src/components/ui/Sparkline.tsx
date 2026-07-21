@@ -4,11 +4,16 @@ export function Sparkline({
   color,
   width = 120,
   height = 40,
+  endDot = false,
 }: {
   points: number[];
   color: string;
   width?: number;
   height?: number;
+  /** Glowing dot on the last point (Fitonist endpoint treatment) -- opt-in,
+   * enabled only where a sparkline reads as a live "current value" trend
+   * (StatCard, the improvement matrix's row sparklines). */
+  endDot?: boolean;
 }) {
   // Quiet spacer, not a message: callers (StatCard, ImprovementMatrix) carry
   // their own empty-state copy, and "Not enough data yet" next to a live
@@ -55,6 +60,15 @@ export function Sparkline({
         className="rtd-sparkline-path"
         style={{ ["--rtd-dash" as string]: approxLength || 1 }}
       />
+      {endDot && (
+        <circle
+          cx={coords[coords.length - 1][0]}
+          cy={coords[coords.length - 1][1]}
+          r="2.5"
+          fill={color}
+          style={{ filter: `drop-shadow(0 0 3px ${color})` }}
+        />
+      )}
     </svg>
   );
 }

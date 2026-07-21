@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
 
@@ -21,7 +22,9 @@ export function TrainingLoadCard({
       {!hasAnyData ? (
         <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
           <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
-          <span className="text-caption text-[var(--rtd-text-tertiary)]">Tracking starts after your first logged gym session</span>
+          <Link href="/train" className="text-caption text-[var(--rtd-text-tertiary)] underline decoration-dotted underline-offset-2 hover:text-[var(--rtd-text-secondary)]">
+            Tracking starts after your first logged gym session
+          </Link>
         </div>
       ) : (
         <>

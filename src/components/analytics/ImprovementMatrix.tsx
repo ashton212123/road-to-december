@@ -35,7 +35,7 @@ export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[];
             ) : (
               <>
                 <div className="w-24 shrink-0 hidden sm:block">
-                  <Sparkline points={row.sparkline} color={row.domainColor} width={90} height={28} />
+                  <Sparkline points={row.sparkline} color={row.domainColor} width={90} height={28} endDot />
                 </div>
                 <span className="w-20 shrink-0 text-subhead rtd-nums text-right text-[var(--rtd-text)]">
                   {formatValue(row.current, row.unit, row.decimals)}

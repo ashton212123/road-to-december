@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const CELL_COLOR = (pct: number) => {
   if (pct >= 90) return "var(--rtd-green)";
   if (pct >= 60) return "var(--rtd-orange)";
@@ -16,9 +18,17 @@ export function FuelAdherenceCard({ days }: { days: { date: string; kcal: number
     <div id="detail-fuel" className="rtd-glass p-5 flex flex-col gap-3">
       <div className="rtd-micro-label">Fuel adherence</div>
       <p className="text-subhead text-[var(--rtd-text)] leading-snug">
-        {avgPct !== null
-          ? `Averaging ${avgPct}% of kcal target over the last ${loggedDays.length} logged day${loggedDays.length === 1 ? "" : "s"}.`
-          : "Needs more data — log a few meals to see adherence."}
+        {avgPct !== null ? (
+          `Averaging ${avgPct}% of kcal target over the last ${loggedDays.length} logged day${loggedDays.length === 1 ? "" : "s"}.`
+        ) : (
+          <>
+            Needs more data —{" "}
+            <Link href="/fuel" className="underline decoration-dotted underline-offset-2 hover:text-[var(--rtd-text-secondary)]">
+              log a few meals
+            </Link>{" "}
+            to see adherence.
+          </>
+        )}
       </p>
       {recent.length > 0 && (
         <div className="grid grid-cols-7 gap-1">

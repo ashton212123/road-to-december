@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
 import { currentVsPreviousDaily, periodDayLabels } from "@/lib/analytics/periodCompare";
@@ -31,9 +32,17 @@ export function RecoveryOverlayCard({
     <div id="detail-recovery" className="rtd-glass p-5 flex flex-col gap-3">
       <div className="rtd-micro-label">Recovery</div>
       <p className="text-subhead text-[var(--rtd-text)] leading-snug">
-        {avgSleep !== null
-          ? `Averaging ${avgSleep.toFixed(1)}h sleep over ${sleepSorted.length} logged night${sleepSorted.length === 1 ? "" : "s"}.`
-          : "Needs more data — log sleep to see trends."}
+        {avgSleep !== null ? (
+          `Averaging ${avgSleep.toFixed(1)}h sleep over ${sleepSorted.length} logged night${sleepSorted.length === 1 ? "" : "s"}.`
+        ) : (
+          <>
+            Needs more data —{" "}
+            <Link href="/more/recovery" className="underline decoration-dotted underline-offset-2 hover:text-[var(--rtd-text-secondary)]">
+              log sleep
+            </Link>{" "}
+            to see trends.
+          </>
+        )}
       </p>
 
       <div className="flex flex-col gap-2">

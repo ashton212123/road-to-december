@@ -32,6 +32,7 @@ import {
   getCmjTests,
   getSwimTimes,
   getMainLiftLogHistory,
+  getSorenessLogs,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
@@ -91,6 +92,7 @@ const getCachedHomeData = unstable_cache(
       swimTimes,
       mainLiftLogs,
       weekFoodLogs,
+      sorenessLogs,
     ] = await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
@@ -106,6 +108,7 @@ const getCachedHomeData = unstable_cache(
       getSwimTimes(200),
       getMainLiftLogHistory(),
       getFoodLogsSince(weekStart),
+      getSorenessLogs(1),
     ]);
 
     return {
@@ -124,6 +127,7 @@ const getCachedHomeData = unstable_cache(
       swimTimes,
       mainLiftLogs,
       weekFoodLogs,
+      sorenessLogs,
     };
   },
   ["home-page-data"],
@@ -151,6 +155,7 @@ export default async function HomePage() {
     swimTimes,
     mainLiftLogs,
     weekFoodLogs,
+    sorenessLogs,
   } = await withRetry(() => getCachedHomeData(today, weekStart), { timeoutMs: 15000 });
 
   const alerts = await evaluateAlerts(canvas, {
@@ -266,7 +271,12 @@ export default async function HomePage() {
   const dailyLoads = computeDailySessionLoads(recentWorkoutLogs);
   const acwr = computeAcwr(dailyLoads);
   const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
-  const readinessSignals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio });
+  const latestSoreness = sorenessLogs[0];
+  const recentSoreness =
+    latestSoreness && (latestSoreness.date === today || latestSoreness.date === addDaysISO(today, -1))
+      ? { rating: latestSoreness.rating1to5, area: latestSoreness.area, date: latestSoreness.date }
+      : null;
+  const readinessSignals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio, recentSoreness });
   const readinessComputed = readinessSignals.some((s) => s.light === "red")
     ? "red"
     : readinessSignals.some((s) => s.light === "yellow")

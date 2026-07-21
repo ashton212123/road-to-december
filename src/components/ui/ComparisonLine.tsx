@@ -48,6 +48,18 @@ export function ComparisonLine({
 
   const currentPath = toPath(current);
   const previousPath = toPath(previous);
+
+  // Fitonist glowing endpoint: a filled dot on the current series' last
+  // real (non-null) point -- previous (butter, dashed) stays plain, since
+  // the glow is meant to draw the eye to "where you are now."
+  let lastCurrentPoint: { x: number; y: number } | null = null;
+  for (let i = current.length - 1; i >= 0; i--) {
+    const v = current[i];
+    if (v !== null) {
+      lastCurrentPoint = { x: i * stepX, y: height - pad - ((v - min) / range) * (height - pad * 2) };
+      break;
+    }
+  }
   const fillPath = currentPath ? `${currentPath} L${(n - 1) * stepX},${height} L0,${height} Z` : "";
   const gradientId = `rtd-cmp-grad-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
   // Fitonist two-tone: previous period rides in butter yellow against the
@@ -81,6 +93,15 @@ export function ComparisonLine({
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{ filter: `drop-shadow(0 0 6px color-mix(in srgb, ${color} 40%, transparent))` }}
+          />
+        )}
+        {lastCurrentPoint && (
+          <circle
+            cx={lastCurrentPoint.x}
+            cy={lastCurrentPoint.y}
+            r="3"
+            fill={color}
+            style={{ filter: `drop-shadow(0 0 4px ${color})` }}
           />
         )}
       </svg>

@@ -67,7 +67,7 @@ export function StatCard({
       {sparklinePoints !== undefined && (
         <div className="flex-1 min-h-0 flex items-end mt-1 relative">
           {sparklinePoints.length >= 2 ? (
-            <Sparkline points={sparklinePoints} color={domainColor ?? "var(--rtd-blue)"} width={140} height={40} />
+            <Sparkline points={sparklinePoints} color={domainColor ?? "var(--rtd-blue)"} width={140} height={40} endDot />
           ) : (
             <div className="w-full flex flex-col gap-1 pb-0.5">
               <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
