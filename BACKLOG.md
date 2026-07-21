@@ -15,9 +15,12 @@ Reference: https://dribbble.com/shots/24606569 (Fitonist) — near-black cards ~
 - [ ] Import parser: "kick"/"pull" markers still missing from pace-per-100 exclusion (w/u, w/d, drill already excluded) — two-word fix, queued for LOOP_PHASE3_PROMPT.md P4.
 - [ ] Lighthouse mobile pass on /home and /analytics: performance ≥ 90; fix the top offender if below.
 - [ ] Empty states audit: every empty card app-wide has a CTA that routes to where the data gets logged — partially done (Learn, Home cards); full app-wide sweep queued for LOOP_PHASE3_PROMPT.md P4c/P5c.
-- [ ] Coach memory visible/editable in Settings: the athlete model (iteration 13) persists and is injected into chat/brief, but there's no UI to read or correct it yet — queued for LOOP_PHASE3_PROMPT.md P2c.
 
 ## Done
+
+- [x] Coach memory visible/editable in Settings (iteration 15): new "Coach memory" card on `/more/settings` — read-only view of the athlete model with an Edit → textarea → Save/Cancel flow (`CoachMemoryEditor.tsx`), backed by a new `updateAthleteModelAction` server action using `onConflictDoUpdate` (unlike the daily auto-refresh's `onConflictDoNothing`) so a manual correction today always wins. No schema change — same `ai_takeaways` table, same `(date, key)` unique index.
+- [x] Coach reachability (iteration 15): mobile now has a floating coach button (previously desktop-only) linking to the full-screen `/more/coach-ai`, plus a "Coach" entry added to all 3 places the rest of the nav lives (Home's more-row, the avatar menu, `/more`'s link list) — it was reachable only via the desktop panel or a buried nav path before.
+- [x] QuickLogSheet Escape-key close (iteration 15): small keyboard-a11y gap, same pattern CoachPanel already used.
 
 - [x] Self-host Inter font (iteration 14): `next/font/google` needed Google reachable at build time — one flaky network = failed deploy (it happened in loop 4). Now `next/font/local` loading `src/app/fonts/InterVariable.woff2` (rsms.me's official variable build), zero build-time network dependency.
 - [x] Coach panel chat history (iteration 14, real bug found in phase-3 audit): `CoachPanel.tsx`'s desktop slide-over hardcoded `initialMessages={[]}` on every open despite full history existing in the DB and being used server-side by the POST route to build prompt context — so it visually looked amnesiac even though the coach itself remembered everything. Added a `GET /api/coach/chat` handler + panel now fetches history on open before rendering `CoachChat`.

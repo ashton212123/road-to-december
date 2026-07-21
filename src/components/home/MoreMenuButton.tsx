@@ -7,6 +7,7 @@ import { TrainingStatusControl } from "@/components/more/TrainingStatusControl";
 import type { TrainingStatus } from "@/app/(app)/more/actions";
 
 const ITEMS = [
+  { href: "/more/coach-ai", label: "Coach", icon: "✨" },
   { href: "/more/recovery", label: "Recovery", icon: "🌙" },
   { href: "/learn", label: "Learn", icon: "📚" },
   { href: "/school", label: "School", icon: "🎓" },

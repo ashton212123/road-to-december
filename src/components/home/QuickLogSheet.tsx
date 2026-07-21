@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { logWaterAction } from "@/app/(app)/fuel/actions";
 import { SleepLogger } from "@/components/more/SleepLogger";
@@ -53,6 +53,15 @@ export function QuickLogSheet({
     setExpanded(null);
     setWaterLogged(false);
   }
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKeydown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [open]);
 
   function logWater() {
     startWater(async () => {

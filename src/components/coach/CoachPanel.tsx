@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { CoachChat } from "./CoachChat";
 import { IconSparkle } from "@/components/ui/icons";
 import { quickPromptsForPath } from "@/lib/coach/quickPrompts";
@@ -65,6 +66,25 @@ export function CoachPanel() {
       >
         <IconSparkle />
       </button>
+
+      {/* Mobile: the desktop slide-over doesn't render below md, so this
+          links straight to the full-screen coach page instead of opening
+          a panel that isn't there. Fixed above the bottom dock. */}
+      <Link
+        href="/more/coach-ai"
+        aria-label="Open coach"
+        className="md:hidden fixed right-4 z-40 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer text-[var(--rtd-purple)] active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom) + 92px)",
+          background: "rgba(0,0,0,0.5)",
+          border: "1px solid var(--rtd-hairline)",
+          boxShadow: "0 0 24px rgba(129,85,255,0.25), var(--rtd-shadow)",
+          backdropFilter: "blur(var(--rtd-blur))",
+          WebkitBackdropFilter: "blur(var(--rtd-blur))",
+        }}
+      >
+        <IconSparkle />
+      </Link>
 
       {open && (
         <div className="hidden md:block fixed inset-0 z-50">

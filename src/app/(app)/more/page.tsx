@@ -8,6 +8,7 @@ import { LogoutButton } from "@/components/more/LogoutButton";
 // desktop. Ordered by frequency of use: Recovery is daily, School/Business
 // are periodic, Settings is occasional.
 const LINKS = [
+  { href: "/more/coach-ai", label: "Coach", desc: "Full-screen chat with today's context", icon: "✨" },
   { href: "/more/recovery", label: "Recovery", desc: "Sleep, soreness, readiness lights", icon: "🌙" },
   { href: "/learn", label: "Learn", desc: "Python, ML, cybersecurity, project-based tracks", icon: "📚" },
   { href: "/school", label: "School", desc: "Courses, assignments, Canvas sync", icon: "🎓" },

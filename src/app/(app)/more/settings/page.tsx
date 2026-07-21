@@ -2,11 +2,13 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SettingsForm } from "@/components/more/SettingsForm";
 import { TrainingStatusControl } from "@/components/more/TrainingStatusControl";
+import { CoachMemoryEditor } from "@/components/more/CoachMemoryEditor";
 import { getSettingsRow } from "@/lib/db/queries";
 import { withRetry } from "@/lib/db/withRetry";
+import { getAthleteModel } from "@/lib/coach/athleteModel";
 
 export default async function SettingsPage() {
-  const settingsRow = await withRetry(() => getSettingsRow());
+  const [settingsRow, athleteModel] = await Promise.all([withRetry(() => getSettingsRow()), getAthleteModel()]);
 
   return (
     <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
@@ -19,6 +21,11 @@ export default async function SettingsPage() {
         initialWaterTargetMl={settingsRow.waterTargetMl}
         initialWeightUnit={settingsRow.weightUnit as "kg" | "lb"}
       />
+
+      <SectionLabel>Coach memory</SectionLabel>
+      <GlassCard>
+        <CoachMemoryEditor initialModel={athleteModel} />
+      </GlassCard>
 
       <SectionLabel>Connect Claude via MCP</SectionLabel>
       <GlassCard className="flex flex-col gap-3">

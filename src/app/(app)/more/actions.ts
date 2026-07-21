@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { sleepLogs, sorenessLogs, settings, cmjTests, jumpTests } from "@/lib/db/schema";
+import { sleepLogs, sorenessLogs, settings, cmjTests, jumpTests, aiTakeaways } from "@/lib/db/schema";
 import type { Settings } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
 
@@ -56,6 +56,26 @@ export async function updateSettingsAction(input: {
   revalidatePath("/", "layout");
   updateTag("analytics-data");
   updateTag("home-data");
+}
+
+const ATHLETE_MODEL_KEY = "athlete-model";
+
+/** Manual correction to the coach's persistent athlete model (see
+ * lib/coach/athleteModel.ts). Unlike the daily auto-refresh, which uses
+ * onConflictDoNothing (idempotent per day), a manual edit must win even if
+ * today's row already exists -- onConflictDoUpdate overwrites it. Newest
+ * date wins in getAthleteModel(), so this is immediately the live memory. */
+export async function updateAthleteModelAction(message: string) {
+  const trimmed = message.trim().slice(0, 900);
+  if (!trimmed) return;
+  await db
+    .insert(aiTakeaways)
+    .values({ date: todayManilaISO(), key: ATHLETE_MODEL_KEY, message: trimmed })
+    .onConflictDoUpdate({
+      target: [aiTakeaways.date, aiTakeaways.key],
+      set: { message: trimmed },
+    });
+  revalidatePath("/more/settings");
 }
 
 export type TrainingStatus = Settings["trainingStatus"];

@@ -58,6 +58,7 @@ const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
 };
 
 const MORE_ROW_ITEMS = [
+  { href: "/more/coach-ai", label: "Coach", icon: "✨" },
   { href: "/more/recovery", label: "Recovery", icon: "🌙" },
   { href: "/learn", label: "Learn", icon: "📚" },
   { href: "/school", label: "School", icon: "🎓" },
@@ -485,7 +486,7 @@ export default async function HomePage() {
         <RecentPRsCard prs={recentPRs} className="order-8 md:order-9" />
       </div>
 
-      <div className="grid grid-cols-5 gap-2 mt-1 md:hidden">
+      <div className="grid grid-cols-3 gap-2 mt-1 md:hidden">
         {MORE_ROW_ITEMS.map((item) => (
           <Link
             key={item.href}
