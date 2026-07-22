@@ -23,14 +23,21 @@ export function buildSwimViewModel(raw: Raw, today: string) {
   const splitAutopsy = swimTimes
     .filter((s) => SWIM_EVENTS_WITH_SPLITS.includes(s.event) && s.splits && s.splits.length === 4)
     .slice(0, 5)
-    .map((s) => ({ date: s.date, splits: s.splits as number[], strokeCounts: (s.strokeCounts as number[]) ?? [] }));
+    .map((s) => ({
+      date: s.date,
+      splits: s.splits as number[],
+      strokeCounts: (s.strokeCounts as number[]) ?? [],
+      isRace: s.isPb || s.meetName !== null,
+    }));
 
   const meetsWithReadiness = raw.meetsWithEvents.map((meet) => ({
     id: meet.id,
     name: meet.name,
     date: meet.date,
     events: meet.events.map((ev) => {
-      const loggedTimes = swimTimes.filter((s) => s.event === ev.event).map((s) => ({ date: s.date, timeMs: s.timeMs }));
+      const loggedTimes = swimTimes
+        .filter((s) => s.event === ev.event)
+        .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null }));
       return {
         id: ev.id,
         event: ev.event,
@@ -72,7 +79,10 @@ export function buildSwimViewModel(raw: Raw, today: string) {
     meetsWithReadiness,
     latestTimeByEvent: Object.fromEntries(latestByEvent),
     allSwimTimesByEvent: Object.fromEntries(
-      allEventNames.map((ev) => [ev, swimTimes.filter((s) => s.event === ev).map((s) => ({ date: s.date, timeMs: s.timeMs }))])
+      allEventNames.map((ev) => [
+        ev,
+        swimTimes.filter((s) => s.event === ev).map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null })),
+      ])
     ),
     swimWeekly,
     latestSwimSession,

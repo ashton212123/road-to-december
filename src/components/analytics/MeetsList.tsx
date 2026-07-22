@@ -61,7 +61,7 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
                         className="font-semibold"
                         style={{ color: CONFIDENCE_COLOR[ev.readiness.confidence] }}
                       >
-                        proj {formatSwimTime(ev.readiness.projectedMs)}
+                        {ev.readiness.pointsUsed >= 2 ? "proj" : "race"} {formatSwimTime(ev.readiness.projectedMs)}
                       </span>
                     )}
                   </div>

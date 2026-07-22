@@ -668,7 +668,9 @@ const handler = createMcpHandler(
           meet: m.name,
           date: m.date,
           events: m.events.map((ev) => {
-            const loggedTimes = allSwimTimes.filter((s) => s.event === ev.event).map((s) => ({ date: s.date, timeMs: s.timeMs }));
+            const loggedTimes = allSwimTimes
+              .filter((s) => s.event === ev.event)
+              .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null }));
             return {
               event: ev.event,
               targetTimeMs: ev.targetTimeMs,

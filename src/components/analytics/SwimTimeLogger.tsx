@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { IconChevronDown } from "@/components/ui/icons";
 import { logSwimTimeAction } from "@/app/(app)/analytics/actions";
 import { parseSwimTime } from "@/lib/swim/format";
@@ -17,6 +18,7 @@ export function SwimTimeLogger() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [logType, setLogType] = useState<"practice" | "meet">("practice");
   const [meetName, setMeetName] = useState("");
   const [splits, setSplits] = useState(["", "", "", ""]);
   const [strokeCounts, setStrokeCounts] = useState(["", "", "", ""]);
@@ -34,6 +36,11 @@ export function SwimTimeLogger() {
       setError("Time format: m:ss.cc or ss.cc (e.g. 2:24.53 or 30.46).");
       return;
     }
+    const trimmedMeetName = meetName.trim();
+    if (logType === "meet" && !trimmedMeetName) {
+      setError("Enter the meet name -- that's what marks this as a race result.");
+      return;
+    }
     const parsedSplits = splits.map((s) => Number(s)).filter((n) => n > 0);
     const parsedStrokes = strokeCounts.map((s) => Number(s)).filter((n) => n > 0);
 
@@ -41,7 +48,7 @@ export function SwimTimeLogger() {
       await logSwimTimeAction({
         event: eventName,
         timeMs,
-        meetName: meetName.trim() || null,
+        meetName: logType === "meet" ? trimmedMeetName : null,
         splits: parsedSplits.length === 4 ? parsedSplits : null,
         strokeCounts: parsedStrokes.length === 4 ? parsedStrokes : null,
       });
@@ -57,6 +64,33 @@ export function SwimTimeLogger() {
   return (
     <GlassCard className="flex flex-col gap-3">
       <div className="text-title-3">Log a swim time</div>
+
+      <SegmentedControl
+        options={[
+          { value: "practice", label: "Practice" },
+          { value: "meet", label: "Meet" },
+        ]}
+        value={logType}
+        onChange={(v) => {
+          setLogType(v);
+          setDone(false);
+        }}
+      />
+      <p className="text-caption text-[var(--rtd-text-tertiary)] -mt-1.5">
+        Practice times track training. Only race results drive meet projections.
+      </p>
+
+      {logType === "meet" && (
+        <input
+          placeholder="Meet name"
+          value={meetName}
+          onChange={(e) => {
+            setMeetName(e.target.value);
+            setDone(false);
+          }}
+          className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none"
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <select
@@ -102,7 +136,7 @@ export function SwimTimeLogger() {
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-1 text-footnote text-[var(--rtd-text-secondary)] self-start cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
       >
-        Meet name &amp; splits (optional)
+        Splits &amp; stroke counts (optional)
         <span className="transition-transform" style={{ transform: expanded ? "rotate(180deg)" : "none" }}>
           <IconChevronDown />
         </span>
@@ -110,12 +144,6 @@ export function SwimTimeLogger() {
 
       {expanded && (
         <div className="flex flex-col gap-2 rtd-fade-in">
-          <input
-            placeholder="Meet name"
-            value={meetName}
-            onChange={(e) => setMeetName(e.target.value)}
-            className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none"
-          />
           <div className="grid grid-cols-4 gap-1.5">
             {splits.map((v, i) => (
               <input

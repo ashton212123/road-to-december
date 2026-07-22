@@ -26,17 +26,24 @@ export function SwimHero({
   allSwimTimesByEvent,
   meetEventsFlat,
 }: {
-  allSwimTimesByEvent: Record<string, { date: string; timeMs: number }[]>;
+  allSwimTimesByEvent: Record<string, { date: string; timeMs: number; isRace: boolean }[]>;
   meetEventsFlat: MeetEventWithReadiness[];
 }) {
   const [event, setEvent] = useState("200 Breast");
 
   const times = allSwimTimesByEvent[event] ?? [];
-  const currentBest = times.length > 0 ? Math.min(...times.map((t) => t.timeMs)) : null;
+  const raceTimes = times.filter((t) => t.isRace);
+  const practiceTimes = times.filter((t) => !t.isRace);
+  const currentBest = raceTimes.length > 0 ? Math.min(...raceTimes.map((t) => t.timeMs)) : null;
+  const practiceBest = practiceTimes.length > 0 ? Math.min(...practiceTimes.map((t) => t.timeMs)) : null;
 
   const nearestMeetEvent = meetEventsFlat
     .filter((e) => e.event === event)
     .sort((a, b) => (a.meetDate < b.meetDate ? -1 : 1))[0];
+  // Only a real trend fit (>=2 race results) earns the "projected" label --
+  // a single race point renders its own timeMs verbatim as projectedMs, which
+  // would otherwise read as a prediction it isn't.
+  const showProjection = nearestMeetEvent && nearestMeetEvent.readiness.pointsUsed >= 2 && nearestMeetEvent.readiness.projectedMs !== null;
 
   return (
     <GlassCard className="flex flex-col gap-3 rtd-fade-in">
@@ -58,25 +65,28 @@ export function SwimHero({
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <div className="rtd-micro-label">Current best</div>
+          <div className="rtd-micro-label">Current best (race)</div>
           <div className="rtd-display text-large-title mt-1 transition-[color,opacity] duration-500">
             {currentBest !== null ? formatSwimTime(currentBest) : "—"}
           </div>
+          {practiceBest !== null && (
+            <div className="text-footnote text-[var(--rtd-text-tertiary)] rtd-nums mt-0.5">practice best {formatSwimTime(practiceBest)}</div>
+          )}
         </div>
-        {nearestMeetEvent && (
+        {showProjection && (
           <div className="text-right">
-            <div className="rtd-micro-label">Projected · {nearestMeetEvent.meetName}</div>
+            <div className="rtd-micro-label">Projected from race results · {nearestMeetEvent.meetName}</div>
             <div
               className="text-title-1 mt-1 transition-colors duration-500"
               style={{ color: CONFIDENCE_COLOR[nearestMeetEvent.readiness.confidence] }}
             >
-              {nearestMeetEvent.readiness.projectedMs !== null ? formatSwimTime(nearestMeetEvent.readiness.projectedMs) : "—"}
+              {formatSwimTime(nearestMeetEvent.readiness.projectedMs as number)}
             </div>
           </div>
         )}
       </div>
 
-      {nearestMeetEvent && (
+      {nearestMeetEvent && currentBest !== null && (
         <div className="flex items-center justify-between text-footnote">
           <span className="text-[var(--rtd-text-secondary)]">
             Target {formatSwimTime(nearestMeetEvent.targetTimeMs)}
@@ -100,8 +110,13 @@ export function SwimHero({
         </div>
       )}
 
-      {!nearestMeetEvent && times.length === 0 && (
+      {currentBest === null && practiceBest === null && (
         <div className="text-subhead text-[var(--rtd-text-tertiary)]">Log a time for {event} to see your trend here.</div>
+      )}
+      {currentBest === null && practiceBest !== null && (
+        <div className="text-subhead text-[var(--rtd-text-tertiary)]">
+          Practice times only — log a meet result to project readiness for {event}.
+        </div>
       )}
     </GlassCard>
   );

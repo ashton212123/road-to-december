@@ -96,9 +96,20 @@ export async function getCoachAppContext() {
       name: meet.name,
       date: meet.date,
       events: meet.events.map((ev) => {
-        const loggedTimes = swimTimes.filter((s) => s.event === ev.event).map((s) => ({ date: s.date, timeMs: s.timeMs }));
+        const loggedTimes = swimTimes
+          .filter((s) => s.event === ev.event)
+          .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null }));
         const readiness = computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today });
-        return { event: ev.event, targetTimeMs: ev.targetTimeMs, ...readiness };
+        // Explicit raceBest/practiceBest keys so the LLM can't conflate the two series.
+        const { currentBestMs, practiceBestMs, practiceTrendMsPerWeek, ...rest } = readiness;
+        return {
+          event: ev.event,
+          targetTimeMs: ev.targetTimeMs,
+          raceBestMs: currentBestMs,
+          practiceBestMs,
+          practiceTrendMsPerWeek,
+          ...rest,
+        };
       }),
     }));
 

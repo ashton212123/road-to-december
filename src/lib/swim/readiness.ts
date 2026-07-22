@@ -1,24 +1,30 @@
 /**
  * Meet-readiness projection: a simple least-squares linear trend fit through
- * logged times for an event, projected forward to the meet date. This is
- * intentionally a plain regression, not a real predictive model (no paid
+ * logged RACE times for an event, projected forward to the meet date. This
+ * is intentionally a plain regression, not a real predictive model (no paid
  * LLM/ML calls per the build constraint) -- confidence is a heuristic on
- * sample size + fit quality, not a calibrated probability. Training load and
- * gym progression are surfaced as separate supporting context rather than
- * blended into the projection itself, since there's no principled way to
- * weight three different signals without real outcome data to calibrate
- * against -- see DECISIONS.md.
+ * sample size + fit quality, not a calibrated probability.
+ *
+ * Race vs. practice separation (2026-07-21): practice swims and tapered/
+ * rested race swims are different regimes -- there is no universal formula
+ * that converts one into the other, so they are never blended. Only race
+ * results (isPb, or logged under a meet name) drive currentBestMs and the
+ * projection. Practice times surface as a separate, clearly-labeled training
+ * signal (practiceBestMs / practiceTrendMsPerWeek) and never feed the
+ * meet-readiness math.
  */
 
-export type TimePoint = { date: string; timeMs: number };
+export type TimePoint = { date: string; timeMs: number; isRace: boolean };
 
 export type ReadinessResult = {
-  currentBestMs: number | null;
-  projectedMs: number | null;
+  currentBestMs: number | null; // best RACE result only
+  practiceBestMs: number | null; // best practice result -- training signal, never a race prediction
+  projectedMs: number | null; // from race results only
   gapToTargetMs: number | null; // projectedMs - targetTimeMs; positive = still slower than target
-  trendMsPerWeek: number | null; // negative = getting faster
+  trendMsPerWeek: number | null; // race trend; negative = getting faster
+  practiceTrendMsPerWeek: number | null; // practice trend; negative = getting faster in practice
   confidence: "low" | "medium" | "high" | "none";
-  pointsUsed: number;
+  pointsUsed: number; // race points used in the projection
 };
 
 function daysBetweenISO(fromISO: string, toISO: string): number {
@@ -27,37 +33,12 @@ function daysBetweenISO(fromISO: string, toISO: string): number {
   return (to - from) / 86_400_000;
 }
 
-export function computeMeetReadiness(params: {
-  targetTimeMs: number;
-  loggedTimes: TimePoint[]; // any order
-  meetDate: string;
-  today: string;
-}): ReadinessResult {
-  const { targetTimeMs, meetDate, today } = params;
-  const points = [...params.loggedTimes].sort((a, b) => (a.date < b.date ? -1 : 1));
-
-  if (points.length === 0) {
-    return { currentBestMs: null, projectedMs: null, gapToTargetMs: null, trendMsPerWeek: null, confidence: "none", pointsUsed: 0 };
-  }
-
-  const currentBestMs = Math.min(...points.map((p) => p.timeMs));
-
-  if (points.length === 1) {
-    const only = points[0];
-    return {
-      currentBestMs,
-      projectedMs: only.timeMs,
-      gapToTargetMs: only.timeMs - targetTimeMs,
-      trendMsPerWeek: null,
-      confidence: "low",
-      pointsUsed: 1,
-    };
-  }
-
-  const firstDate = points[0].date;
-  const xs = points.map((p) => daysBetweenISO(firstDate, p.date));
-  const ys = points.map((p) => p.timeMs);
-  const n = points.length;
+function linearRegression(points: { date: string; timeMs: number }[]) {
+  const sorted = [...points].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const firstDate = sorted[0].date;
+  const xs = sorted.map((p) => daysBetweenISO(firstDate, p.date));
+  const ys = sorted.map((p) => p.timeMs);
+  const n = sorted.length;
   const meanX = xs.reduce((s, x) => s + x, 0) / n;
   const meanY = ys.reduce((s, y) => s + y, 0) / n;
 
@@ -79,6 +60,54 @@ export function computeMeetReadiness(params: {
   }
   const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
 
+  return { slope, intercept, r2, firstDate };
+}
+
+export function computeMeetReadiness(params: {
+  targetTimeMs: number;
+  loggedTimes: TimePoint[]; // any order, mixed race + practice
+  meetDate: string;
+  today: string;
+}): ReadinessResult {
+  const { targetTimeMs, meetDate, today, loggedTimes } = params;
+  const raceTimes = loggedTimes.filter((p) => p.isRace);
+  const practiceTimes = loggedTimes.filter((p) => !p.isRace);
+
+  const practiceBestMs = practiceTimes.length > 0 ? Math.min(...practiceTimes.map((p) => p.timeMs)) : null;
+  const practiceTrendMsPerWeek = practiceTimes.length >= 3 ? Math.round(linearRegression(practiceTimes).slope * 7) : null;
+
+  if (raceTimes.length === 0) {
+    return {
+      currentBestMs: null,
+      practiceBestMs,
+      projectedMs: null,
+      gapToTargetMs: null,
+      trendMsPerWeek: null,
+      practiceTrendMsPerWeek,
+      confidence: "none",
+      pointsUsed: 0,
+    };
+  }
+
+  const currentBestMs = Math.min(...raceTimes.map((p) => p.timeMs));
+
+  if (raceTimes.length === 1) {
+    const only = raceTimes[0];
+    return {
+      currentBestMs,
+      practiceBestMs,
+      projectedMs: only.timeMs,
+      gapToTargetMs: only.timeMs - targetTimeMs,
+      trendMsPerWeek: null,
+      practiceTrendMsPerWeek,
+      confidence: "low",
+      pointsUsed: 1,
+    };
+  }
+
+  const { slope, intercept, r2, firstDate } = linearRegression(raceTimes);
+  const n = raceTimes.length;
+
   const meetOffsetDays = daysBetweenISO(firstDate, meetDate);
   const todayOffsetDays = daysBetweenISO(firstDate, today);
   // Never project further back than today's actual trend position, and never
@@ -94,9 +123,11 @@ export function computeMeetReadiness(params: {
 
   return {
     currentBestMs,
+    practiceBestMs,
     projectedMs,
     gapToTargetMs: projectedMs - targetTimeMs,
     trendMsPerWeek: Math.round(slope * 7),
+    practiceTrendMsPerWeek,
     confidence,
     pointsUsed: n,
   };
