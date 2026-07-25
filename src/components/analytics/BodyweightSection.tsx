@@ -76,7 +76,7 @@ export function BodyweightSection({
 
       <div>
         <SectionLabel>Bodyweight vs target band (65–66 kg by taper)</SectionLabel>
-        <GlassCard>
+        <GlassCard variant="open">
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid {...gridDotted} />
@@ -99,7 +99,7 @@ export function BodyweightSection({
 
       <div>
         <SectionLabel>7-day avg, this {periodWord} vs last</SectionLabel>
-        <GlassCard className="flex flex-col gap-2">
+        <GlassCard variant="open" className="flex flex-col gap-2">
           <ComparisonLegend
             currentLabel={`This ${periodWord}`}
             previousLabel={`Last ${periodWord}`}

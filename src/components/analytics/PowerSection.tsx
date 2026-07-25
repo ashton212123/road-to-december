@@ -37,7 +37,7 @@ export function PowerSection({
 
       <div>
         <SectionLabel>CMJ — weekly monitor (best of 3)</SectionLabel>
-        <GlassCard>
+        <GlassCard variant="open">
           {cmjSeries.length === 0 ? (
             <EmptyState
               title="No CMJ tests logged"
@@ -64,7 +64,7 @@ export function PowerSection({
 
       <div>
         <SectionLabel>Broad jump progression{broadJumpPb ? ` — PB ${broadJumpPb}cm` : ""}</SectionLabel>
-        <GlassCard>
+        <GlassCard variant="open">
           {broadJumpSeries.length === 0 ? (
             <EmptyState title="No broad jump tests logged" body="Baseline in week 1, then chase PBs through P5." />
           ) : (

@@ -29,7 +29,7 @@ export function RecoveryOverlayCard({
   const sleepLabels = periodDayLabels(period, sleepCmp.current.length);
 
   return (
-    <div id="detail-recovery" className="rtd-glass p-5 flex flex-col gap-3">
+    <div id="detail-recovery" className="rtd-open-section flex flex-col gap-3">
       <div className="rtd-micro-label">Recovery</div>
       <p className="text-subhead text-[var(--rtd-text)] leading-snug">
         {avgSleep !== null ? (

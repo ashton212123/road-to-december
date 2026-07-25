@@ -15,7 +15,7 @@ export function FuelAdherenceCard({ days }: { days: { date: string; kcal: number
       : null;
 
   return (
-    <div id="detail-fuel" className="rtd-glass p-5 flex flex-col gap-3">
+    <div id="detail-fuel" className="rtd-open-section flex flex-col gap-3">
       <div className="rtd-micro-label">Fuel adherence</div>
       <p className="text-subhead text-[var(--rtd-text)] leading-snug">
         {avgPct !== null ? (

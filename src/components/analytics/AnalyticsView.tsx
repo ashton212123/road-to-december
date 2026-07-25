@@ -1,4 +1,3 @@
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { StrengthSection } from "./StrengthSection";
 import { PeriodSelector } from "./PeriodSelector";
@@ -6,6 +5,7 @@ import { ImprovementMatrix } from "./ImprovementMatrix";
 import { FuelAdherenceCard } from "./FuelAdherenceCard";
 import { RecoveryOverlayCard } from "./RecoveryOverlayCard";
 import { AnalyticsTabs } from "./AnalyticsTabs";
+import { OverviewTile } from "./OverviewTile";
 import { MiniBarList } from "@/components/ui/MiniBarList";
 import type { TonnageRow, HardSetRow } from "@/lib/analytics/tonnage";
 import type { DailySessionLoad, AcwrPoint } from "@/lib/analytics/load";
@@ -30,6 +30,7 @@ export function AnalyticsView(props: {
   currentPeriodLabel: string;
   matrixRows: MatrixRow[];
   takeaways: Record<"strength" | "load" | "power" | "bodyweight" | "swim", string | null>;
+  overviewTiles: { href: string; label: string; domainColor: string; headline: string; sparkline: number[]; takeaway: string | null }[];
   e1rmByLift: Record<string, { date: string; e1rm: number }[]>;
   liftTargets: Record<string, { label: string; goalKg: number }>;
   tonnage: TonnageRow[];
@@ -44,25 +45,6 @@ export function AnalyticsView(props: {
   sleepLogs: { date: string; hours: number }[];
   foodAdherenceByDate: { date: string; kcal: number; kcalTargetMin: number }[];
 }) {
-  const overviewDomains: { href: string; label: string; takeaway: string | null }[] = [
-    {
-      href: `/analytics?tab=train&period=${props.period}&offset=${props.offset}`,
-      label: "Train",
-      takeaway: props.takeaways.strength ?? props.takeaways.load,
-    },
-    { href: "/swim", label: "Swim", takeaway: props.takeaways.swim },
-    {
-      href: `/analytics?tab=fuel&period=${props.period}&offset=${props.offset}`,
-      label: "Fuel",
-      takeaway: props.takeaways.bodyweight,
-    },
-    {
-      href: `/analytics?tab=recovery&period=${props.period}&offset=${props.offset}`,
-      label: "Recovery",
-      takeaway: props.takeaways.power,
-    },
-  ];
-
   return (
     <div className="flex flex-col gap-4">
       <AnalyticsTabs tab={props.tab} period={props.period} offset={props.offset} />
@@ -70,26 +52,12 @@ export function AnalyticsView(props: {
 
       {props.tab === "overview" && (
         <>
-          <ImprovementMatrix rows={props.matrixRows} period={props.period} offset={props.offset} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {overviewDomains.map((d) => (
-              <Link
-                key={d.label}
-                href={d.href}
-                className="rtd-glass px-4 py-3 flex flex-col gap-1 cursor-pointer hover:bg-white/[0.05] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="rtd-micro-label">{d.label}</span>
-                  <span className="text-[var(--rtd-text-tertiary)]" aria-hidden="true">
-                    ›
-                  </span>
-                </div>
-                <span className="text-subhead text-[var(--rtd-text)] leading-snug">
-                  {d.takeaway ?? "No takeaway yet — log a few sessions."}
-                </span>
-              </Link>
+            {props.overviewTiles.map((t) => (
+              <OverviewTile key={t.label} {...t} />
             ))}
           </div>
+          <ImprovementMatrix rows={props.matrixRows} period={props.period} offset={props.offset} />
         </>
       )}
 
@@ -97,7 +65,7 @@ export function AnalyticsView(props: {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           <div id="detail-strength" className="flex flex-col gap-2">
             {props.takeaways.strength && (
-              <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.strength}</p>
+              <p className="rtd-open-section text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.strength}</p>
             )}
             <StrengthSection
               e1rmByLift={props.e1rmByLift}
@@ -110,10 +78,10 @@ export function AnalyticsView(props: {
 
           <div id="detail-load" className="flex flex-col gap-2">
             {props.takeaways.load && (
-              <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.load}</p>
+              <p className="rtd-open-section text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.load}</p>
             )}
             {props.tonnage.length > 0 && (
-              <div className="rtd-glass px-4 py-3 flex flex-col gap-2">
+              <div className="rtd-open-section flex flex-col gap-2">
                 <div className="rtd-micro-label">Tonnage by movement pattern (this week)</div>
                 <MiniBarList
                   color="var(--rtd-domain-train)"
@@ -141,7 +109,7 @@ export function AnalyticsView(props: {
 
           <div id="detail-power" className="flex flex-col gap-2">
             {props.takeaways.power && (
-              <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.power}</p>
+              <p className="rtd-open-section text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.power}</p>
             )}
             <PowerSection cmjSeries={props.cmjSeries} broadJumpSeries={props.broadJumpSeries} />
           </div>
@@ -155,7 +123,7 @@ export function AnalyticsView(props: {
           </div>
           <div id="detail-body" className="flex flex-col gap-2">
             {props.takeaways.bodyweight && (
-              <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.bodyweight}</p>
+              <p className="rtd-open-section text-subhead text-[var(--rtd-text)] leading-snug">{props.takeaways.bodyweight}</p>
             )}
             <BodyweightSection weightSeries={props.weightSeries} today={props.today} period={props.period} offset={props.offset} />
           </div>

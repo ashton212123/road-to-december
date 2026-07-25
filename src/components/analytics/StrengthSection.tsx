@@ -48,7 +48,7 @@ export function StrengthSection({
           return (
             <div key={lift}>
               <SectionLabel>{lift} · e1RM</SectionLabel>
-              <GlassCard className="flex flex-col gap-2">
+              <GlassCard variant="open" className="flex flex-col gap-2">
                 <ComparisonLegend
                   currentLabel={`This ${periodWord}`}
                   previousLabel={`Last ${periodWord}`}

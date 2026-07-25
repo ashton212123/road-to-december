@@ -184,6 +184,71 @@ async function AnalyticsContent({
   });
   const currentPeriodLabel = periodLabel(periodStarts[periodStarts.length - 1], period);
 
+  // Overview doorway tiles (LOOP_PHASE5_PROMPT.md P6): one oversized headline
+  // stat + a 7-day sparkline per domain. Derived from data this page already
+  // computes above -- no new queries.
+  const lastTonnageWeek = tonnage.length > 0 ? tonnage[tonnage.length - 1] : null;
+  const weeklyTonnageKg = lastTonnageWeek ? lastTonnageWeek.squat + lastTonnageWeek.hinge + lastTonnageWeek.press + lastTonnageWeek.pull : 0;
+  const trainSparkline = [...dailyLoads].sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-7).map((d) => d.load);
+
+  // Race-best gap for 200 Breast at the nearest upcoming meet -- the same
+  // race-only readiness math loop 26 fixed, reused rather than re-derived.
+  const upcomingMeet = swimVm.meetsWithReadiness.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0];
+  const swim200BrEvent = upcomingMeet?.events.find((e) => e.event === "200 Breast");
+  const swimGapMs = swim200BrEvent?.readiness.gapToTargetMs ?? null;
+  const swimHeadline = swimGapMs !== null ? `${swimGapMs <= 0 ? "-" : "+"}${(Math.abs(swimGapMs) / 1000).toFixed(2)}s` : "—";
+  const swim200BrSparkline = [...(swimVm.allSwimTimesByEvent["200 Breast"] ?? [])]
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .slice(-7)
+    .map((t) => t.timeMs / 1000);
+
+  const foodAdherence7d = [...foodByDate.entries()]
+    .map(([date, entries]) => ({ date, pct: (entries.reduce((s, e) => s + e.kcal, 0) / computeKcalTarget(date).min) * 100 }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .slice(-7);
+  const fuelAdherenceAvgPct =
+    foodAdherence7d.length > 0 ? Math.round(foodAdherence7d.reduce((s, d) => s + d.pct, 0) / foodAdherence7d.length) : null;
+  const fuelSparkline = foodAdherence7d.map((d) => d.pct);
+
+  const sleepSortedDesc = [...sleepLogs].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const lastSleepHours = sleepSortedDesc.length > 0 ? Number(sleepSortedDesc[0].hours) : null;
+  const recoverySparkline = sleepSortedDesc.slice(0, 7).reverse().map((s) => Number(s.hours));
+
+  const overviewTiles = [
+    {
+      href: `/analytics?tab=train&period=${period}&offset=${offset}`,
+      label: "Train",
+      domainColor: "var(--rtd-domain-train)",
+      headline: weeklyTonnageKg > 0 ? `${Math.round(weeklyTonnageKg).toLocaleString()}kg` : "—",
+      sparkline: trainSparkline,
+      takeaway: takeaways.strength ?? takeaways.load,
+    },
+    {
+      href: "/swim?view=meets",
+      label: "Swim",
+      domainColor: "var(--rtd-domain-swim)",
+      headline: swimHeadline,
+      sparkline: swim200BrSparkline,
+      takeaway: takeaways.swim,
+    },
+    {
+      href: `/analytics?tab=fuel&period=${period}&offset=${offset}`,
+      label: "Fuel",
+      domainColor: "var(--rtd-domain-fuel)",
+      headline: fuelAdherenceAvgPct !== null ? `${fuelAdherenceAvgPct}%` : "—",
+      sparkline: fuelSparkline,
+      takeaway: takeaways.bodyweight,
+    },
+    {
+      href: `/analytics?tab=recovery&period=${period}&offset=${offset}`,
+      label: "Recovery",
+      domainColor: "var(--rtd-domain-recovery)",
+      headline: lastSleepHours !== null ? `${lastSleepHours.toFixed(1)}h` : "—",
+      sparkline: recoverySparkline,
+      takeaway: takeaways.power,
+    },
+  ];
+
   return (
       <AnalyticsView
         today={today}
@@ -193,6 +258,7 @@ async function AnalyticsContent({
         currentPeriodLabel={currentPeriodLabel}
         matrixRows={matrixRows}
         takeaways={takeaways}
+        overviewTiles={overviewTiles}
         e1rmByLift={e1rmByLiftObj}
         liftTargets={MAIN_LIFT_TARGETS}
         tonnage={tonnage}

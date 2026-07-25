@@ -17,7 +17,7 @@ function formatValue(v: number | null, unit: string, decimals: number): string {
 export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[]; period: Period; offset: number }) {
   const windowDays = period === "week" ? 7 : 28;
   return (
-    <BentoCard label={`Improvement matrix · last ${windowDays} days vs previous`} colSpan={12}>
+    <BentoCard variant="open" label={`Improvement matrix · last ${windowDays} days vs previous`} colSpan={12}>
       <div className="flex flex-col rtd-divide-y">
         {rows.map((row) => (
           <a

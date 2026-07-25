@@ -85,7 +85,7 @@ export function LoadSection({
 
       <div>
         <SectionLabel>Daily session load (RPE × time-on-task)</SectionLabel>
-        <GlassCard>
+        <GlassCard variant="open">
           {dailyLoads.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6">
               <ChartEmpty>No sessions logged yet</ChartEmpty>
@@ -115,7 +115,7 @@ export function LoadSection({
 
       <div>
         <SectionLabel>Acute (7d) : Chronic (28d) ratio</SectionLabel>
-        <GlassCard className="flex flex-col gap-2">
+        <GlassCard variant="open" className="flex flex-col gap-2">
           {acwr.length === 0 ? (
             <ChartEmpty>ACWR needs at least a week of logged sessions</ChartEmpty>
           ) : (
@@ -159,7 +159,7 @@ export function LoadSection({
             ))}
           </div>
         </div>
-        <GlassCard className="flex flex-col gap-2">
+        <GlassCard variant="open" className="flex flex-col gap-2">
           {tabData.length === 0 ? (
             <ChartEmpty>
               {tab === "sessions" ? "No sessions logged yet" : tab === "tonnage" ? "No tonnage yet" : "No hard sets logged yet"}
