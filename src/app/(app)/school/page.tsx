@@ -11,7 +11,7 @@ export default async function SchoolPage() {
 
   if (!configured) {
     return (
-      <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
+      <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
         <SectionLabel>School</SectionLabel>
         <EmptyState
           icon="🎓"
@@ -26,7 +26,7 @@ export default async function SchoolPage() {
   const submitted = assignments.filter((a) => a.submitted);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-4xl md:mx-auto">
+    <div className="flex flex-col gap-4 pt-1 md:max-w-4xl md:mx-auto">
       <SectionLabel>School</SectionLabel>
 
       {error && (

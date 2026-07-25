@@ -43,7 +43,7 @@ export default async function SwimPage({ searchParams }: { searchParams: Promise
   const view: SwimView = rawView === "meets" || rawView === "analysis" ? rawView : "log";
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 pt-1">
       <SectionLabel>Swim</SectionLabel>
       <Suspense fallback={<AnalyticsSkeleton />}>
         <SwimContent view={view} />

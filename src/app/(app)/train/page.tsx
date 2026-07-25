@@ -12,7 +12,7 @@ export default async function TrainPage() {
   const currentPhase = getCurrentPhase(allPhases, today);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 pt-1">
       <SectionLabel>Train — 21-week program</SectionLabel>
       <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4 rtd-stagger">
         {allPhases.map((phase) => {

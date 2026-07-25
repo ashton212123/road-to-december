@@ -43,7 +43,7 @@ export default async function PhaseSessionPage({
       (b) => b.condition === "always" || b.condition === condition || (condition === null && b.condition !== "asean_cancelled")
     );
     return (
-      <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+      <div className="flex flex-col gap-4 pt-1">
         <SectionLabel>
           {phase.tag} · {phase.name}
         </SectionLabel>
@@ -122,7 +122,7 @@ export default async function PhaseSessionPage({
   });
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 pt-1">
       <SectionLabel>
         {phase.tag} · {phase.name}
       </SectionLabel>

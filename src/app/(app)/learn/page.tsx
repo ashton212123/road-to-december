@@ -16,7 +16,7 @@ export default async function LearnPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 pt-1">
       <SectionLabel>Learn</SectionLabel>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {LEARN_TRACKS.map((track) => {

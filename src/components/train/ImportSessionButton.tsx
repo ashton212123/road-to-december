@@ -170,7 +170,7 @@ export function ImportSessionButton({
 
       {open && (
         <div
-          className="rtd-glass-blur fixed inset-0 z-50 flex items-center justify-center px-4"
+          className="rtd-glass-blur rtd-backdrop-enter fixed inset-0 z-50 flex items-center justify-center px-4"
           style={{ background: "rgba(0,0,0,0.4)" }}
           onClick={() => {
             setOpen(false);
@@ -181,7 +181,7 @@ export function ImportSessionButton({
           aria-label="Import session"
         >
           <div
-            className="rtd-glass rtd-glass-blur p-3.5 md:p-4 flex flex-col gap-3 max-w-lg w-full max-h-[85vh] overflow-y-auto"
+            className="rtd-glass rtd-glass-blur rtd-dialog-enter p-3.5 md:p-4 flex flex-col gap-3 max-w-lg w-full max-h-[85vh] overflow-y-auto"
             style={{ backgroundColor: "rgba(20,20,22,0.9)" }}
             onClick={(e) => e.stopPropagation()}
           >

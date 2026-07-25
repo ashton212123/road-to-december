@@ -113,7 +113,7 @@ export default async function FuelPage({
     .filter((r) => r.value > 0);
 
   return (
-    <div className="flex flex-col gap-3 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-3 pt-1">
       <SectionLabel
         right={
           <div className="flex items-center gap-1">

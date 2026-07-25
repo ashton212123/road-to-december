@@ -84,7 +84,7 @@ export function QuickLogSheet({
 
       {open && (
         <div
-          className="rtd-glass-blur fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          className="rtd-glass-blur rtd-backdrop-enter fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(0,0,0,0.4)" }}
           onClick={close}
           role="dialog"
@@ -92,7 +92,7 @@ export function QuickLogSheet({
           aria-label="Quick log"
         >
           <div
-            className="rtd-glass rtd-glass-blur p-3.5 md:p-4 flex flex-col gap-2 w-full md:max-w-sm rounded-t-[16px] md:rounded-[10px] max-h-[80vh] overflow-y-auto"
+            className="rtd-glass rtd-glass-blur rtd-sheet-enter p-3.5 md:p-4 flex flex-col gap-2 w-full md:max-w-sm rounded-t-[16px] md:rounded-[10px] max-h-[80vh] overflow-y-auto"
             style={{ backgroundColor: "rgba(20,20,22,0.92)", paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}
             onClick={(e) => e.stopPropagation()}
           >

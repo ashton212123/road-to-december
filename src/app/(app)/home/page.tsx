@@ -379,7 +379,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="flex flex-col gap-3 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-3 pt-1">
       <div className="flex items-center justify-between">
         <span className="text-title-3 font-semibold text-[var(--rtd-text)] md:hidden">Home</span>
         <div className="flex items-center gap-2 ml-auto">

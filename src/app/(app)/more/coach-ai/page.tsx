@@ -24,7 +24,7 @@ export default async function CoachAiPage({ searchParams }: { searchParams: Prom
   ]);
 
   return (
-    <div className="flex flex-col gap-3 rtd-fade-in pt-1 h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-6rem)] md:max-w-2xl md:mx-auto">
+    <div className="flex flex-col gap-3 pt-1 h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-6rem)] md:max-w-2xl md:mx-auto">
       <SectionLabel>Coach</SectionLabel>
       <CoachChat
         initialMessages={initialMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))}

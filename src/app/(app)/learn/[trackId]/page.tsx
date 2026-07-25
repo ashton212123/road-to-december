@@ -20,7 +20,7 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
   const upNextKey = track.levels.find((l) => !done.has(l.key))?.key;
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-2xl md:mx-auto">
+    <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
       <div className="flex items-center gap-2">
         <Link
           href="/learn"

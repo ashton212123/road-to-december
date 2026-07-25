@@ -24,7 +24,7 @@ export default async function BusinessPage() {
   const archived = allBusinesses.filter((b) => b.archived);
 
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1 md:max-w-3xl md:mx-auto">
+    <div className="flex flex-col gap-4 pt-1 md:max-w-3xl md:mx-auto">
       <SectionLabel>Business</SectionLabel>
 
       {allBusinesses.length > 0 && (

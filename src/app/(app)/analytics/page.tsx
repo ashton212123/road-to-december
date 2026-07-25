@@ -49,7 +49,7 @@ export default function AnalyticsPage({
   searchParams: Promise<{ period?: string; offset?: string; tab?: string }>;
 }) {
   return (
-    <div className="flex flex-col gap-4 rtd-fade-in pt-1">
+    <div className="flex flex-col gap-4 pt-1">
       <SectionLabel>Analytics</SectionLabel>
       <Suspense fallback={<AnalyticsSkeleton />}>
         <AnalyticsContent searchParams={searchParams} />

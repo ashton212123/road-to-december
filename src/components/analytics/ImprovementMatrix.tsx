@@ -23,7 +23,7 @@ export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[];
           <a
             key={row.key}
             href={matrixHref(row.key, period, offset)}
-            className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 hover:bg-white/[0.03] rounded-lg px-1.5 -mx-1.5 transition-colors duration-150 ease-out cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+            className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 hover:bg-white/[0.03] active:scale-[0.99] rounded-lg px-1.5 -mx-1.5 transition-[background-color,transform] duration-150 ease-out cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
           >
             <IconTile color={row.domainColor}>
               <IconBolt />

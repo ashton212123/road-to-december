@@ -52,7 +52,7 @@ export function MoreMenuButton({ trainingStatus }: { trainingStatus: TrainingSta
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-subhead text-[var(--rtd-text)] cursor-pointer hover:bg-white/[0.04] transition-colors duration-150 ease-out"
+              className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-subhead text-[var(--rtd-text)] cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-[background-color,transform] duration-150 ease-out"
             >
               <span>{item.icon}</span>
               {item.label}

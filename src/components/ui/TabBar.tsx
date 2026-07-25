@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import { useKeyboardOpen } from "@/lib/useKeyboardOpen";
+import { SlidingPillNav } from "./SlidingPillNav";
 
 export type TabItem = {
   href: string;
@@ -24,6 +25,7 @@ function isActive(item: TabItem, pathname: string) {
 export function TabBar({ items }: { items: TabItem[] }) {
   const pathname = usePathname();
   const keyboardOpen = useKeyboardOpen();
+  const activeItem = items.find((item) => isActive(item, pathname));
 
   // The keyboard replaces the bottom third of the screen -- a fixed dock
   // sitting on top of it just floats mid-content until dismissed.
@@ -42,17 +44,15 @@ export function TabBar({ items }: { items: TabItem[] }) {
         boxShadow: "var(--rtd-shadow)",
       }}
     >
-      <div className="flex items-stretch h-full px-1.5 gap-1">
-        {/* Active item styles itself (rtd-pill-active) instead of a sibling
-            absolutely-positioned thumb -- see the class comment in
-            globals.css for why the old approach drifted off-center. */}
+      <SlidingPillNav activeKey={activeItem?.href ?? ""} className="flex items-stretch h-full px-1.5 gap-1">
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-0.5 cursor-pointer rounded-full transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 ${active ? "rtd-pill-active" : ""}`}
+              data-pill-key={item.href}
+              className="relative z-10 flex-1 min-w-0 min-h-11 flex flex-col items-center justify-center gap-0.5 cursor-pointer rounded-full transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             >
               <span
                 className="rtd-tab-icon w-5 h-5 flex items-center justify-center transition-colors duration-150 ease-out"
@@ -70,7 +70,7 @@ export function TabBar({ items }: { items: TabItem[] }) {
             </Link>
           );
         })}
-      </div>
+      </SlidingPillNav>
     </nav>
   );
 }
@@ -80,6 +80,7 @@ export function TabBar({ items }: { items: TabItem[] }) {
  * the content field below runs full width like the reference dashboard. */
 export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] }) {
   const pathname = usePathname();
+  const activeItem = items.find((item) => isActive(item, pathname));
 
   return (
     <header className="hidden md:flex items-center justify-between gap-4 w-full mb-6">
@@ -88,21 +89,26 @@ export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] 
         <span className="text-title-3 font-extrabold tracking-tight text-[var(--rtd-lilac)]">2dec</span>
       </Link>
 
-      <nav className="flex p-1 gap-1 rounded-full bg-white/[0.05] border border-[var(--rtd-border)]" aria-label="Primary">
+      <SlidingPillNav
+        activeKey={activeItem?.href ?? ""}
+        aria-label="Primary"
+        className="flex p-1 gap-1 rounded-full bg-white/[0.05] border border-[var(--rtd-border)]"
+      >
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`min-h-10 px-5 rounded-full text-subhead font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 ${active ? "rtd-pill-active" : ""}`}
+              data-pill-key={item.href}
+              className="relative z-10 min-h-10 px-5 rounded-full text-subhead font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
               style={{ color: active ? "#fff" : "var(--rtd-text-secondary)" }}
             >
               {item.label}
             </Link>
           );
         })}
-      </nav>
+      </SlidingPillNav>
 
       <div className="flex items-center gap-1.5 shrink-0">
         {extras.map((item) => {

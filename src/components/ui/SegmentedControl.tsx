@@ -1,5 +1,7 @@
 "use client";
 
+import { SlidingPillNav } from "./SlidingPillNav";
+
 export function SegmentedControl<T extends string>({
   options,
   value,
@@ -12,12 +14,11 @@ export function SegmentedControl<T extends string>({
   className?: string;
 }) {
   return (
-    <div
-      className={`flex p-1 gap-1 rounded-full bg-white/[0.06] border border-[var(--rtd-hairline)] ${className ?? ""}`}
+    <SlidingPillNav
+      activeKey={value}
       role="tablist"
+      className={`flex p-1 gap-1 rounded-full bg-white/[0.06] border border-[var(--rtd-hairline)] ${className ?? ""}`}
     >
-      {/* Active option styles itself (rtd-pill-active) instead of a sibling
-          sliding thumb -- see the class comment in globals.css. */}
       {options.map((opt) => {
         const active = opt.value === value;
         return (
@@ -26,14 +27,15 @@ export function SegmentedControl<T extends string>({
             role="tab"
             aria-selected={active}
             data-active={active}
+            data-pill-key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`flex-1 min-h-11 px-3 py-1.5 rounded-full text-subhead font-medium cursor-pointer transition-colors duration-200 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 ${active ? "rtd-pill-active" : ""}`}
+            className="relative z-10 flex-1 min-h-11 px-3 py-1.5 rounded-full text-subhead font-medium cursor-pointer transition-colors duration-200 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{ color: active ? "#fff" : "var(--rtd-text-secondary)" }}
           >
             {opt.label}
           </button>
         );
       })}
-    </div>
+    </SlidingPillNav>
   );
 }
