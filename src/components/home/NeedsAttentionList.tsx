@@ -7,7 +7,7 @@ import { DOMAIN_META, sortAttentionItems, type AttentionItem } from "@/lib/dashb
 export function NeedsAttentionList({ items, className }: { items: AttentionItem[]; className?: string }) {
   if (items.length === 0) {
     return (
-      <GlassCard className={clsx("flex flex-col items-center justify-center gap-2 text-center", className)}>
+      <GlassCard variant="open" className={clsx("flex flex-col items-center justify-center gap-2 text-center", className)}>
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
           style={{ background: "color-mix(in srgb, var(--rtd-green) 16%, transparent)", color: "var(--rtd-green)" }}
@@ -25,7 +25,7 @@ export function NeedsAttentionList({ items, className }: { items: AttentionItem[
   const domainsPresent = [...new Set(sorted.map((i) => i.domain))];
 
   return (
-    <GlassCard className={clsx("flex flex-col gap-3", className)}>
+    <GlassCard variant="open" className={clsx("flex flex-col gap-3", className)}>
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {domainsPresent.map((d) => (
           <div key={d} className="flex items-center gap-1.5 text-caption text-[var(--rtd-text-secondary)]">

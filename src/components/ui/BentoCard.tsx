@@ -15,6 +15,11 @@ export function BentoCard({
   href,
   colSpan,
   rowSpan,
+  /** "open" keeps the grid LAYOUT (colSpan/rowSpan) but drops the glass
+   * background/border/shadow -- for desktop bento cells whose mobile
+   * counterpart is an .rtd-open-section, not a genuinely interactive
+   * surface. Default "card" is the original glass chrome, unchanged. */
+  variant = "card",
 }: {
   children: ReactNode;
   className?: string;
@@ -24,6 +29,7 @@ export function BentoCard({
   href?: string;
   colSpan?: number;
   rowSpan?: number;
+  variant?: "card" | "open";
 }) {
   const spanStyle: CSSProperties = {
     ...(colSpan ? { gridColumn: `span ${colSpan} / span ${colSpan}` } : {}),
@@ -34,7 +40,8 @@ export function BentoCard({
   const content = (
     <div
       className={clsx(
-        "rtd-glass rtd-bento-card h-full flex flex-col gap-2 p-3.5 md:p-5 min-w-0",
+        variant === "card" && "rtd-glass",
+        "rtd-bento-card h-full flex flex-col gap-2 p-3.5 md:p-5 min-w-0",
         href && "cursor-pointer",
         className
       )}

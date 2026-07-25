@@ -163,7 +163,7 @@ export default async function FuelPage({
       )}
 
       <div className="rtd-bento-grid">
-        <BentoCard colSpan={8} rowSpan={2} label="Today's intake">
+        <BentoCard variant="open" colSpan={8} rowSpan={2} label="Today's intake">
           <div className="grid grid-cols-3 gap-2 flex-1 items-center">
             <div className="flex flex-col items-center gap-1.5">
               <ProgressRing
@@ -238,7 +238,7 @@ export default async function FuelPage({
           </BentoCard>
         )}
 
-        <BentoCard colSpan={5} rowSpan={3} label="Macros">
+        <BentoCard variant="open" colSpan={5} rowSpan={3} label="Macros">
           <MacroDonut
             kcalLogged={kcalToday}
             kcalTarget={kcalTarget.mid}
@@ -303,7 +303,7 @@ export default async function FuelPage({
 
       {/* Mobile stack */}
       <div className="flex flex-col gap-4 md:hidden">
-        <div className="rtd-glass p-4 flex flex-col gap-4">
+        <div className="rtd-open-section flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col items-center gap-1.5">
               <ProgressRing pct={(kcalToday / kcalTarget.mid) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-orange)", "#ff375f"]} glow ariaLabel={`Calories: ${kcalToday} of ${kcalTarget.min} to ${kcalTarget.max}`} />
@@ -354,7 +354,7 @@ export default async function FuelPage({
 
         <div>
           <SectionLabel>Macros</SectionLabel>
-          <div className="rtd-glass p-4">
+          <div className="rtd-open-section">
             <MacroDonut
               kcalLogged={kcalToday}
               kcalTarget={kcalTarget.mid}

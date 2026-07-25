@@ -501,7 +501,7 @@ export default async function HomePage() {
           <Link
             key={item.href}
             href={item.href}
-            className="rtd-glass flex flex-col items-center gap-1 py-3 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+            className="flex flex-col items-center gap-1 py-3 cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] rounded-[10px] transition-[background-color,transform] duration-150 ease-out"
           >
             <span className="text-lg" aria-hidden="true">{item.icon}</span>
             <span className="text-caption text-[var(--rtd-text-secondary)]">{item.label}</span>

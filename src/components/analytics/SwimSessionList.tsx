@@ -15,7 +15,7 @@ export function SwimSessionList({ sessions }: { sessions: Session[] }) {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2">
+    <GlassCard variant="open" className="flex flex-col gap-2">
       {sessions.slice(0, 10).map((s) => (
         <div key={s.id} className="flex items-center justify-between text-footnote gap-2">
           <div className="min-w-0">

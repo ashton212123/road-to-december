@@ -103,7 +103,7 @@ async function SwimContent({ view }: { view: SwimView }) {
           {vm.paceSeries.length > 0 && (
             <div>
               <SectionLabel>Pace per 100 (from imported sessions)</SectionLabel>
-              <GlassCard className="flex flex-col gap-2">
+              <GlassCard variant="open" className="flex flex-col gap-2">
                 {vm.paceTakeaway && <p className="text-caption text-[var(--rtd-text-secondary)]">{vm.paceTakeaway}</p>}
                 <ComparisonLine
                   current={vm.paceSeries.map((p) => p.paceSecPer100)}

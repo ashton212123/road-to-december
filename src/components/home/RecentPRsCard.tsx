@@ -5,7 +5,7 @@ import type { PrEntry } from "@/lib/dashboard/recentPRs";
 
 export function RecentPRsCard({ prs, className }: { prs: PrEntry[]; className?: string }) {
   return (
-    <BentoCard label="Recent PRs" colSpan={4} rowSpan={2} className={className}>
+    <BentoCard variant="open" label="Recent PRs" colSpan={4} rowSpan={2} className={className}>
       {prs.length === 0 ? (
         <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
           <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />

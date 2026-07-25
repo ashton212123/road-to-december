@@ -5,9 +5,9 @@ function MacroBar({ label, current, targetG, color }: { label: string; current: 
   const pct = targetG > 0 ? Math.min(100, (current / targetG) * 100) : 0;
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex items-center justify-between text-caption">
-        <span className="text-[var(--rtd-text-tertiary)]">{label}</span>
-        <span className="text-[var(--rtd-text-secondary)] rtd-nums">
+      <div className="flex items-baseline justify-between gap-2 text-caption">
+        <span className="text-[var(--rtd-text-tertiary)] min-w-0 truncate">{label}</span>
+        <span className="text-[var(--rtd-text-secondary)] rtd-nums shrink-0">
           {Math.round(current)}/{Math.round(targetG)}g
         </span>
       </div>
@@ -69,9 +69,9 @@ export function FuelRingCard({
           <MacroBar label="Protein" current={proteinToday} targetG={proteinTargetG} color="var(--rtd-green)" />
           <MacroBar label="Carbs" current={carbsToday} targetG={carbsTargetG} color="var(--rtd-blue)" />
           <MacroBar label="Fat" current={fatToday} targetG={fatTargetG} color="var(--rtd-purple)" />
-          <div className="flex items-center justify-between text-caption">
-            <span className="text-[var(--rtd-text-tertiary)]">Water</span>
-            <span className="text-[var(--rtd-text-secondary)] rtd-nums">
+          <div className="flex items-baseline justify-between gap-2 text-caption">
+            <span className="text-[var(--rtd-text-tertiary)] min-w-0 truncate">Water</span>
+            <span className="text-[var(--rtd-text-secondary)] rtd-nums shrink-0">
               {(waterMl / 1000).toFixed(1)}/{(waterTargetMl / 1000).toFixed(1)}L
             </span>
           </div>

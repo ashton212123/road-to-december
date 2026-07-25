@@ -14,7 +14,7 @@ export function CoachBriefCard({
   className?: string;
 }) {
   return (
-    <BentoCard colSpan={4} rowSpan={3} className={className}>
+    <BentoCard variant="open" colSpan={4} rowSpan={3} className={className}>
       <Link href="/more/coach-ai" className="flex items-center gap-2 mb-1 w-fit cursor-pointer">
         <span className="text-[var(--rtd-purple)]">
           <IconSparkle />

@@ -36,7 +36,7 @@ export function SwimAnalysisView({
     <div className="flex flex-col gap-4">
       <div>
         <SectionLabel>Race plans</SectionLabel>
-        <GlassCard className="flex flex-col gap-4">
+        <GlassCard variant="open" className="flex flex-col gap-4">
           {RACE_PLANS.map((plan) => {
             const deltas =
               plan.targetSplits && plan.targetSplits.length === 4 && latestRaceSplits && plan.event === "200 Breast"
@@ -87,7 +87,7 @@ export function SwimAnalysisView({
 
       <div>
         <SectionLabel>Personal bests vs goal</SectionLabel>
-        <GlassCard className="flex flex-col gap-2">
+        <GlassCard variant="open" className="flex flex-col gap-2">
           {pbRows.map((row) => (
             <div key={row.name} className="flex items-center justify-between text-footnote">
               <span className="text-[var(--rtd-text-secondary)]">{row.name}</span>
@@ -107,7 +107,7 @@ export function SwimAnalysisView({
       <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
         <div>
           <SectionLabel>200 BR split autopsy — you vs target (% of race)</SectionLabel>
-          <GlassCard>
+          <GlassCard variant="open">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={splitBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid {...chartTheme.grid} />
@@ -127,7 +127,7 @@ export function SwimAnalysisView({
 
         <div>
           <SectionLabel>Time to 15m (dive) — the #1 weakness metric</SectionLabel>
-          <GlassCard>
+          <GlassCard variant="open">
             {timeTo15m.length === 0 ? (
               <EmptyState title="No time-to-15m logs yet" body="Ask coach to hand-time 3 dives, fresh and fatigued." />
             ) : (
@@ -147,7 +147,7 @@ export function SwimAnalysisView({
 
       <div>
         <SectionLabel>Stroke counts per 50 (200 BR)</SectionLabel>
-        <GlassCard className="flex flex-col gap-2">
+        <GlassCard variant="open" className="flex flex-col gap-2">
           {splitAutopsy.length === 0 ? (
             <EmptyState title="No 200 BR splits logged yet" body="Log exact 50-splits and stroke counts after your next meet." />
           ) : (

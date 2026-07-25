@@ -70,6 +70,13 @@ export function ProgressRing({
       role={ariaLabel ? "img" : undefined}
       aria-label={ariaLabel}
     >
+      {glow && (
+        <div
+          className="rtd-ring-glow-layer"
+          style={{ "--rtd-ring-glow-color": glowColor } as React.CSSProperties}
+          aria-hidden="true"
+        />
+      )}
       <svg
         width={className ? "100%" : size}
         height={className ? "100%" : size}
@@ -96,11 +103,7 @@ export function ProgressRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className={glow ? "rtd-ring-glow" : undefined}
-          style={{
-            transition: "stroke-dashoffset 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
-            ...(glow ? ({ "--rtd-ring-glow-color": glowColor } as React.CSSProperties) : {}),
-          }}
+          style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(0.16, 1, 0.3, 1)" }}
         />
       </svg>
       {(label || sub) && (

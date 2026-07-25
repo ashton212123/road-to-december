@@ -28,7 +28,7 @@ export function SwimWeeklyVolumeCard({ weeks }: { weeks: SwimWeek[] }) {
   const max = Math.max(1, ...weeks.map((w) => w.distanceM));
   const hasAny = weeks.some((w) => w.sessions > 0);
   return (
-    <BentoCard label="Weekly swim volume" colSpan={6}>
+    <BentoCard variant="open" label="Weekly swim volume" colSpan={6}>
       {!hasAny ? (
         <div className="flex flex-col gap-2 items-start">
           <p className="text-caption text-[var(--rtd-text-tertiary)]">Import or log a swim session and weekly volume starts tracking here.</p>
@@ -111,7 +111,7 @@ export function SwimMonthDotsCard({
   const ym = monthStartISO.slice(0, 7);
 
   return (
-    <BentoCard label={`Swim month · ${monthLabel}`} colSpan={6}>
+    <BentoCard variant="open" label={`Swim month · ${monthLabel}`} colSpan={6}>
       <div className="grid grid-cols-7 gap-1.5 justify-items-center">
         {WEEKDAYS.map((d, i) => (
           <span key={`h${i}`} className="text-caption text-[var(--rtd-text-tertiary)]">
@@ -161,7 +161,7 @@ export function SwimLatestSessionCard({
   session: { date: string; parsedDistanceM: number | null; setsText: string | null; intervals: SwimSessionInterval[] | null } | null;
 }) {
   return (
-    <BentoCard label="Latest imported session" colSpan={12}>
+    <BentoCard variant="open" label="Latest imported session" colSpan={12}>
       {!session || !session.intervals || session.intervals.length === 0 ? (
         <div className="flex flex-col gap-2 items-start">
           <p className="text-caption text-[var(--rtd-text-tertiary)]">
@@ -257,7 +257,7 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
   if (upcoming.length === 0) return null;
 
   return (
-    <BentoCard label="Meet readiness" colSpan={12}>
+    <BentoCard variant="open" label="Meet readiness" colSpan={12}>
       <div className="flex flex-col gap-4">
         {upcoming.map((meet) => {
           const hasAnyTime = meet.events.some((ev) => ev.readiness.currentBestMs !== null || ev.readiness.practiceBestMs !== null);

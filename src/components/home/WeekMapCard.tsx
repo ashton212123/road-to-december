@@ -20,7 +20,7 @@ export function WeekMapCard({
   className?: string;
 }) {
   return (
-    <BentoCard label="Week map" colSpan={4} rowSpan={2} className={className}>
+    <BentoCard variant="open" label="Week map" colSpan={4} rowSpan={2} className={className}>
       <div className="grid gap-y-1.5" style={{ gridTemplateColumns: "44px repeat(7, 1fr) 32px" }}>
         <div />
         {days.map((d) => (

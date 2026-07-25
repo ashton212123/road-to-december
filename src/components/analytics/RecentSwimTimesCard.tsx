@@ -17,7 +17,7 @@ export function RecentSwimTimesCard({ recentTimes }: { recentTimes: RecentSwimTi
   return (
     <div>
       <SectionLabel>Recent logged times</SectionLabel>
-      <GlassCard className="flex flex-col gap-2">
+      <GlassCard variant="open" className="flex flex-col gap-2">
         {recentTimes.length === 0 ? (
           <EmptyState title="No times logged yet" body="Log one above after your next set or meet." />
         ) : (

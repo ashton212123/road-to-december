@@ -175,6 +175,24 @@ body {
   backdrop-filter: blur(var(--rtd-blur));
 }
 
+/* Loop 29, "unboxed": most of the app was a stack of bordered
+   GlassCard/BentoCards -- the athlete's exact complaint ("everything is
+   boxed"). An open section is content sitting directly on the wallpaper,
+   no background/border/shadow of its own, separated from the section
+   before it by one hairline instead of a card edge (not above the first
+   section, so a lone one stays clean). SectionLabel remains the header.
+   Card chrome stays reserved for genuinely interactive surfaces (loggers,
+   the import hero, quick-log) -- see each page's own comments for which
+   surfaces kept it. BentoCard's variant="open" reuses this look while
+   keeping the desktop bento grid's column LAYOUT (just dropping the glass
+   chrome per cell). */
+.rtd-open-section {
+  padding: 20px 0;
+}
+.rtd-open-section + .rtd-open-section {
+  border-top: 0.5px solid var(--rtd-hairline);
+}
+
 .rtd-glass-interactive {
   transition: background-color 150ms ease-out;
 }
@@ -439,39 +457,36 @@ body {
   }
 }
 
-/* Fitonist active state: solid white pill, near-black content. Used by every
-   segmented control, tab bar, and toggle thumb -- one learned interaction
-   language across the app. */
-.rtd-pill-thumb {
-  background: #fff;
-  border: none;
-}
-
-.rtd-pill-on {
-  color: #0b0b0d !important;
-}
-
-/* Liquid glowing ring stroke (ProgressRing's `glow` prop) -- a slow breathing
-   drop-shadow keyed to the gradient's end color, set via --rtd-ring-glow-color
-   inline. Settles to a static glow under reduced motion instead of pulsing. */
-@keyframes rtd-ring-breathe {
+/* Liquid glowing ring (ProgressRing's `glow` prop). Was an animated
+   filter: drop-shadow on the SVG stroke -- Windows/Chromium promotes a
+   filter region for that which rasterizes as a visible square halo (the
+   athlete's exact reported bug: "the circle is a blocky red/orange square
+   on desktop"). Loop 29 fix: same technique as .rtd-hero-glow below -- a
+   pre-blurred radial-gradient layer sitting behind the ring (z-index: -1),
+   animating only opacity. Zero SVG filters anywhere. */
+@keyframes rtd-ring-glow-breathe {
   0%,
   100% {
-    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--rtd-ring-glow-color) 55%, transparent));
+    opacity: 0.6;
   }
   50% {
-    filter: drop-shadow(0 0 9px color-mix(in srgb, var(--rtd-ring-glow-color) 75%, transparent));
+    opacity: 1;
   }
 }
 
-.rtd-ring-glow {
-  animation: rtd-ring-breathe 3.2s ease-in-out infinite;
+.rtd-ring-glow-layer {
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 55%, color-mix(in srgb, var(--rtd-ring-glow-color) 30%, transparent) 72%, transparent 100%);
+  animation: rtd-ring-glow-breathe 3.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rtd-ring-glow {
+  .rtd-ring-glow-layer {
     animation: none;
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--rtd-ring-glow-color) 65%, transparent));
+    opacity: 1;
   }
 }
 
