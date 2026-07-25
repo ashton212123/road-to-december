@@ -5,6 +5,7 @@ import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
 import { MoreMenuButton } from "@/components/home/MoreMenuButton";
 import { QuickLogSheet } from "@/components/home/QuickLogSheet";
 import { HomeHeroBand } from "@/components/home/HomeHeroBand";
+import { HomeDoorwayDials } from "@/components/home/HomeDoorwayDials";
 import { MonthCalendarCard } from "@/components/home/MonthCalendarCard";
 import { FuelRingCard } from "@/components/home/FuelRingCard";
 import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
@@ -404,8 +405,17 @@ export default async function HomePage() {
           cluster sits in the MIDDLE of the mobile sequence but near the TOP
           of the desktop one; a partial override would place it wrong on one
           side.
-          Mobile:  Hero(1) Plan(2) Brief(3) FuelCluster(4) Needs(5) WeekMap(6) Load(7) PRs(8)
-          Desktop: Hero(1) Calendar(2) FuelCluster(3) Plan(4) Brief(5) Needs(6) WeekMap(7) Load(8) PRs(9) */}
+          LOOP_PHASE5_PROMPT.md P5: three doorway dials (Readiness/Fuel/
+          Consistency) now sit directly under the hero band on both mobile
+          and desktop. The prompt's own reordering for mobile explicitly
+          named 5 components below the dials (Plan -> Brief -> Load ->
+          WeekMap -> PRs, swapping Load/WeekMap from their old order) but
+          didn't mention the fuel/stat cluster or Needs-attention -- rather
+          than delete real dashboard data the athlete uses daily on an
+          ambiguous omission, both stay in the flow, placed right after the
+          explicitly-named sequence.
+          Mobile:  Hero(1) Dials(2) Plan(3) Brief(4) FuelCluster(5) Needs(6) Load(7) WeekMap(8) PRs(9)
+          Desktop: Hero(1) Dials(2) Calendar(3) FuelCluster(4) Plan(5) Brief(6) Needs(7) WeekMap(8) Load(9) PRs(10) */}
       <div className="rtd-home-grid">
         <HomeHeroBand
           daysToNcaa={daysToNcaa}
@@ -422,11 +432,20 @@ export default async function HomePage() {
           actionLine={readinessActionLineText}
           className="order-1 md:order-1"
         />
+        <HomeDoorwayDials
+          readinessOverall={readinessOverall}
+          greenSignalCount={readinessSignals.filter((s) => s.light === "green").length}
+          totalSignalCount={readinessSignals.length}
+          kcalToday={kcalToday}
+          kcalTargetMid={kcalTarget.mid}
+          consistencyPct={consistency.pct}
+          className="order-2 md:order-2 col-span-full"
+        />
         <MonthCalendarCard
           today={today}
           gymDates={recentWorkoutLogs.map((l) => l.date)}
           swimDates={recentSwimSessions.map((s) => s.date)}
-          className="hidden md:flex md:order-2"
+          className="hidden md:flex md:order-3"
         />
 
         {/* FuelRingCard + the two stat tiles share one wrapper so they can
@@ -434,8 +453,8 @@ export default async function HomePage() {
             stats split the row below) while dissolving via md:contents on
             desktop so each keeps its own independent col-span in the 12-col
             grid. display:contents makes the WRAPPER's own order inert at
-            desktop, so md:order-3 has to live on each child individually. */}
-        <div className="grid grid-cols-2 gap-2.5 order-4 md:contents">
+            desktop, so md:order-4 has to live on each child individually. */}
+        <div className="grid grid-cols-2 gap-2.5 order-5 md:contents">
           <FuelRingCard
             kcalToday={kcalToday}
             kcalTargetMid={kcalTarget.mid}
@@ -447,7 +466,7 @@ export default async function HomePage() {
             fatTargetG={carbsFatTarget.fatG}
             waterMl={waterToday}
             waterTargetMl={settingsRow.waterTargetMl}
-            className="col-span-2 md:col-span-6 md:row-span-2 md:order-3"
+            className="col-span-2 md:col-span-6 md:row-span-2 md:order-4"
           />
           <StatCard
             label="Bodyweight (7d)"
@@ -458,7 +477,7 @@ export default async function HomePage() {
             deltaPct={weightTrendPct}
             goodDirection="up"
             sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
-            className="md:col-span-3 md:row-span-2 md:order-3"
+            className="md:col-span-3 md:row-span-2 md:order-4"
           />
           <StatCard
             label="Consistency"
@@ -466,7 +485,7 @@ export default async function HomePage() {
             domainColor="var(--rtd-blue)"
             icon={<IconTrain />}
             sub={consistency.pct !== null ? `${consistency.done}/${consistency.planned} · 4wk` : "no data yet"}
-            className="md:col-span-3 md:row-span-2 md:order-3"
+            className="md:col-span-3 md:row-span-2 md:order-4"
           />
         </div>
 
@@ -476,24 +495,24 @@ export default async function HomePage() {
           tomorrow={tomorrowPreview}
           phaseId={todaySession ? currentPhase.id : null}
           todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
-          className="order-2 md:order-4"
+          className="order-3 md:order-5"
         />
         <CoachBriefCard
           brief={dailyBrief}
           bullets={coachBriefBullets}
           followUps={followUps}
-          className="order-3 md:order-5"
+          className="order-4 md:order-6"
         />
-        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full order-5 md:order-6" />
+        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full order-6 md:order-7" />
 
-        <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="order-6 md:order-7" />
         <TrainingLoadCard
           thisWeekDaily={thisWeekDaily}
           lastWeekDaily={lastWeekDaily}
           takeaway={trainingLoadTakeaway}
-          className="order-7 md:order-8"
+          className="order-7 md:order-9"
         />
-        <RecentPRsCard prs={recentPRs} className="order-8 md:order-9" />
+        <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="order-8 md:order-8" />
+        <RecentPRsCard prs={recentPRs} className="order-9 md:order-10" />
       </div>
 
       <div className="grid grid-cols-3 gap-2 mt-1 md:hidden">

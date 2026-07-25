@@ -3,13 +3,16 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { BentoCard } from "@/components/ui/BentoCard";
 import type { ReadinessLight } from "@/lib/rules/readiness";
 
-const LIGHT_COLOR: Record<ReadinessLight, string> = {
+// Exported: the one green/yellow/red vocabulary every readiness-adjacent
+// surface draws from (hero band, the new home doorway dials) so the mapping
+// is never redefined twice and can't drift.
+export const LIGHT_COLOR: Record<ReadinessLight, string> = {
   green: "var(--rtd-green)",
   yellow: "var(--rtd-orange)",
   red: "var(--rtd-red)",
 };
 
-const LIGHT_WORD: Record<ReadinessLight, string> = {
+export const LIGHT_WORD: Record<ReadinessLight, string> = {
   green: "Ready",
   yellow: "Caution",
   red: "Rest",

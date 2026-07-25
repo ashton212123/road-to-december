@@ -1,5 +1,20 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-21 — Iteration 30: Whoop-shaped home — three doorway dials, progressive disclosure (LOOP_PHASE5_PROMPT.md P5)
+
+**Why:** the athlete asked Home to work like Whoop's own pattern (and their own PULSE prototype): a small number of hero dials, each a doorway to a dedicated detail page, not a destination in itself — with the explicit constraint that this app has no strain/recovery hardware, so nothing gets faked.
+
+**Shipped:**
+- New `components/home/HomeDoorwayDials.tsx`: three `ProgressRing`s, each the whole ring wrapped in a `Link`, sitting directly under the hero band with no card box (`active:scale-95` tap feedback).
+  1. **Readiness** → `/more/recovery`. Ring fill is literally `greenSignalCount / totalSignalCount` — never an invented composite score — labeled transparently with a sub-line ("3/4 signals green"). Ring color and center word reuse `HomeHeroBand`'s existing `LIGHT_COLOR`/`LIGHT_WORD` maps (now exported) so the vocabulary can't drift between the two surfaces.
+  2. **Fuel** → `/fuel`. Ring = kcal % of target mid, center = kcal remaining (or "+N over"), same orange/red gradient `FuelRingCard` already uses.
+  3. **Consistency** → `/train`. Ring = 4-week consistency %, center = the % itself.
+- **A genuine spec gap, resolved conservatively:** the prompt's own reordering for mobile explicitly named 5 components below the dials (Today's Plan → coach brief → training load → week map → recent PRs, swapping training load and week map from their prior order) but didn't mention the fuel/stat cluster or the Needs-attention list at all. Rather than silently delete real dashboard data the athlete checks daily on an ambiguous omission from a partial list, both stay in the flow — placed immediately after the explicitly-named sequence, on both mobile and desktop. Documented this decision directly in `home/page.tsx`'s ordering comment so it's not silently different from a literal reading of the prompt.
+- Ring audit: every other `ProgressRing` call site (`/fuel`'s own kcal/protein/water rings, `WaterLogger`, `MacroDonut`) is already on its destination page — no further doorway wrapping needed, matching the plan's own stated exception. `FuelRingCard` was already a doorway (wrapped in `BentoCard href="/fuel"` since an earlier phase).
+- 3-color vocabulary check: confirmed `DeltaChip`/`GapChip`'s solid-stamp green/red (`#4ade80`/`#f87171`, distinct from `var(--rtd-green)`/`var(--rtd-red)`) is a deliberate, already-internally-consistent second pair — both components share the identical values with matching "stamped verdict, not a tint" documentation, not accidental drift. No changes made there.
+
+**Verified live:** full smoke green, local and prod. Live assertions: `/home` contains "signals green"; each of the three dial hrefs (`/more/recovery`, `/fuel`, `/train`) appears immediately followed by a `ProgressRing`'s `role="img"` wrapper — the same href string appears many other places on the page (TopBar nav, mobile dock, FuelRingCard's own link), so the assertion scans every occurrence rather than trusting the first match, a lesson from a prior phase's RSC-duplication traps.
+
 ## 2026-07-21 — Iteration 29: filter-free ring glow + open-section design language (LOOP_PHASE5_PROMPT.md P4)
 
 **Why:** the athlete's desktop screenshot showed the fuel ring rendering as a blocky red/orange square halo instead of a soft circular glow, and separately called out that "everything is boxed" — every section of the app is a bordered GlassCard/BentoCard, when Whoop-style apps (and their own PULSE prototype) use open sections divided by whitespace/hairlines, with card chrome reserved for genuinely interactive surfaces.
