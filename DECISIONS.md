@@ -2,6 +2,25 @@
 
 Every judgment call made without asking, per your "don't block on questions" instruction. Review and correct anything you'd have called differently — nothing here is precious.
 
+## Phase 6 (loops 32-39) — scientific judgment calls, evidence strength, and what would change each
+
+Every non-measured number phase 6 computes with, so a coach (or you) can see exactly where the science ends and a modelling choice begins.
+
+### Zone thresholds (7-zone REC/EN1-3/SP1-3 classification, `src/lib/swim/sessionType.ts` + `src/lib/swim/zones.ts`)
+**[coaching convention], E12.** The %-of-total-volume cutoffs that decide a session's `SessionType` (speed ≥12% SP2/SP3, race-pace ≥18% SP1, VO2 ≥18% EN3, threshold ≥22% EN2, technique ≥40% TECH, recovery ≥60% REC under 3000m, aerobic ≥50% EN1) are USA Swimming's standard energy-zone framework, tuned to this athlete's 9-swims/week schedule — not measured lactate/HR thresholds. **What would change it:** a real lactate- or critical-speed-anchored zone test (`src/lib/swim/criticalSpeed.ts` is already a partial step toward this) would replace the volume-share heuristic with physiologically anchored boundaries.
+
+### IM leg fractions (`src/lib/swim/imModel.ts`)
+**[coaching convention].** The 400 IM (fly 24.3% / back 26.2% / breast 28.3% / free 21.2%) and 200 IM (23.2% / 26.3% / 28.5% / 22.0%) leg-time splits are the standard elite IM split shape, not this athlete's own measured proportions. **What would change it:** enough of his own logged 4-split IM races to fit a personal split shape instead of borrowing the elite-average one — the model already falls back to "no delta" rather than fabricating a comparison when logged splits are missing.
+
+### SCM→LCM conversion offsets (`src/lib/swim/course.ts`)
+**[coaching convention], E11.** Additive per-event millisecond offsets (50 Breast +1.0s, 100 Breast +2.2s, 200 Breast +4.5s, 200 IM +3.5s, 400 IM +7.0s) are turn-count-driven estimates, not this athlete's measured SCM/LCM gap. **What would change it:** a handful of his own times in both courses for the same event, close together in time, would let the offset be fit from his actual turn-conversion speed instead of a generic estimate.
+
+### 1,100 kcal/kg energy-equivalent constant (`src/lib/fuel/energyModel.ts`, `KCAL_PER_KG`)
+**[coaching convention] — not literature-sourced.** Used to convert a weight-trend gap (target rate vs. observed rate, kg/week) into a daily kcal correction. The commonly cited energy density of pure fat mass is ~7,700 kcal/kg (Wishnofsky); 1,100 kcal/kg is instead a rough composite-tissue figure, since the mix of lean and fat mass a training teenager actually gains or loses isn't pure fat — chosen to keep corrections from swinging wildly on noisy weigh-in data, but it's a modelling assumption, not a cited number. **What would change it:** a body-composition method (DEXA, or even a consistent skinfold/InBody trend) showing what fraction of his actual weight change is lean vs. fat would let this constant be replaced with a real, athlete-specific energy density instead of one flat number covering both gain and cut.
+
+### 0.5× breast-kick volume weighting (`src/lib/swim/zones.ts`, `breastKickMetres`)
+**[coaching convention].** Full breaststroke-kick-only sets count at full metres toward the breaststroker's-knee injury signal (E4); whole-stroke breaststroke sets count at half weight, on the assumption the kick is roughly half of a breaststroke cycle's work. **What would change it:** a kick-vs-pull time split from underwater video, or a coach's stroke-count breakdown of an actual breaststroke cycle, would let this be measured per-stroke instead of assumed at a flat 50%.
+
 ## Performance investigation: closed, by your explicit decision
 
 Asked directly whether to upgrade Supabase's compute tier (the one remaining lever that would fully eliminate occasional hangs under load, ~$25/mo). **You said no, stay on free tier.** That's the actual final answer, not a fallback — accepting occasional hangs under concurrent load as the tradeoff for $0 ongoing cost.

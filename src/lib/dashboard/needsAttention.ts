@@ -49,6 +49,11 @@ export function buildAttentionItems(input: {
   urgentSchoolAssignments: SchoolAssignmentLike[];
 }): AttentionItem[] {
   const items: AttentionItem[] = [];
+  // Loop 39.2: on a scheduled double-session day (swim + gym both on today's
+  // plan -- Wed/Fri/Sat this season), keep the list training-focused and
+  // drop business/school so the hardest training days aren't cluttered with
+  // secondary-life admin.
+  const isDoubleSessionDay = Boolean(input.weekDay.swim) && input.todaySession !== null;
 
   if (input.todaySession && !input.loggedWorkoutToday) {
     items.push({
@@ -91,26 +96,28 @@ export function buildAttentionItems(input: {
     });
   }
 
-  for (const t of input.undoneBusinessTasks) {
-    items.push({
-      id: `business-task-${t.id}`,
-      domain: "business",
-      label: t.title,
-      detail: t.dueDate ? `${t.businessName} · due ${t.dueDate}` : t.businessName,
-      href: `/business/${t.businessId}`,
-      urgent: t.dueDate !== null && t.dueDate <= input.today,
-    });
-  }
+  if (!isDoubleSessionDay) {
+    for (const t of input.undoneBusinessTasks) {
+      items.push({
+        id: `business-task-${t.id}`,
+        domain: "business",
+        label: t.title,
+        detail: t.dueDate ? `${t.businessName} · due ${t.dueDate}` : t.businessName,
+        href: `/business/${t.businessId}`,
+        urgent: t.dueDate !== null && t.dueDate <= input.today,
+      });
+    }
 
-  for (const a of input.urgentSchoolAssignments) {
-    items.push({
-      id: `school-${a.id}`,
-      domain: "school",
-      label: a.name,
-      detail: a.courseName,
-      href: "/school",
-      urgent: false,
-    });
+    for (const a of input.urgentSchoolAssignments) {
+      items.push({
+        id: `school-${a.id}`,
+        domain: "school",
+        label: a.name,
+        detail: a.courseName,
+        href: "/school",
+        urgent: false,
+      });
+    }
   }
 
   return items;

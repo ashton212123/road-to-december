@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { BentoCard } from "@/components/ui/BentoCard";
 import type { ReadinessLight } from "@/lib/rules/readiness";
+import type { PhaseWeek } from "@/lib/train/phaseWeek";
 
 // Exported: the one green/yellow/red vocabulary every readiness-adjacent
 // surface draws from (hero band, the new home doorway dials) so the mapping
@@ -30,7 +31,7 @@ export function HomeHeroBand({
   seasonPct,
   phaseTag,
   phaseName,
-  weekNumber,
+  phaseWeek,
   readinessOverall,
   readinessSignals,
   actionLine,
@@ -44,7 +45,7 @@ export function HomeHeroBand({
   seasonPct: number;
   phaseTag: string;
   phaseName: string;
-  weekNumber: number;
+  phaseWeek: PhaseWeek;
   readinessOverall: ReadinessLight;
   readinessSignals: { label: string; light: ReadinessLight; detail: string }[];
   actionLine: string;
@@ -65,7 +66,7 @@ export function HomeHeroBand({
               className="text-footnote font-semibold px-2.5 py-1 rounded-full shrink-0"
               style={{ background: "rgba(10,132,255,0.14)", color: "var(--rtd-blue)" }}
             >
-              {phaseTag} · {phaseName} · Wk {weekNumber}
+              {phaseTag} · {phaseName} · Week {phaseWeek.weekInPhase} of {phaseWeek.totalWeeksInPhase}
             </span>
           </div>
 

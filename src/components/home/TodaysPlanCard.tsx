@@ -7,6 +7,7 @@ type PlanRow = {
   key: string;
   time: string | null;
   title: string;
+  sessionType?: string | null;
   done: boolean;
   href: string;
   color: string;
@@ -98,6 +99,7 @@ export function TodaysPlanCard({
               <div className="flex-1 min-w-0">
                 <div className="text-subhead font-medium text-[var(--rtd-text)] truncate">{row.title}</div>
                 {row.time && <div className="text-caption text-[var(--rtd-text-tertiary)] truncate">{row.time}</div>}
+                {row.sessionType && <div className="text-caption text-[var(--rtd-cyan)] truncate">{row.sessionType}</div>}
               </div>
             </Link>
           ))

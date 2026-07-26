@@ -1,3 +1,28 @@
+# Coach Notes — what this app measures, what it refuses to measure, and why (Phase 6, loops 32-39)
+
+Athlete-facing summary, written so you (or a real coach) can see exactly what the app is confident about, what it's guessing at, and what it deliberately won't pretend to know. Every number in the app either comes straight from something you logged, or carries a `[strong]` / `[moderate]` / `[coaching convention]` / `[extrapolated]` tag saying how solid the science behind it is — see `DECISIONS.md` for the full sourcing on each.
+
+## What it now measures
+
+- **What kind of session you just swam** (`speed` / `race_pace` / `vo2` / `threshold` / `aerobic` / `recovery` / `technique` / `mixed`) — computed deterministically from the zone breakdown you logged, never guessed by the AI, so the same session always classifies the same way.
+- **Which of your events a session actually supports** — breaststroke sprint, breaststroke middle-distance, or 400 IM aerobic capacity — derived from that same classification, so "did today's swim help my races" has a real answer instead of a vibe.
+- **Where a race is actually being lost** — stroke-length collapse late in a race, an overspent first 50, underwater/breakout fade under fatigue, light aerobic volume for the 400 IM, a breaststroke-kick volume spike, race-pace-rehearsal deficit close to a meet, and the weakest IM leg — each gated by how much data backs it (never "high confidence" off one data point) and silent when the data isn't there yet.
+- **Recovery signals**: sleep, CMJ vs. a rolling 4-week baseline (not a single noisy prior test), soreness, weekly training-load ramp, and breast-kick-volume ramp (the one signal with a real injury-mechanism link, E4).
+- **Meet readiness** — your current best vs. your target time per event, with a practice-time trend line, never blending SCM and LCM times together.
+- **Taper plan** — auto-appears once a meet is inside 21 days, built from the E1-sourced volume-reduction protocol.
+- **Fuel targets that adapt to your actual measured weight response** (not a fixed calorie band, not a generic TDEE formula) once you have 14+ days of weigh-ins, plus carbs periodized by that day's real training demand instead of a flat split.
+
+## What it deliberately refuses to measure, and why
+
+- **No ACWR (acute:chronic workload ratio).** The literature (E5) shows it's mathematically self-coupled and has no demonstrated causal link to injury — keeping it in would have looked scientific while being actively misleading. Weekly load ramp is shown instead, labeled explicitly as descriptive, not predictive.
+- **No single composite "readiness score."** Sleep, CMJ, soreness, load ramp, and breast-kick ramp are shown as separate signals rather than blended into one number — there's no principled, athlete-validated way to weight them against each other, and a fabricated composite would look precise without meaning anything.
+- **No fabricated numbers, ever, for missing data.** A stat with nothing behind it renders `—` with a stated reason (e.g. "log a race with per-50 splits to see this"), never a 0 or an invented placeholder.
+- **No motivational filler.** The coach voice (daily brief, readiness lines, session-complete copy) is banned from generic encouragement ("you've got this," "crush it") — every line has to state a fact, a number, or a mechanism instead.
+- **No treating estimates as measurements.** SCM→LCM conversion, the IM split shape, and the 7-zone framework are all labeled `[coaching convention]` and are never silently blended into a trend line as if they were logged data.
+- **No push notifications / no Canvas submission capability.** Both were explicitly scoped out in earlier phases and remain out — the MCP tool layer (`get_pending_items`, etc.) is the "digest" instead of building a separate notification subsystem, and Canvas access stays read-only by design.
+
+---
+
 # Coach Notes — Evidence Review of the Dryland Program (2026)
 
 Purpose: an outside check of the existing 21-week dryland program (`data/program.md`) against current sports-science literature on strength training for competitive swimmers, done as part of a broader app update. Written to be shown to coaches directly — every claim below is sourced.

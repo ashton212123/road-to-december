@@ -534,6 +534,24 @@ body {
   }
 }
 
+/* Home's mobile-only "More today" disclosure -- native <details>/<summary>,
+   default marker removed cross-browser (iOS Safari needs the -webkit- form
+   explicitly, list-style:none alone doesn't reach it there), chevron flips
+   on open instead. */
+.rtd-home-grid summary {
+  list-style: none;
+}
+.rtd-home-grid summary::-webkit-details-marker {
+  display: none;
+}
+.rtd-more-today-chevron {
+  display: inline-block;
+  transition: transform 200ms ease-out;
+}
+details[open] > summary .rtd-more-today-chevron {
+  transform: rotate(180deg);
+}
+
 .rtd-bento-card {
   transition: transform 150ms ease-out, border-color 150ms ease-out;
 }

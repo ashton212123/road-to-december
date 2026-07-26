@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { AlertCardList } from "@/components/rules/AlertCardList";
 import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
@@ -32,7 +31,6 @@ import {
   getSleepLogs,
   getCmjTests,
   getSwimTimes,
-  getMainLiftLogHistory,
   getSorenessLogs,
   getSessionLoadsSince,
   getAllMeetsWithEvents,
@@ -41,6 +39,8 @@ import { computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { computeEnergyTarget, computeAutoEnergyPhase } from "@/lib/fuel/energyModel";
 import { buildDayFuelPlan } from "@/lib/fuel/carbPeriodization";
 import { deriveDaySchedule } from "@/lib/fuel/scheduleFromWeek";
+import { computePhaseWeek } from "@/lib/train/phaseWeek";
+import { TYPE_LABELS, type SessionType } from "@/lib/swim/sessionType";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
 import { computeConsistencyPct } from "@/lib/analytics/streak";
@@ -64,24 +64,16 @@ const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   sun: 6,
 };
 
-const MORE_ROW_ITEMS = [
-  { href: "/more/coach-ai", label: "Coach", icon: "✨" },
-  { href: "/more/recovery", label: "Recovery", icon: "🌙" },
-  { href: "/learn", label: "Learn", icon: "📚" },
-  { href: "/school", label: "School", icon: "🎓" },
-  { href: "/business", label: "Business", icon: "💼" },
-  { href: "/more/settings", label: "Settings", icon: "⚙️" },
-];
-
 // Every DB read Home needs, cached and tagged "home-data" -- every log-
 // writing server action revalidates this tag. evaluateAlerts is
 // deliberately NOT called in here: it reads the wall-clock hour internally
 // (some alerts only fire after a threshold hour), so it has to run fresh on
 // every request against these cached raw rows, not get frozen at whatever
 // hour first populated the cache.
-// Key versioned (v2, loop 37) because this function's returned shape gained
-// sessionLoads -- same reasoning as analytics/page.tsx's cache key: the tag
-// alone doesn't invalidate a same-day entry warmed before this deploy.
+// Key versioned (v3, loop 39) because this function's returned shape lost
+// mainLiftLogs (findRecentPRs no longer needs it -- swim PRs + CMJ only) --
+// same reasoning as analytics/page.tsx's cache key: the tag alone doesn't
+// invalidate a same-day entry warmed before this deploy.
 const getCachedHomeData = unstable_cache(
   async (today: string) => {
     const canvas = await getCanvasSummary({ sync: false });
@@ -99,7 +91,6 @@ const getCachedHomeData = unstable_cache(
       recentSleepLogs,
       cmjTests,
       swimTimes,
-      mainLiftLogs,
       weekFoodLogs,
       sorenessLogs,
       sessionLoads,
@@ -117,7 +108,6 @@ const getCachedHomeData = unstable_cache(
       getSleepLogs(30),
       getCmjTests(30),
       getSwimTimes(200),
-      getMainLiftLogHistory(),
       getFoodLogsSince(addDaysISO(today, -13)), // 14-day window: also feeds computeEnergyTarget's weight-response average
       getSorenessLogs(1),
       getSessionLoadsSince(addDaysISO(today, -150)),
@@ -138,14 +128,13 @@ const getCachedHomeData = unstable_cache(
       recentSleepLogs,
       cmjTests,
       swimTimes,
-      mainLiftLogs,
       weekFoodLogs,
       sorenessLogs,
       sessionLoads,
       allMeets,
     };
   },
-  ["home-page-data-v2"],
+  ["home-page-data-v3"],
   { tags: ["home-data"] }
 );
 
@@ -168,7 +157,6 @@ export default async function HomePage() {
     recentSleepLogs,
     cmjTests,
     swimTimes,
-    mainLiftLogs,
     weekFoodLogs,
     sorenessLogs,
     sessionLoads,
@@ -196,13 +184,13 @@ export default async function HomePage() {
   });
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
+  const phaseWeek = computePhaseWeek(currentPhase, today);
   const seasonStart = seasonData.meta.seasonStart;
   const seasonEnd = seasonData.meta.seasonEnd;
   const seasonPct = Math.min(
     100,
     Math.max(0, Math.round((daysBetween(seasonStart, today) / daysBetween(seasonStart, seasonEnd)) * 100))
   );
-  const weekNumber = Math.max(1, Math.floor(daysBetween(seasonStart, today) / 7) + 1);
   const daysToNcaa = Math.max(0, daysBetween(today, seasonData.meta.targets.ncaaDate));
   const daysToAsean = Math.max(0, daysBetween(today, seasonData.meta.targets.aseanDate));
   const aseanDateLabel = new Date(seasonData.meta.targets.aseanDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -268,6 +256,15 @@ export default async function HomePage() {
     urgentSchoolAssignments: urgentAssignments,
   });
 
+  // Loop 39.3: real recent training rhythm (oldest -> newest) for the daily
+  // brief to reference factually -- never fabricated, just the last few
+  // logged session types with a recorded classification.
+  const recentSessionTypes = [...recentSwimSessions]
+    .filter((s) => s.sessionType !== null)
+    .slice(0, 5)
+    .reverse()
+    .map((s) => TYPE_LABELS[s.sessionType as SessionType] ?? s.sessionType!);
+
   const dailyBrief = await withRetry(() =>
     getDailyBrief({
       today,
@@ -289,6 +286,7 @@ export default async function HomePage() {
       phaseName: currentPhase.name,
       loggedWorkoutToday,
       loggedSwimToday,
+      recentSessionTypes,
       activeAlertHeadlines: alerts.map((a) => a.title),
     })
   );
@@ -353,6 +351,7 @@ export default async function HomePage() {
       key: "swim",
       time: weekDay.swim,
       title: "Swim",
+      sessionType: todaySchedule.plannedSessionType ? TYPE_LABELS[todaySchedule.plannedSessionType] : null,
       done: loggedSwimToday,
       href: "/swim",
       color: "var(--rtd-domain-swim)",
@@ -423,7 +422,7 @@ export default async function HomePage() {
   const lastWeekDaily = Array.from({ length: 7 }, (_, i) => dailyLoadByDate.get(addDaysISO(weekStart, i - 7)) ?? null);
   const trainingLoadTakeaway = loadTakeaway(acwr);
 
-  const recentPRs = findRecentPRs({ mainLiftLogs, swimTimes, cmjTests });
+  const recentPRs = findRecentPRs({ swimTimes, cmjTests });
 
   const followUps = [
     todaySession ? `What should I focus on in ${todaySession.title}?` : "How's my training this week?",
@@ -440,7 +439,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="flex flex-col gap-3 pt-1">
+    <div className="flex flex-col gap-2.5 md:gap-3 pt-1">
       <div className="flex items-center justify-between">
         <span className="text-title-3 font-semibold text-[var(--rtd-text)] md:hidden">Home</span>
         <div className="flex items-center gap-2 ml-auto">
@@ -460,21 +459,13 @@ export default async function HomePage() {
 
       {/* Every module renders exactly once. Mobile order (order-N) and
           desktop order (md:order-N) are two independent sequences declared
-          explicitly on every child -- see the two lists below -- rather than
-          left to fall back on default/tied ordering, since the fuel/stat
-          cluster sits in the MIDDLE of the mobile sequence but near the TOP
-          of the desktop one; a partial override would place it wrong on one
-          side.
-          LOOP_PHASE5_PROMPT.md P5: three doorway dials (Readiness/Fuel/
-          Consistency) now sit directly under the hero band on both mobile
-          and desktop. The prompt's own reordering for mobile explicitly
-          named 5 components below the dials (Plan -> Brief -> Load ->
-          WeekMap -> PRs, swapping Load/WeekMap from their old order) but
-          didn't mention the fuel/stat cluster or Needs-attention -- rather
-          than delete real dashboard data the athlete uses daily on an
-          ambiguous omission, both stay in the flow, placed right after the
-          explicitly-named sequence.
-          Mobile:  Hero(1) Dials(2) Plan(3) Brief(4) FuelCluster(5) Needs(6) Load(7) WeekMap(8) PRs(9)
+          explicitly on every child -- rather than left to fall back on
+          default/tied ordering, since the fuel/stat cluster sits in the
+          MIDDLE of the mobile sequence but near the TOP of the desktop one;
+          a partial override would place it wrong on one side. Desktop order
+          is untouched by loop 39 -- only the mobile sequence changed, per
+          the athlete's primary device being an iPhone.
+          Mobile:  Hero(1) Dials(2) Plan(3) Needs(4) Brief(5) FuelCluster(6) [More today: WeekMap(7) Load(8) PRs(9)]
           Desktop: Hero(1) Dials(2) Calendar(3) FuelCluster(4) Plan(5) Brief(6) Needs(7) WeekMap(8) Load(9) PRs(10) */}
       <div className="rtd-home-grid">
         <HomeHeroBand
@@ -486,7 +477,7 @@ export default async function HomePage() {
           seasonPct={seasonPct}
           phaseTag={currentPhase.tag}
           phaseName={currentPhase.name}
-          weekNumber={weekNumber}
+          phaseWeek={phaseWeek}
           readinessOverall={readinessOverall}
           readinessSignals={readinessSignals}
           actionLine={readinessActionLineText}
@@ -514,7 +505,7 @@ export default async function HomePage() {
             desktop so each keeps its own independent col-span in the 12-col
             grid. display:contents makes the WRAPPER's own order inert at
             desktop, so md:order-4 has to live on each child individually. */}
-        <div className="grid grid-cols-2 gap-2.5 order-5 md:contents">
+        <div className="grid grid-cols-2 gap-2.5 order-6 md:contents">
           <FuelRingCard
             kcalToday={kcalToday}
             kcalTargetMid={energyTarget.kcal}
@@ -557,35 +548,37 @@ export default async function HomePage() {
           todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
           className="order-3 md:order-5"
         />
+        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full order-4 md:order-7" />
         <CoachBriefCard
           brief={dailyBrief}
           bullets={coachBriefBullets}
           followUps={followUps}
-          className="order-4 md:order-6"
+          className="order-5 md:order-6"
         />
-        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full order-6 md:order-7" />
 
-        <TrainingLoadCard
-          thisWeekDaily={thisWeekDaily}
-          lastWeekDaily={lastWeekDaily}
-          takeaway={trainingLoadTakeaway}
-          className="order-7 md:order-9"
-        />
-        <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="order-8 md:order-8" />
-        <RecentPRsCard prs={recentPRs} className="order-9 md:order-10" />
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 mt-1 md:hidden">
-        {MORE_ROW_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex flex-col items-center gap-1 py-3 cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] rounded-[10px] transition-[background-color,transform] duration-150 ease-out"
-          >
-            <span className="text-lg" aria-hidden="true">{item.icon}</span>
-            <span className="text-caption text-[var(--rtd-text-secondary)]">{item.label}</span>
-          </Link>
-        ))}
+        {/* Mobile-only collapsed disclosure for the three lowest-priority
+            modules -- three fewer scroll-screens on the athlete's phone.
+            display:contents on both the <details> and its content wrapper
+            at md: makes their own boxes disappear so the three cards rejoin
+            the top-level grid with their own md:order-N, same technique as
+            the fuel/stat cluster above; the summary toggle itself is
+            md:hidden so desktop never sees it. */}
+        <details className="order-7 md:contents">
+          <summary className="rtd-glass md:hidden cursor-pointer select-none list-none rounded-[10px] px-3.5 py-2.5 flex items-center justify-between text-subhead font-medium text-[var(--rtd-text-secondary)]">
+            More today
+            <span aria-hidden="true" className="rtd-more-today-chevron">⌄</span>
+          </summary>
+          <div className="flex flex-col gap-2.5 mt-2.5 md:contents">
+            <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="md:order-8" />
+            <TrainingLoadCard
+              thisWeekDaily={thisWeekDaily}
+              lastWeekDaily={lastWeekDaily}
+              takeaway={trainingLoadTakeaway}
+              className="md:order-9"
+            />
+            <RecentPRsCard prs={recentPRs} className="md:order-10" />
+          </div>
+        </details>
       </div>
     </div>
   );

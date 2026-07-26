@@ -46,7 +46,7 @@ function buildTiming(params: { scheduledSwims: number; scheduledGym: boolean; pl
     timing.push({
       when: "Pre-session, ~30-45 min before",
       what: "30-60g easy carbs",
-      why: "Overnight liver glycogen is low; race-pace work without it means rehearsing race velocity on a fuel state you'll never race in.",
+      why: "Overnight liver glycogen is low; race-pace work without it means rehearsing race velocity on a fuel state you'll never race in [moderate].",
     });
   }
 

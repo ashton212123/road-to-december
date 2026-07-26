@@ -26,6 +26,7 @@ const CHECKS = [
   ["/home", "Days to NCAA"],
   ["/train", null],
   ["/fuel", "Protein"],
+  ["/fuel?view=plan", "g/kg"],
   ["/analytics?period=week&offset=0", "Improvement matrix"],
   ["/analytics?period=month&offset=0", "Improvement matrix"],
   ["/swim", "Weekly swim volume"],
