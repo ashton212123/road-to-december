@@ -5,6 +5,7 @@ import { BentoCard } from "@/components/ui/BentoCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DaySelector } from "@/components/train/DaySelector";
 import { WorkoutSession } from "@/components/train/WorkoutSession";
+import { PhaseWeekHeader } from "@/components/train/PhaseWeekHeader";
 import { TaperChecklist } from "@/components/train/TaperChecklist";
 import { TrainWeekDots } from "@/components/train/TrainWeekDots";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/db/queries";
 import { todayManilaISO, todayDayKey, mondayOf, addDaysISO } from "@/lib/time";
 import { suggestNextLoad } from "@/lib/train/progression";
+import { computePhaseWeek } from "@/lib/train/phaseWeek";
 import { withRetry } from "@/lib/db/withRetry";
 import type { workoutLogs } from "@/lib/db/schema";
 
@@ -36,6 +38,9 @@ export default async function PhaseSessionPage({
   const phase = await withRetry(() => getPhaseById(phaseId));
   if (!phase) notFound();
 
+  const today = todayManilaISO();
+  const phaseWeek = computePhaseWeek(phase, today);
+
   if (phase.isRaceBlock) {
     const settingsRow = await withRetry(() => getSettingsRow());
     const condition = settingsRow.aseanConfirmed === true ? "asean_confirmed" : settingsRow.aseanConfirmed === false ? "asean_cancelled" : null;
@@ -47,6 +52,7 @@ export default async function PhaseSessionPage({
         <SectionLabel>
           {phase.tag} · {phase.name}
         </SectionLabel>
+        <PhaseWeekHeader phaseWeek={phaseWeek} isDeload={phase.isDeload} />
         <GlassCard className="text-subhead text-[var(--rtd-text-secondary)]">{phase.note}</GlassCard>
         <TaperChecklist blocks={blocks} />
       </div>
@@ -57,7 +63,6 @@ export default async function PhaseSessionPage({
   const defaultDay = availableDays.includes(todayDayKey()) ? todayDayKey() : availableDays[0];
   const selectedDay = day && availableDays.includes(day) ? day : defaultDay;
   const session = phase.sessions.find((s) => s.dayKey === selectedDay);
-  const today = todayManilaISO();
 
   const weekStart = mondayOf(today);
 
@@ -126,6 +131,7 @@ export default async function PhaseSessionPage({
       <SectionLabel>
         {phase.tag} · {phase.name}
       </SectionLabel>
+      <PhaseWeekHeader phaseWeek={phaseWeek} isDeload={phase.isDeload} />
       {phase.note && <p className="text-subhead text-[var(--rtd-text-secondary)] -mt-2">{phase.note}</p>}
       <DaySelector phaseId={phase.id} days={availableDays} current={selectedDay} />
 

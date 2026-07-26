@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { workoutLogs, exercises } from "@/lib/db/schema";
+import { workoutLogs, exercises, sessionLoads } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
 
 export async function logSetAction(input: {
@@ -107,6 +107,27 @@ export async function uncompleteExerciseAction(exerciseId: number, phaseId: stri
   await db.delete(workoutLogs).where(and(eq(workoutLogs.exerciseId, exerciseId), eq(workoutLogs.date, today)));
   revalidatePath(`/train/${phaseId}`);
   revalidatePath("/home");
+  updateTag("analytics-data");
+  updateTag("home-data");
+}
+
+/** Foster's session-RPE method: one whole-session RPE collected ~30 min
+ * post-session, multiplied by actual duration -- the unified load signal
+ * shared with swim (loop 32's session_loads table). Dismissing the prompt
+ * without rating is allowed (called only when the athlete actually taps a
+ * pill); onConflictDoNothing so a double-submit is a no-op. */
+export async function logSessionRpeAction(input: { kind: "gym" | "swim"; rpe: number; durationMin: number }) {
+  await db
+    .insert(sessionLoads)
+    .values({
+      date: todayManilaISO(),
+      kind: input.kind,
+      sourceId: null,
+      rpe: String(input.rpe),
+      durationMin: input.durationMin,
+      load: Math.round(input.rpe * input.durationMin),
+    })
+    .onConflictDoNothing();
   updateTag("analytics-data");
   updateTag("home-data");
 }

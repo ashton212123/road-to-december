@@ -8,6 +8,7 @@ import { logSetAction, deleteSetAction, updateSetAction } from "@/app/(app)/trai
 import type { ProgressionSuggestion } from "@/lib/train/progression";
 import type { ActiveRest } from "./WorkoutSession";
 import { kgToDisplay, displayToKg, type WeightUnit } from "@/lib/train/units";
+import { classifyTransfer } from "@/lib/train/transfer";
 
 /** Renders only the parts of a set that actually exist -- a checkbox-completed
  * bodyweight exercise (no weight) used to read "–kg × 6 @ RPE –", which looks
@@ -53,6 +54,7 @@ export type ExerciseSummary = {
    * drops the weight input entirely instead of asking for a kg number that
    * doesn't apply (e.g. a box jump). */
   hasLoad: boolean;
+  movementPattern: string | null;
 };
 
 export function ExerciseCard({
@@ -68,6 +70,7 @@ export function ExerciseCard({
   activeRest,
   now,
   onRestStarted,
+  onExerciseFinished,
   weightUnit,
 }: {
   exercise: ExerciseSummary;
@@ -89,6 +92,10 @@ export function ExerciseCard({
   activeRest: ActiveRest | null;
   now: number | null;
   onRestStarted: (startedAt: number) => void;
+  /** Fires instead of onRestStarted when the set just logged was the last
+   * prescribed one -- the rest timer has nothing left to count down to, so
+   * it must not start (G11: "the rest timer keeps counting after my last set"). */
+  onExerciseFinished: () => void;
   /** Storage is always kg (DB, actions, e1RM, tonnage never change) --
    * display and input convert at this component's edge only. */
   weightUnit: WeightUnit;
@@ -97,7 +104,8 @@ export function ExerciseCard({
   const [expanded, setExpanded] = useState(false);
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
-  const [rpe, setRpe] = useState("");
+
+  const transfer = classifyTransfer(exercise.name, exercise.movementPattern, exercise.isExplosive);
 
   const isActiveRestHere = activeRest?.exerciseId === exercise.id;
   const elapsed = isActiveRestHere && now !== null ? Math.floor((now - (activeRest?.startedAt ?? 0)) / 1000) : null;
@@ -115,31 +123,37 @@ export function ExerciseCard({
   const ghostWeightKg = resolvedDefaultWeightKg ?? lastSetWeightKg;
   const ghostWeight = ghostWeightKg !== null ? String(kgToDisplay(ghostWeightKg, weightUnit)) : "";
   const ghostReps = String(exercise.targetRepsMax ?? exercise.targetRepsMin ?? lastSet?.reps ?? "");
-  const ghostRpe = lastSet?.rpe ?? "";
+
+  const targetSets = exercise.targetSets;
+  const isFinalPrescribedSet = targetSets !== null && todaysSets.length + 1 >= targetSets;
+  const isPastTarget = targetSets !== null && todaysSets.length >= targetSets;
 
   function handleAddSet() {
     const restSeconds = isActiveRestHere ? Math.floor((Date.now() - (activeRest?.startedAt ?? 0)) / 1000) : null;
     const setNumber = todaysSets.length + 1;
     const startedAt = Date.now();
+    const finishedNow = isFinalPrescribedSet;
     navigator.vibrate?.(50);
     startTransition(async () => {
       const usedWeightDisplay = !exercise.hasLoad ? null : weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
       const usedWeight = usedWeightDisplay !== null ? displayToKg(usedWeightDisplay, weightUnit) : null;
       const usedReps = reps ? Number(reps) : ghostReps ? Number(ghostReps) : null;
-      const usedRpe = rpe ? Number(rpe) : ghostRpe ? Number(ghostRpe) : null;
       await logSetAction({
         exerciseId: exercise.id,
         setNumber,
         weightKg: usedWeight,
         reps: usedReps,
-        rpe: usedRpe,
+        rpe: null,
         restSeconds,
         phaseId,
       });
-      onRestStarted(startedAt);
+      // Only start a rest timer when there's a next set to rest FOR -- on the
+      // last prescribed set, counting down to nothing is the bug the athlete
+      // reported ("keeps counting after my last set").
+      if (finishedNow) onExerciseFinished();
+      else onRestStarted(startedAt);
       setWeight("");
       setReps("");
-      setRpe("");
     });
   }
 
@@ -191,6 +205,7 @@ export function ExerciseCard({
             )}
           </div>
           <div className="text-footnote text-[var(--rtd-text-secondary)]">{exercise.prescription || "—"}</div>
+          <div className="text-caption text-[var(--rtd-text-tertiary)] mt-0.5">{transfer.why}</div>
         </button>
 
         <span
@@ -268,7 +283,7 @@ export function ExerciseCard({
             </div>
           )}
 
-          <div className={`grid gap-2 items-end ${exercise.hasLoad ? "grid-cols-4" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 items-end ${exercise.hasLoad ? "grid-cols-3" : "grid-cols-2"}`}>
             {exercise.hasLoad && (
               <label className="flex flex-col gap-1 col-span-1">
                 <span className="rtd-micro-label">{weightUnit}</span>
@@ -291,20 +306,16 @@ export function ExerciseCard({
                 className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
               />
             </label>
-            <label className="flex flex-col gap-1 col-span-1">
-              <span className="rtd-micro-label">rpe</span>
-              <input
-                inputMode="decimal"
-                value={rpe}
-                placeholder={ghostRpe || undefined}
-                onChange={(e) => setRpe(e.target.value)}
-                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
-              />
-            </label>
             <Button type="button" variant="secondary" disabled={pending} onClick={handleAddSet} className="col-span-1 !px-2">
-              Add set
+              {isPastTarget ? "Add extra set" : "Add set"}
             </Button>
           </div>
+          {ghostReps && !reps && <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">Logs {ghostReps} reps unless you change it.</div>}
+          {targetSets !== null && (
+            <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">
+              {Math.min(todaysSets.length, targetSets)}/{targetSets} prescribed sets done
+            </div>
+          )}
         </div>
       )}
     </GlassCard>

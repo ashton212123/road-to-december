@@ -2,8 +2,10 @@ import Link from "next/link";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { IconChevronRight, IconBolt } from "@/components/ui/icons";
+import { PhaseWeekHeader } from "@/components/train/PhaseWeekHeader";
 import { getAllPhasesWithSessions, getCurrentPhase } from "@/lib/db/queries";
 import { todayManilaISO, daysBetween } from "@/lib/time";
+import { computePhaseWeek } from "@/lib/train/phaseWeek";
 import { withRetry } from "@/lib/db/withRetry";
 
 export default async function TrainPage() {
@@ -14,6 +16,7 @@ export default async function TrainPage() {
   return (
     <div className="flex flex-col gap-4 pt-1">
       <SectionLabel>Train — 21-week program</SectionLabel>
+      {currentPhase && <PhaseWeekHeader phaseWeek={computePhaseWeek(currentPhase, today)} isDeload={currentPhase.isDeload} />}
       <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4 rtd-stagger">
         {allPhases.map((phase) => {
           const isCurrent = phase.id === currentPhase?.id;

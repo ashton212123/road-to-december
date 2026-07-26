@@ -1,7 +1,11 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
+import { logSessionRpeAction } from "@/app/(app)/train/actions";
+
+const RPE_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export function SessionCompleteSummary({
   sessionTitle,
@@ -14,6 +18,18 @@ export function SessionCompleteSummary({
   durationMin: number;
   onDismiss: () => void;
 }) {
+  const [rpe, setRpe] = useState<number | null>(null);
+  const [rated, setRated] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function rate(value: number) {
+    setRpe(value);
+    startTransition(async () => {
+      await logSessionRpeAction({ kind: "gym", rpe: value, durationMin });
+      setRated(true);
+    });
+  }
+
   return (
     <div
       className="rtd-glass-blur fixed inset-0 z-40 flex items-center justify-center px-4"
@@ -44,6 +60,36 @@ export function SessionCompleteSummary({
             <span className="rtd-micro-label">minutes</span>
           </div>
         </div>
+
+        {!rated ? (
+          <div className="flex flex-col items-center gap-1.5 w-full mt-1">
+            <span className="text-caption text-[var(--rtd-text-secondary)]">How hard was that session, overall?</span>
+            <span className="text-caption text-[var(--rtd-text-tertiary)]">
+              Rate about 30 minutes after finishing — that&apos;s the window session-RPE was designed for [moderate].
+            </span>
+            <div className="grid grid-cols-5 gap-1.5 w-full">
+              {RPE_OPTIONS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  disabled={pending}
+                  onClick={() => rate(r)}
+                  className="rtd-tap-target py-2 rounded-lg text-subhead font-semibold cursor-pointer"
+                  style={{
+                    background: rpe === r ? "rgba(90,200,250,0.18)" : "rgba(255,255,255,0.06)",
+                    border: rpe === r ? "1px solid var(--rtd-cyan)" : "1px solid transparent",
+                    color: rpe === r ? "var(--rtd-cyan)" : "var(--rtd-text-secondary)",
+                  }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-caption text-[var(--rtd-green)]">Session load logged ✓</div>
+        )}
+
         <Button variant="secondary" onClick={onDismiss} className="mt-3 w-full">
           Done
         </Button>

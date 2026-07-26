@@ -1,5 +1,19 @@
 # Loop Log — one entry per iteration, newest first
 
+## 2026-07-26 — Loop 34: workout truth -- rest-timer bug, two-input grid, session RPE, phase week
+
+Fixes every reported `/train` bug (G11) and adds the transfer-mechanism copy (E7/E8) that answers "why does this gym session matter for my events."
+
+**Shipped:**
+1. **Rest-timer/set-count bug** — `ExerciseCard.handleAddSet` computed `isFinalPrescribedSet` before deciding what to do next: on any set before the last prescribed one it still calls `onRestStarted` as before; on the final prescribed set it calls a new `onExerciseFinished()` instead, which `WorkoutSession` wires to clear `activeRest` and flip the exercise's optimistic-completed flag directly (never `completeExerciseAction`, which would have bulk-inserted a second, duplicate round of default sets on top of the ones already logged one at a time). Add-set button now reads "Add extra set" + a footnote once past the prescribed count, so logging beyond target stays possible without silently implying it wasn't already done.
+2. **Auto-dismiss bug** — the rest-pill's interval guard required a truthy `targetSec` to ever clear itself, so an exercise with no prescribed rest counted up forever. Now `const target = activeRest.targetSec ?? 180` gives every rest a real ceiling.
+3. **Two inputs, not three** — the add-set grid's RPE input is gone (`grid-cols-4/3` → `grid-cols-3/2`); a static hint ("Logs {n} reps unless you change it") makes the existing ghost-reps fallback visible instead of implicit. Per-set RPE stays editable after the fact in `SetRow`'s expanded editor, so history stays meaningful and `progression.ts` keeps working exactly as before (still reads `rpe`, now more often null on freshly-logged sets — expected).
+4. **Session RPE + unified load** — `SessionCompleteSummary` now asks for one whole-session RPE (1-10 pills, Foster's method framing) and writes a `session_loads` row via new `logSessionRpeAction` in `train/actions.ts`, sharing loop 32's unified swim+gym load table.
+5. **Phase + week context** — new `lib/train/phaseWeek.ts` (`computePhaseWeek`, pure date math against the phase's own start/end) + `components/train/PhaseWeekHeader.tsx`, rendered on both `/train` (current phase) and `/train/[phaseId]` (including the race-block branch). Deload weeks get a third line ("the point is to arrive fresh, not to hit numbers").
+6. **Transfer copy (E7/E8)** — new `lib/train/transfer.ts`, deterministic keyword classification (squat/trap-bar/jump → start-and-breakout; box/broad jump/plyo → turn-and-pushoff; chin-up/pulldown/row → pullout-force; press/fly/pullover → stroke-force; hollow/plank/pallof/dead-bug → trunk-stiffness; explosive-but-unmatched → turn-and-pushoff; else general-base), rendered as a small tertiary caption under each exercise's name in `ExerciseCard` — text only, no colored border per the design-system rule against domain-colored left borders.
+
+**Verified live:** lint clean, build clean; one flaky local smoke run (`/more/settings`, ~25s statement-timeout, the same documented pool-starvation class from loop 32) resolved clean on retry, unrelated to this loop's changes. Live smoke 0 failures. Live-HTML assertion caught its own false negative before being trusted: a naive `WEEK X OF Y` substring check first came back empty on `/train/p2` — traced to React's comment-marker splitting of adjacent text/expression JSX children (`WEEK <!-- -->1<!-- --> OF <!-- -->6`), confirmed correct via the raw markup rather than misreported as a bug. Phase p2 correctly reads Week 1 of 6.
+
 ## 2026-07-26 — Loop 33: AI-first swim logging
 
 Kills the 1-10 grid, fixes the "said 4.5km, app showed 3k" bug reported directly by the athlete (G3 in the phase audit).

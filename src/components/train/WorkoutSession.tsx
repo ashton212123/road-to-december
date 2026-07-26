@@ -65,7 +65,11 @@ export function WorkoutSession({
     const interval = setInterval(() => {
       const nowTs = Date.now();
       setNow(nowTs);
-      if (activeRest.targetSec && Math.floor((nowTs - activeRest.startedAt) / 1000) > activeRest.targetSec + AUTO_DISMISS_PAST_TARGET_SEC) {
+      // Exercises with no prescribed rest used to never auto-dismiss at all
+      // (the guard required a truthy targetSec) -- default to a 3-minute
+      // ceiling so an unprescribed rest still clears itself eventually.
+      const target = activeRest.targetSec ?? 180;
+      if (Math.floor((nowTs - activeRest.startedAt) / 1000) > target + AUTO_DISMISS_PAST_TARGET_SEC) {
         setActiveRest(null);
       }
     }, 1000);
@@ -85,6 +89,27 @@ export function WorkoutSession({
       targetSec: entry.exercise.restSecondsPrescribed,
     });
     setNow(startedAt);
+  }
+
+  // The last prescribed set of an exercise has nothing left to rest for --
+  // clear any running timer instead of starting one. The set itself was
+  // already logged for real via logSetAction (unlike the checkbox path,
+  // which bulk-inserts default sets), so completion here is just flipping
+  // the optimistic flag -- never completeExerciseAction, which would insert
+  // a second, duplicate round of sets on top of what was just logged.
+  function handleExerciseFinished(entry: SessionExerciseEntry) {
+    setActiveRest(null);
+    const id = entry.exercise.id;
+    if (optimisticCompleted.get(id)) return;
+    const newCount = completedCount + 1;
+    startTransition(() => {
+      setOptimisticCompleted({ id, value: true });
+      if (newCount === totalCount && totalCount > 0) {
+        const started = startedAtRef.current ?? Date.now();
+        setDurationMin(Math.max(1, Math.round((Date.now() - started) / 60000)));
+        setShowSummary(true);
+      }
+    });
   }
 
   const totalCount = exercises.length;
@@ -152,6 +177,7 @@ export function WorkoutSession({
           activeRest={activeRest}
           now={now}
           onRestStarted={(startedAt) => handleRestStarted(entry, startedAt)}
+          onExerciseFinished={() => handleExerciseFinished(entry)}
           weightUnit={weightUnit}
         />
       ))}
