@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
+import { ZoneDistributionBar, ZONE_ORDER } from "@/components/swim/ZoneDistributionBar";
 import { formatSwimTime } from "@/lib/swim/format";
+import { ZONES, type ZoneDistance } from "@/lib/swim/zones";
 import type { SwimSessionInterval } from "@/lib/db/schema";
 import type { ReadinessResult } from "@/lib/swim/readiness";
 
@@ -14,6 +16,7 @@ const SWIM_GRADIENT = "linear-gradient(90deg, #22d3ee 0%, #818cf8 100%)";
 const GLOW = "0 0 10px rgba(34,211,238,0.45)";
 
 export type SwimWeek = { weekStart: string; distanceM: number; sessions: number; loadSum: number };
+export type ZoneWeek = { weekStart: string; totalM: number; zoneDistance: ZoneDistance };
 
 function fmtKm(m: number): string {
   return m > 0 ? `${(m / 1000).toFixed(1)}km` : "—";
@@ -55,6 +58,45 @@ export function SwimWeeklyVolumeCard({ weeks }: { weeks: SwimWeek[] }) {
               <span className="w-14 shrink-0 text-footnote text-right text-[var(--rtd-text)] rtd-nums">{fmtKm(w.distanceM)}</span>
             </div>
           ))}
+        </div>
+      )}
+    </BentoCard>
+  );
+}
+
+/** What kind of work filled each of the last 8 weeks, not just how much --
+ * replaces the old blended pace-per-100 trend (lib/swim/pace.ts's rewrite
+ * made that zone-honest but gave it no UI home; this is more informative for
+ * a weekly overview than a single pace line ever was). */
+export function SwimZoneWeeklyCard({ weeks }: { weeks: ZoneWeek[] }) {
+  const hasAny = weeks.some((w) => w.totalM > 0);
+  const zonesPresent = ZONE_ORDER.filter((z) => weeks.some((w) => (w.zoneDistance[z] ?? 0) > 0));
+
+  return (
+    <BentoCard variant="open" label="Zone distribution · last 8 weeks" colSpan={12}>
+      {!hasAny ? (
+        <p className="text-caption text-[var(--rtd-text-tertiary)]">Log a swim session and its zone breakdown starts tracking here.</p>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {weeks.map((w) => (
+            <div key={w.weekStart} className="flex items-center gap-2.5">
+              <span className="w-16 shrink-0 text-footnote text-[var(--rtd-text-secondary)] truncate">{shortDate(w.weekStart)}</span>
+              <div className="flex-1">
+                <ZoneDistributionBar zoneDistance={w.zoneDistance} totalM={w.totalM} height={8} />
+              </div>
+              <span className="w-14 shrink-0 text-footnote text-right text-[var(--rtd-text)] rtd-nums">{fmtKm(w.totalM)}</span>
+            </div>
+          ))}
+          {zonesPresent.length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1">
+              {zonesPresent.map((z) => (
+                <span key={z} className="flex items-center gap-1.5 text-caption text-[var(--rtd-text-secondary)]">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ZONES[z].color }} />
+                  {ZONES[z].label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </BentoCard>

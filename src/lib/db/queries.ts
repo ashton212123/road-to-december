@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, ilike, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "./index";
 import {
@@ -337,6 +337,30 @@ export async function getAllMeetsWithEvents() {
 
 export async function getSwimSessions(limit = 60) {
   return db.select().from(swimSessions).orderBy(desc(swimSessions.date)).limit(limit);
+}
+
+/** Date-bounded (not count-bounded) so the sessions-history page's "26
+ * weeks" cap is an actual date window, not an arbitrary row count that could
+ * cut a busy multi-session week in half. */
+export async function getSwimSessionsSince(sinceISO: string) {
+  return db.select().from(swimSessions).where(gte(swimSessions.date, sinceISO)).orderBy(desc(swimSessions.date));
+}
+
+export async function getSwimSessionById(id: number) {
+  const rows = await db.select().from(swimSessions).where(eq(swimSessions.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+/** The week of sessions around a given date -- context for the detail page
+ * (what came right before/after this one), never blended into the session's
+ * own numbers. */
+export async function getSwimSessionsNear(date: string, excludeId: number, days = 7) {
+  const rows = await db
+    .select({ id: swimSessions.id, date: swimSessions.date, sessionType: swimSessions.sessionType, parsedDistanceM: swimSessions.parsedDistanceM })
+    .from(swimSessions)
+    .where(and(gte(swimSessions.date, addDaysISO(date, -days)), lte(swimSessions.date, addDaysISO(date, days))))
+    .orderBy(asc(swimSessions.date));
+  return rows.filter((r) => r.id !== excludeId);
 }
 
 export async function resolveBusinessByName(name: string) {

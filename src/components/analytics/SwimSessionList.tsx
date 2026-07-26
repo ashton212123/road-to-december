@@ -1,40 +1,45 @@
-"use client";
-
-import { useTransition } from "react";
+import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { deleteSwimSessionAction } from "@/app/(app)/analytics/actions";
+import { TYPE_LABELS, type SessionType } from "@/lib/swim/sessionType";
 
-type Session = { id: number; date: string; loadRating: number; setsText: string | null; parsedDistanceM: number | null };
+type Session = {
+  id: number;
+  date: string;
+  loadRating: number;
+  setsText: string | null;
+  parsedDistanceM: number | null;
+  sessionType: string | null;
+};
 
 export function SwimSessionList({ sessions }: { sessions: Session[] }) {
-  const [pending, startTransition] = useTransition();
-
   if (sessions.length === 0) {
     return <EmptyState title="No swim sessions logged yet" body="Log training load above after your next practice." />;
   }
 
   return (
-    <GlassCard variant="open" className="flex flex-col gap-2">
+    <GlassCard variant="open" className="flex flex-col rtd-divide-y">
       {sessions.slice(0, 10).map((s) => (
-        <div key={s.id} className="flex items-center justify-between text-footnote gap-2">
+        <Link
+          key={s.id}
+          href={`/swim/session/${s.id}`}
+          className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+        >
           <div className="min-w-0">
-            <span className="text-[var(--rtd-text)]">{s.date}</span>{" "}
-            <span className="text-[var(--rtd-text-secondary)]">
-              load {s.loadRating}/10{s.parsedDistanceM ? ` · ~${s.parsedDistanceM}m` : ""}
-            </span>
-            {s.setsText && <div className="text-caption text-[var(--rtd-text-secondary)] truncate">{s.setsText}</div>}
+            <span className="text-footnote text-[var(--rtd-text)]">{s.date}</span>
+            {s.setsText && <div className="text-caption text-[var(--rtd-text-tertiary)] truncate">{s.setsText}</div>}
           </div>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => startTransition(() => deleteSwimSessionAction(s.id))}
-            className="rtd-tap-target text-[var(--rtd-red)] shrink-0 cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-            aria-label="Delete session"
-          >
-            ✕
-          </button>
-        </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {s.sessionType && (
+              <span className="text-caption px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)]">
+                {TYPE_LABELS[s.sessionType as SessionType]?.replace(" session", "") ?? s.sessionType}
+              </span>
+            )}
+            <span className="text-caption rtd-nums text-[var(--rtd-text-tertiary)] w-16 text-right">
+              {s.parsedDistanceM ? `${s.parsedDistanceM.toLocaleString()}m` : "—"}
+            </span>
+          </div>
+        </Link>
       ))}
     </GlassCard>
   );

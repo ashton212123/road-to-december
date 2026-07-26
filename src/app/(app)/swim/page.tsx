@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -8,6 +9,7 @@ import {
   SwimMonthDotsCard,
   SwimLatestSessionCard,
   SwimMeetReadinessCard,
+  SwimZoneWeeklyCard,
 } from "@/components/analytics/SwimTrainingBlock";
 import { SwimLogSheet } from "@/components/swim/SwimLogSheet";
 import { SwimViewSelector, type SwimView } from "@/components/analytics/SwimViewSelector";
@@ -17,8 +19,6 @@ import { MeetsList } from "@/components/analytics/MeetsList";
 import { AddMeetForm } from "@/components/analytics/AddMeetForm";
 import { SwimTimeLogger } from "@/components/analytics/SwimTimeLogger";
 import { RecentSwimTimesCard } from "@/components/analytics/RecentSwimTimesCard";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { ComparisonLine } from "@/components/ui/ComparisonLine";
 import { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { buildSwimViewModel } from "@/lib/swim/viewModel";
 import { withRetry } from "@/lib/db/withRetry";
@@ -91,30 +91,28 @@ async function SwimContent({ view }: { view: SwimView }) {
                 : null
             }
           />
-          <SwimSessionList
-            sessions={raw.swimSessions.map((s) => ({
-              id: s.id,
-              date: s.date,
-              loadRating: s.loadRating,
-              setsText: s.setsText,
-              parsedDistanceM: s.parsedDistanceM,
-            }))}
-          />
-          {vm.paceSeries.length > 0 && (
-            <div>
-              <SectionLabel>Pace per 100 (from imported sessions)</SectionLabel>
-              <GlassCard variant="open" className="flex flex-col gap-2">
-                {vm.paceTakeaway && <p className="text-caption text-[var(--rtd-text-secondary)]">{vm.paceTakeaway}</p>}
-                <ComparisonLine
-                  current={vm.paceSeries.map((p) => p.paceSecPer100)}
-                  previous={vm.paceSeries.map(() => null)}
-                  color="var(--rtd-cyan)"
-                  height={100}
-                  labels={vm.paceSeries.map((p) => p.date.slice(5))}
-                />
-              </GlassCard>
-            </div>
-          )}
+          <div>
+            <SectionLabel
+              right={
+                <Link href="/swim/sessions" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110">
+                  See all sessions →
+                </Link>
+              }
+            >
+              Recent sessions
+            </SectionLabel>
+            <SwimSessionList
+              sessions={raw.swimSessions.map((s) => ({
+                id: s.id,
+                date: s.date,
+                loadRating: s.loadRating,
+                setsText: s.setsText,
+                parsedDistanceM: s.parsedDistanceM,
+                sessionType: s.sessionType,
+              }))}
+            />
+          </div>
+          <SwimZoneWeeklyCard weeks={vm.zoneWeekly} />
         </div>
       )}
 

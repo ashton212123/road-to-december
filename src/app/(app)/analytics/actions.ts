@@ -71,6 +71,9 @@ export async function logSwimSessionAction(input: { loadRating: number; setsText
 export async function deleteSwimSessionAction(id: number) {
   await db.delete(swimSessions).where(eq(swimSessions.id, id));
   revalidatePath("/analytics");
+  revalidatePath("/swim");
+  revalidatePath("/swim/sessions");
+  revalidatePath("/home");
   updateTag("analytics-data");
   updateTag("home-data");
 }

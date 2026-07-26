@@ -29,6 +29,7 @@ const CHECKS = [
   ["/analytics?period=week&offset=0", "Improvement matrix"],
   ["/analytics?period=month&offset=0", "Improvement matrix"],
   ["/swim", "Weekly swim volume"],
+  ["/swim/sessions", "All sessions"],
   ["/learn", "30 Days of Python"],
   ["/learn/python", "Day 1"],
   ["/analytics?tab=train&period=week&offset=0", null],

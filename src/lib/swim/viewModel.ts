@@ -1,9 +1,9 @@
 import type { getAnalyticsPageDataRaw } from "@/lib/db/analyticsQuery";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
-import { buildPacePer100Series, pacePer100Takeaway } from "@/lib/swim/pace";
 import { swimTakeaway } from "@/lib/analytics/takeaways";
 import { mondayOf, addDaysISO } from "@/lib/time";
-import type { SwimWeek } from "@/components/analytics/SwimTrainingBlock";
+import type { SwimWeek, ZoneWeek } from "@/components/analytics/SwimTrainingBlock";
+import type { ZoneDistance } from "@/lib/swim/zones";
 
 type Raw = Awaited<ReturnType<typeof getAnalyticsPageDataRaw>>;
 
@@ -16,9 +16,6 @@ const CANONICAL_EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "40
 export function buildSwimViewModel(raw: Raw, today: string) {
   const swimTimes = raw.swimTimes;
   const swimSessions = raw.swimSessions;
-
-  const paceSeries = buildPacePer100Series(swimSessions);
-  const paceTakeaway = pacePer100Takeaway(paceSeries, today);
 
   const splitAutopsy = swimTimes
     .filter((s) => SWIM_EVENTS_WITH_SPLITS.includes(s.event) && s.splits && s.splits.length === 4)
@@ -69,12 +66,25 @@ export function buildSwimViewModel(raw: Raw, today: string) {
     return byWeek.get(weekStart) ?? { weekStart, distanceM: 0, sessions: 0, loadSum: 0 };
   });
 
+  const zoneByWeek = new Map<string, ZoneDistance>();
+  for (const s of swimSessions) {
+    const wk = mondayOf(s.date);
+    const cur = zoneByWeek.get(wk) ?? {};
+    for (const [z, m] of Object.entries((s.zoneDistanceM as ZoneDistance | null) ?? {})) {
+      const zone = z as keyof ZoneDistance;
+      cur[zone] = (cur[zone] ?? 0) + (m ?? 0);
+    }
+    zoneByWeek.set(wk, cur);
+  }
+  const zoneWeekly: ZoneWeek[] = swimWeekly.map((w) => {
+    const zoneDistance = zoneByWeek.get(w.weekStart) ?? {};
+    return { weekStart: w.weekStart, totalM: w.distanceM, zoneDistance };
+  });
+
   const latestSwimSession =
     [...swimSessions].sort((a, b) => (a.date < b.date ? 1 : -1)).find((s) => s.intervals && s.intervals.length > 0) ?? null;
 
   return {
-    paceSeries,
-    paceTakeaway,
     splitAutopsy,
     meetsWithReadiness,
     latestTimeByEvent: Object.fromEntries(latestByEvent),
@@ -85,6 +95,7 @@ export function buildSwimViewModel(raw: Raw, today: string) {
       ])
     ),
     swimWeekly,
+    zoneWeekly,
     latestSwimSession,
     takeaway: swimTakeaway(meetsWithReadiness, today),
   };

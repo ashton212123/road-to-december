@@ -10,6 +10,8 @@ import type { Zone, ZoneDistance } from "./zones";
 
 export type SessionType = "speed" | "race_pace" | "vo2" | "threshold" | "aerobic" | "recovery" | "technique" | "mixed";
 
+export const SESSION_TYPES: SessionType[] = ["speed", "race_pace", "vo2", "threshold", "aerobic", "recovery", "technique", "mixed"];
+
 export type SessionSupport =
   | "breaststroke-sprint"
   | "breaststroke-middle"
@@ -39,7 +41,7 @@ const THRESHOLDS = {
   AEROBIC_PCT: 0.5, // EN1
 };
 
-const TYPE_LABELS: Record<SessionType, string> = {
+export const TYPE_LABELS: Record<SessionType, string> = {
   speed: "Speed session",
   race_pace: "Race-pace session",
   vo2: "VO2 session",
