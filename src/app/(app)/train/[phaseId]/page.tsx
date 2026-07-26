@@ -9,15 +9,20 @@ import { PhaseWeekHeader } from "@/components/train/PhaseWeekHeader";
 import { TaperChecklist } from "@/components/train/TaperChecklist";
 import { TrainWeekDots } from "@/components/train/TrainWeekDots";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
+import { TaperPlanCard } from "@/components/swim/TaperPlanCard";
 import {
   getPhaseById,
   getSessionWorkoutData,
   getSettingsRow,
   getWorkoutLogsSince,
+  getAllMeetsWithEvents,
+  getSwimSessions,
 } from "@/lib/db/queries";
 import { todayManilaISO, todayDayKey, mondayOf, addDaysISO } from "@/lib/time";
 import { suggestNextLoad } from "@/lib/train/progression";
 import { computePhaseWeek } from "@/lib/train/phaseWeek";
+import { buildTaperPlan } from "@/lib/swim/taper";
+import type { ZoneDistance } from "@/lib/swim/zones";
 import { withRetry } from "@/lib/db/withRetry";
 import type { workoutLogs } from "@/lib/db/schema";
 
@@ -42,11 +47,34 @@ export default async function PhaseSessionPage({
   const phaseWeek = computePhaseWeek(phase, today);
 
   if (phase.isRaceBlock) {
-    const settingsRow = await withRetry(() => getSettingsRow());
+    const [settingsRow, allMeets, swimSessions] = await withRetry(() =>
+      Promise.all([getSettingsRow(), getAllMeetsWithEvents(), getSwimSessions(60)])
+    );
     const condition = settingsRow.aseanConfirmed === true ? "asean_confirmed" : settingsRow.aseanConfirmed === false ? "asean_cancelled" : null;
     const blocks = (phase.blocks ?? []).filter(
       (b) => b.condition === "always" || b.condition === condition || (condition === null && b.condition !== "asean_cancelled")
     );
+
+    const nextMeet = allMeets.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0] ?? null;
+    const thisMonday = mondayOf(today);
+    const totalByWeek = new Map<string, number>();
+    const zoneByWeek = new Map<string, ZoneDistance>();
+    for (const s of swimSessions) {
+      const wk = mondayOf(s.date);
+      totalByWeek.set(wk, (totalByWeek.get(wk) ?? 0) + (s.parsedDistanceM ?? 0));
+      const cur = zoneByWeek.get(wk) ?? {};
+      for (const [z, m] of Object.entries((s.zoneDistanceM as ZoneDistance | null) ?? {})) {
+        const zone = z as keyof ZoneDistance;
+        cur[zone] = (cur[zone] ?? 0) + (m ?? 0);
+      }
+      zoneByWeek.set(wk, cur);
+    }
+    const weeklyVolume = Array.from({ length: 8 }, (_, i) => {
+      const weekStart = addDaysISO(thisMonday, -7 * (7 - i));
+      return { weekStart, totalM: totalByWeek.get(weekStart) ?? 0, zoneDistance: zoneByWeek.get(weekStart) ?? {} };
+    });
+    const taperPlan = nextMeet ? buildTaperPlan({ todayISO: today, meetDateISO: nextMeet.date, weeklyVolume }) : null;
+
     return (
       <div className="flex flex-col gap-4 pt-1">
         <SectionLabel>
@@ -54,6 +82,7 @@ export default async function PhaseSessionPage({
         </SectionLabel>
         <PhaseWeekHeader phaseWeek={phaseWeek} isDeload={phase.isDeload} />
         <GlassCard className="text-subhead text-[var(--rtd-text-secondary)]">{phase.note}</GlassCard>
+        {taperPlan && nextMeet && <TaperPlanCard plan={taperPlan} meetName={nextMeet.name} />}
         <TaperChecklist blocks={blocks} />
       </div>
     );

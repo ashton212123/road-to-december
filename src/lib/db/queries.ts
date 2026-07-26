@@ -24,6 +24,7 @@ import {
   meetEvents,
   swimSessions,
   learnProgress,
+  sessionLoads,
 } from "./schema";
 import { todayManilaISO, addDaysISO } from "../time";
 import { seasonData } from "../data/season-data";
@@ -149,6 +150,12 @@ export async function getSorenessLogs(limit = 30) {
 
 export async function getWorkoutLogsSince(dateISO: string) {
   return db.select().from(workoutLogs).where(gte(workoutLogs.date, dateISO)).orderBy(desc(workoutLogs.date));
+}
+
+/** Unified swim+gym session load rows (loop 32/34's session_loads table) --
+ * the primary source for computeDailySessionLoads, loop 37. */
+export async function getSessionLoadsSince(dateISO: string) {
+  return db.select().from(sessionLoads).where(gte(sessionLoads.date, dateISO)).orderBy(desc(sessionLoads.date));
 }
 
 

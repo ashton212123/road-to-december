@@ -29,13 +29,15 @@ const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
 // Tagged "analytics-data" -- every log-writing server action revalidates
 // this tag, so a warm cache is never stale after a write, only ever stale
 // for the seconds between a write and its updateTag call.
-// Cache key versioned (v2) because getAnalyticsPageDataRaw's column set
-// changed (course/session_type/zone columns, loop 36) -- the tag alone only
-// invalidates on the next log-write, so a same-day cache entry warmed before
-// this deploy would otherwise keep serving rows without the new columns.
+// Cache key versioned (now v3) because getAnalyticsPageDataRaw's column/field
+// set keeps changing (course/session_type/zone columns loop 36; sessionLoads
+// loop 37) -- the tag alone only invalidates on the next log-write, so a
+// same-day cache entry warmed before this deploy would otherwise keep
+// serving rows without the new fields. Bump this again any time
+// getAnalyticsPageDataRaw's shape changes.
 const getCachedAnalyticsPageData = unstable_cache(
   async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO),
-  ["analytics-page-data-v2"],
+  ["analytics-page-data-v3"],
   { tags: ["analytics-data"] }
 );
 
@@ -118,7 +120,10 @@ async function AnalyticsContent({
 
   const tonnage = computeWeeklyTonnage(mainLiftLogs);
   const hardSets = computeWeeklyHardSets(mainLiftLogs);
-  const dailyLoads = computeDailySessionLoads(mainLiftLogs);
+  const dailyLoads = computeDailySessionLoads({
+    sessionLoads: raw.sessionLoads.map((s) => ({ date: s.date, kind: s.kind, load: s.load })),
+    workoutLogs: mainLiftLogs,
+  });
   const acwr = computeAcwr(dailyLoads);
   const weeklySessions = computeWeeklySessions(dailyLoads);
 

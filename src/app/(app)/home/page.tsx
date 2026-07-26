@@ -34,6 +34,7 @@ import {
   getSwimTimes,
   getMainLiftLogHistory,
   getSorenessLogs,
+  getSessionLoadsSince,
 } from "@/lib/db/queries";
 import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { evaluateAlerts } from "@/lib/rules/engine";
@@ -46,7 +47,7 @@ import { findRecentPRs } from "@/lib/dashboard/recentPRs";
 import { withRetry } from "@/lib/db/withRetry";
 import { getDailyBrief } from "@/lib/coach/dailyBrief";
 import { computeReadinessSignals } from "@/lib/rules/readiness";
-import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
+import { computeDailySessionLoads, computeAcwr, computeWeeklyLoad, computeWeekOverWeekRamp } from "@/lib/analytics/load";
 import { loadTakeaway } from "@/lib/analytics/takeaways";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
@@ -74,6 +75,9 @@ const MORE_ROW_ITEMS = [
 // (some alerts only fire after a threshold hour), so it has to run fresh on
 // every request against these cached raw rows, not get frozen at whatever
 // hour first populated the cache.
+// Key versioned (v2, loop 37) because this function's returned shape gained
+// sessionLoads -- same reasoning as analytics/page.tsx's cache key: the tag
+// alone doesn't invalidate a same-day entry warmed before this deploy.
 const getCachedHomeData = unstable_cache(
   async (today: string, weekStart: string) => {
     const canvas = await getCanvasSummary({ sync: false });
@@ -94,6 +98,7 @@ const getCachedHomeData = unstable_cache(
       mainLiftLogs,
       weekFoodLogs,
       sorenessLogs,
+      sessionLoads,
     ] = await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
@@ -105,11 +110,12 @@ const getCachedHomeData = unstable_cache(
       getWorkoutLogsSince(addDaysISO(today, -150)),
       getSwimSessions(60),
       getSleepLogs(30),
-      getCmjTests(20),
+      getCmjTests(30),
       getSwimTimes(200),
       getMainLiftLogHistory(),
       getFoodLogsSince(weekStart),
       getSorenessLogs(1),
+      getSessionLoadsSince(addDaysISO(today, -150)),
     ]);
 
     return {
@@ -129,9 +135,10 @@ const getCachedHomeData = unstable_cache(
       mainLiftLogs,
       weekFoodLogs,
       sorenessLogs,
+      sessionLoads,
     };
   },
-  ["home-page-data"],
+  ["home-page-data-v2"],
   { tags: ["home-data"] }
 );
 
@@ -157,6 +164,7 @@ export default async function HomePage() {
     mainLiftLogs,
     weekFoodLogs,
     sorenessLogs,
+    sessionLoads,
   } = await withRetry(() => getCachedHomeData(today, weekStart), { timeoutMs: 15000 });
 
   const alerts = await evaluateAlerts(canvas, {
@@ -258,26 +266,51 @@ export default async function HomePage() {
     })
   );
 
-  // Readiness -- same three transparent inputs as the Recovery page.
+  // Readiness -- same transparent inputs as the Recovery page (loop 37
+  // rebuild, G5): ACWR is out, CMJ compares to a 4-week baseline instead of
+  // one prior test, weekly load ramp and breast-kick ramp are new.
   const lastSleep = recentSleepLogs[0] ? Number(recentSleepLogs[0].hours) : null;
-  const cmjSorted = [...cmjTests].sort((a, b) => (a.date < b.date ? -1 : 1));
-  const cmjTrend: "up" | "flat" | "down" | "insufficient-data" =
-    cmjSorted.length < 2
-      ? "insufficient-data"
-      : Number(cmjSorted[cmjSorted.length - 1].bestOf3Cm) > Number(cmjSorted[cmjSorted.length - 2].bestOf3Cm)
-        ? "up"
-        : Number(cmjSorted[cmjSorted.length - 1].bestOf3Cm) < Number(cmjSorted[cmjSorted.length - 2].bestOf3Cm)
-          ? "down"
-          : "flat";
-  const dailyLoads = computeDailySessionLoads(recentWorkoutLogs);
+
+  const cmjSorted = [...cmjTests].sort((a, b) => (a.date < b.date ? 1 : -1)); // newest first
+  const cmjLatestCm = cmjSorted.length > 0 ? Number(cmjSorted[0].bestOf3Cm) : null;
+  const cmjBaselineWindow = cmjSorted.slice(1).filter((t) => t.date >= addDaysISO(today, -28));
+  const cmjBaselineCm =
+    cmjBaselineWindow.length > 0 ? cmjBaselineWindow.reduce((s, t) => s + Number(t.bestOf3Cm), 0) / cmjBaselineWindow.length : null;
+
+  const dailyLoads = computeDailySessionLoads({
+    sessionLoads: sessionLoads.map((s) => ({ date: s.date, kind: s.kind, load: s.load })),
+    workoutLogs: recentWorkoutLogs,
+  });
   const acwr = computeAcwr(dailyLoads);
-  const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
+  const weeklyLoad = computeWeeklyLoad(dailyLoads);
+  const loadRamp = computeWeekOverWeekRamp(weeklyLoad);
+  const latestRampPct = loadRamp.length > 0 ? loadRamp[loadRamp.length - 1].pctChange : null;
+
+  const breastKickByWeek = new Map<string, number>();
+  for (const s of recentSwimSessions) {
+    const wk = mondayOf(s.date);
+    breastKickByWeek.set(wk, (breastKickByWeek.get(wk) ?? 0) + (s.breastKickM ?? 0));
+  }
+  const thisWeekBreastKickM = breastKickByWeek.get(weekStart) ?? 0;
+  const priorBreastKickWeeks = Array.from({ length: 4 }, (_, i) => breastKickByWeek.get(addDaysISO(weekStart, -7 * (i + 1))) ?? 0);
+  const priorBreastKickWithData = priorBreastKickWeeks.filter((m) => m > 0);
+  const breastKickBaselineM =
+    priorBreastKickWithData.length > 0 ? priorBreastKickWithData.reduce((a, b) => a + b, 0) / priorBreastKickWithData.length : null;
+  const breastKickRatio = breastKickBaselineM !== null && breastKickBaselineM > 0 ? thisWeekBreastKickM / breastKickBaselineM : null;
+
   const latestSoreness = sorenessLogs[0];
   const recentSoreness =
     latestSoreness && (latestSoreness.date === today || latestSoreness.date === addDaysISO(today, -1))
       ? { rating: latestSoreness.rating1to5, area: latestSoreness.area, date: latestSoreness.date }
       : null;
-  const readinessSignals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio, recentSoreness });
+  const readinessSignals = computeReadinessSignals({
+    lastSleepHours: lastSleep,
+    cmjLatestCm,
+    cmjBaselineCm,
+    weeklyLoadRampPct: latestRampPct,
+    breastKickRatio,
+    recentSoreness,
+  });
   const readinessComputed = readinessSignals.some((s) => s.light === "red")
     ? "red"
     : readinessSignals.some((s) => s.light === "yellow")

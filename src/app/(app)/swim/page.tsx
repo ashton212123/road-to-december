@@ -27,6 +27,8 @@ import { seasonData } from "@/lib/data/season-data";
 import { analyzeDps, type DpsAnalysis } from "@/lib/swim/dps";
 import { buildImSplitModel, type ImSplitModel } from "@/lib/swim/imModel";
 import { detectBottlenecks } from "@/lib/swim/bottlenecks";
+import { buildTaperPlan } from "@/lib/swim/taper";
+import { TaperPlanCard } from "@/components/swim/TaperPlanCard";
 
 // The recharts-dependent Analysis view is the only reason this page ever
 // needed the chart bundle -- Log and Meets never touch it, so it stays
@@ -35,9 +37,10 @@ const SwimAnalysisView = dynamic(() => import("@/components/analytics/SwimAnalys
   loading: () => <div className="rtd-glass" style={{ height: 220 }} />,
 });
 
-// Same batch + tag (and same v2 key, see analytics/page.tsx) as Analytics:
-// one cached round trip feeds both pages, and every log write revalidates it.
-const getCachedData = unstable_cache(async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO), ["analytics-page-data-v2"], {
+// Same batch + tag (and same versioned key, see analytics/page.tsx) as
+// Analytics: one cached round trip feeds both pages, and every log write
+// revalidates it.
+const getCachedData = unstable_cache(async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO), ["analytics-page-data-v3"], {
   tags: ["analytics-data"],
 });
 
@@ -121,6 +124,11 @@ async function SwimContent({ view }: { view: SwimView }) {
     daysToNextMeet,
   });
 
+  const taperPlan =
+    nextMeet && daysToNextMeet !== null && daysToNextMeet <= 21
+      ? buildTaperPlan({ todayISO: today, meetDateISO: nextMeet.date, weeklyVolume: vm.zoneWeekly })
+      : null;
+
   return (
     <div className="flex flex-col gap-4">
       {vm.takeaway && <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{vm.takeaway}</p>}
@@ -176,6 +184,7 @@ async function SwimContent({ view }: { view: SwimView }) {
 
       {view === "meets" && (
         <div className="flex flex-col gap-4">
+          {taperPlan && nextMeet && <TaperPlanCard plan={taperPlan} meetName={nextMeet.name} />}
           <SwimMeetReadinessCard meets={vm.meetsWithReadiness} today={today} />
           <SwimHero allSwimTimesByEvent={vm.allSwimTimesByEvent} meetEventsFlat={meetEventsFlat} />
           <div>

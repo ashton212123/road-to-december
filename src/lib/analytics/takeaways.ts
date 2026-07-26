@@ -6,19 +6,19 @@ import type { ReadinessResult } from "@/lib/swim/readiness";
  * no AI call either. Strength's takeaway (plateau diagnosis) is the one tab
  * that genuinely needs judgment and lives in coach/strengthTakeaway.ts instead. */
 
+/**
+ * Loop 37 (G5): descriptive only, no risk framing -- ACWR has known
+ * statistical problems and no demonstrated causal link to injury
+ * (Impellizzeri et al. 2020), so this never tells him to "back off" or
+ * "trim volume." It states what his last month looked like and nothing more.
+ */
 export function loadTakeaway(acwr: AcwrPoint[]): string | null {
-  const latest = [...acwr].reverse().find((p) => p.ratio !== null);
-  if (!latest || latest.ratio === null) {
-    // Sessions exist (acwr is non-empty) but none are old enough for a real
-    // chronic baseline yet -- explain the gap instead of showing nothing.
-    if (acwr.length > 0) return "Building your load baseline — ACWR needs about two weeks of logged sessions before it means anything.";
-    return null;
+  if (acwr.length === 0) return null;
+  const latest = acwr[acwr.length - 1];
+  if (latest.ratio === null) {
+    return "Building your load baseline — this needs about two weeks of logged sessions before acute vs. chronic load means anything.";
   }
-  const r = latest.ratio;
-  if (r > 1.5) return `ACWR is ${r.toFixed(2)} — acute load is spiking well above your 28-day baseline. Back off intensity this week.`;
-  if (r > 1.3) return `ACWR is ${r.toFixed(2)} — trending high. Watch soreness and sleep over the next few days.`;
-  if (r < 0.8) return `ACWR is ${r.toFixed(2)} — load is light relative to your recent baseline, room to push if recovery allows.`;
-  return `ACWR is ${r.toFixed(2)} — acute and chronic load are well balanced.`;
+  return `Your last 7 days averaged ${latest.acute} load/day against a 28-day average of ${latest.chronic}. Acute-to-chronic ratios are widely used but have known statistical problems and no demonstrated causal link to injury [strong critique — Impellizzeri 2020], so this is shown as a description of your last month, not a risk score.`;
 }
 
 export function powerTakeaway(

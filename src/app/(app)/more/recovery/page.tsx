@@ -3,10 +3,10 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { SleepLogger } from "@/components/more/SleepLogger";
 import { SorenessLogger } from "@/components/more/SorenessLogger";
 import { CmjQuickLog } from "@/components/more/CmjQuickLog";
-import { getSleepLogs, getSorenessLogs, getCmjTests, getWorkoutLogsWithExerciseSince } from "@/lib/db/queries";
+import { getSleepLogs, getSorenessLogs, getCmjTests, getWorkoutLogsWithExerciseSince, getSwimSessions, getSessionLoadsSince } from "@/lib/db/queries";
 import { computeReadinessSignals, type ReadinessLight } from "@/lib/rules/readiness";
-import { computeDailySessionLoads, computeAcwr } from "@/lib/analytics/load";
-import { addDaysISO, todayManilaISO } from "@/lib/time";
+import { computeDailySessionLoads, computeWeeklyLoad, computeWeekOverWeekRamp } from "@/lib/analytics/load";
+import { addDaysISO, todayManilaISO, mondayOf } from "@/lib/time";
 import { withRetry } from "@/lib/db/withRetry";
 
 const LIGHT_COLOR: Record<ReadinessLight, string> = {
@@ -17,37 +17,59 @@ const LIGHT_COLOR: Record<ReadinessLight, string> = {
 
 export default async function RecoveryPage() {
   const today = todayManilaISO();
-  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs] = await withRetry(() =>
+  const weekStart = mondayOf(today);
+  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs, swimSessions, sessionLoads] = await withRetry(() =>
     Promise.all([
       getSleepLogs(14),
       getSorenessLogs(10),
-      getCmjTests(4),
+      getCmjTests(30),
       getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)),
+      getSwimSessions(60),
+      getSessionLoadsSince(addDaysISO(today, -35)),
     ])
   );
 
   const lastSleep = sleepLogs[0] ? Number(sleepLogs[0].hours) : null;
 
-  const cmjSorted = [...cmjTests].sort((a, b) => (a.date < b.date ? -1 : 1));
-  const cmjTrend: "up" | "flat" | "down" | "insufficient-data" =
-    cmjSorted.length < 2
-      ? "insufficient-data"
-      : Number(cmjSorted[cmjSorted.length - 1].bestOf3Cm) > Number(cmjSorted[cmjSorted.length - 2].bestOf3Cm)
-        ? "up"
-        : Number(cmjSorted[cmjSorted.length - 1].bestOf3Cm) < Number(cmjSorted[cmjSorted.length - 2].bestOf3Cm)
-          ? "down"
-          : "flat";
+  const cmjSorted = [...cmjTests].sort((a, b) => (a.date < b.date ? 1 : -1)); // newest first
+  const cmjLatestCm = cmjSorted.length > 0 ? Number(cmjSorted[0].bestOf3Cm) : null;
+  const cmjBaselineWindow = cmjSorted.slice(1).filter((t) => t.date >= addDaysISO(today, -28));
+  const cmjBaselineCm =
+    cmjBaselineWindow.length > 0 ? cmjBaselineWindow.reduce((s, t) => s + Number(t.bestOf3Cm), 0) / cmjBaselineWindow.length : null;
 
-  const dailyLoads = computeDailySessionLoads(mainLiftLogs);
-  const acwr = computeAcwr(dailyLoads);
-  const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
+  const dailyLoads = computeDailySessionLoads({
+    sessionLoads: sessionLoads.map((s) => ({ date: s.date, kind: s.kind, load: s.load })),
+    workoutLogs: mainLiftLogs,
+  });
+  const weeklyLoad = computeWeeklyLoad(dailyLoads);
+  const loadRamp = computeWeekOverWeekRamp(weeklyLoad);
+  const latestRampPct = loadRamp.length > 0 ? loadRamp[loadRamp.length - 1].pctChange : null;
+
+  const breastKickByWeek = new Map<string, number>();
+  for (const s of swimSessions) {
+    const wk = mondayOf(s.date);
+    breastKickByWeek.set(wk, (breastKickByWeek.get(wk) ?? 0) + (s.breastKickM ?? 0));
+  }
+  const thisWeekBreastKickM = breastKickByWeek.get(weekStart) ?? 0;
+  const priorBreastKickWeeks = Array.from({ length: 4 }, (_, i) => breastKickByWeek.get(addDaysISO(weekStart, -7 * (i + 1))) ?? 0);
+  const priorBreastKickWithData = priorBreastKickWeeks.filter((m) => m > 0);
+  const breastKickBaselineM =
+    priorBreastKickWithData.length > 0 ? priorBreastKickWithData.reduce((a, b) => a + b, 0) / priorBreastKickWithData.length : null;
+  const breastKickRatio = breastKickBaselineM !== null && breastKickBaselineM > 0 ? thisWeekBreastKickM / breastKickBaselineM : null;
 
   const latestSoreness = sorenessLogs[0];
   const recentSoreness =
     latestSoreness && (latestSoreness.date === today || latestSoreness.date === addDaysISO(today, -1))
       ? { rating: latestSoreness.rating1to5, area: latestSoreness.area, date: latestSoreness.date }
       : null;
-  const signals = computeReadinessSignals({ lastSleepHours: lastSleep, cmjTrend, acwrRatio: latestRatio, recentSoreness });
+  const signals = computeReadinessSignals({
+    lastSleepHours: lastSleep,
+    cmjLatestCm,
+    cmjBaselineCm,
+    weeklyLoadRampPct: latestRampPct,
+    breastKickRatio,
+    recentSoreness,
+  });
   const overall: ReadinessLight = signals.some((s) => s.light === "red")
     ? "red"
     : signals.some((s) => s.light === "yellow")

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { AlertCard } from "@/components/ui/AlertCard";
 import { Button } from "@/components/ui/Button";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
 import { GlassTooltip, PatternLegend } from "./ChartTooltip";
@@ -61,8 +60,6 @@ export function LoadSection({
   offset: number;
 }) {
   const [tab, setTab] = useState<TabKey>("tonnage");
-  const latestRatio = acwr.length > 0 ? acwr[acwr.length - 1].ratio : null;
-  const flagged = latestRatio !== null && latestRatio > 1.5;
   const periodWord = period === "week" ? "week" : "month";
 
   const acwrRows = acwr.filter((a) => a.ratio !== null).map((a) => ({ date: a.date, value: a.ratio as number }));
@@ -73,16 +70,6 @@ export function LoadSection({
 
   return (
     <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
-      {flagged && (
-        <div className="md:col-span-2">
-          <AlertCard
-            tone="danger"
-            title="Acute:chronic ratio elevated"
-            body={`Current ratio ${latestRatio!.toFixed(2)} is above 1.5 — trim this week's volume before it compounds.`}
-          />
-        </div>
-      )}
-
       <div>
         <SectionLabel>Daily session load (RPE × time-on-task)</SectionLabel>
         <GlassCard variant="open">
@@ -127,11 +114,11 @@ export function LoadSection({
                 previousAvailable={acwrCmp.hasPrevious}
               />
               <ComparisonLine current={acwrCmp.current} previous={acwrCmp.previous} color="var(--rtd-orange)" height={140} labels={acwrLabels} />
-              <div className="text-caption text-[var(--rtd-text-tertiary)]">
-                Flag above <span style={{ color: "var(--rtd-red)" }}>1.5</span>
-              </div>
             </>
           )}
+          <div className="text-caption text-[var(--rtd-text-tertiary)] pt-1 border-t border-[var(--rtd-hairline)]">
+            Acute-to-chronic ratios are widely used but have known statistical problems and no demonstrated causal link to injury [strong critique — Impellizzeri 2020] — shown here as a description of training load, not a risk score.
+          </div>
         </GlassCard>
       </div>
 

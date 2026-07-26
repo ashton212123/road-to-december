@@ -12,6 +12,7 @@ import type {
   SorenessLog,
   WaterLog,
   SwimSession,
+  SessionLoad,
   Settings,
 } from "./schema";
 
@@ -39,6 +40,7 @@ export type AnalyticsPageData = {
   timeTo15m: TimeTo15m[];
   meetsWithEvents: AnalyticsMeetWithEvents[];
   swimSessions: SwimSession[];
+  sessionLoads: SessionLoad[];
   foodLogs: FoodLog[];
   sleepLogs: SleepLog[];
   sorenessLogs: SorenessLog[];
@@ -111,6 +113,12 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
                duration_min as "durationMin", session_rpe::text as "sessionRpe"
         from swim_sessions order by date desc limit 60
       ) t) as "swimSessions",
+
+      (select coalesce(json_agg(t), '[]') from (
+        select id, date, kind, source_id as "sourceId", rpe::text as "rpe", duration_min as "durationMin",
+               load, created_at as "createdAt"
+        from session_loads where date >= ${sinceISO} order by date desc
+      ) t) as "sessionLoads",
 
       (select coalesce(json_agg(t), '[]') from (
         select id, date, time_slot as "timeSlot", description, kcal, protein_g::text as "proteinG",
