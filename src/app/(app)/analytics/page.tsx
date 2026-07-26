@@ -14,10 +14,12 @@ import { computeWeeklyTonnage, computeWeeklyHardSets } from "@/lib/analytics/ton
 import { withRetry } from "@/lib/db/withRetry";
 import { loadTakeaway, powerTakeaway, bodyweightTakeaway } from "@/lib/analytics/takeaways";
 import { getStrengthTakeaway } from "@/lib/coach/strengthTakeaway";
-import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
+import { computeProteinTargetG } from "@/lib/fuel/targets";
+import { computeEnergyTarget, computeAutoEnergyPhase } from "@/lib/fuel/energyModel";
 import { recentPeriodStarts, periodLabel, type Period } from "@/lib/analytics/periods";
 import { buildImprovementMatrix } from "@/lib/analytics/improvementMatrix";
 import { buildSwimViewModel } from "@/lib/swim/viewModel";
+import { seasonData } from "@/lib/data/season-data";
 
 const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
   "Back squat": { label: "Back squat", goalKg: 100 },
@@ -29,15 +31,17 @@ const MAIN_LIFT_TARGETS: Record<string, { label: string; goalKg: number }> = {
 // Tagged "analytics-data" -- every log-writing server action revalidates
 // this tag, so a warm cache is never stale after a write, only ever stale
 // for the seconds between a write and its updateTag call.
-// Cache key versioned (now v3) because getAnalyticsPageDataRaw's column/field
+// Cache key versioned (now v4) because getAnalyticsPageDataRaw's column/field
 // set keeps changing (course/session_type/zone columns loop 36; sessionLoads
-// loop 37) -- the tag alone only invalidates on the next log-write, so a
-// same-day cache entry warmed before this deploy would otherwise keep
-// serving rows without the new fields. Bump this again any time
-// getAnalyticsPageDataRaw's shape changes.
+// loop 37; kcal_target_override/energy_phase loop 38) -- the tag alone only
+// invalidates on the next log-write, so a same-day cache entry warmed before
+// this deploy would otherwise keep serving rows without the new fields.
+// Bump this again any time getAnalyticsPageDataRaw's shape changes -- v3->v4
+// was missed on the loop 38 settingsRow hotfix and caused a live regression
+// (stale pre-fix rows served from cache, crashing on undefined.kcalTargetOverride).
 const getCachedAnalyticsPageData = unstable_cache(
   async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO),
-  ["analytics-page-data-v3"],
+  ["analytics-page-data-v4"],
   { tags: ["analytics-data"] }
 );
 
@@ -152,12 +156,27 @@ async function AnalyticsContent({
 
   // Improvement matrix: one row per tracked metric, aggregated by the
   // selected week/month period, with a plain daily-adherence-% approximation
-  // for kcal/protein (target computed per-day for kcal since it varies at
-  // the bulk-window boundary; protein target uses the latest known weight --
-  // exact historical weight-at-the-time isn't worth the extra complexity at
-  // this scale).
+  // for kcal/protein (protein target uses the latest known weight; kcal
+  // target uses ONE energy target computed for today's weight-response,
+  // applied across the whole historical window -- exact historical
+  // weight-at-the-time isn't worth the extra complexity at this scale, and
+  // recomputing a fresh weight-response target per historical day would be
+  // both far more expensive and not meaningfully more accurate this far back).
   const latestWeightKg = weightSeries.length > 0 ? Number(weightSeries[weightSeries.length - 1].kg) : 63;
   const proteinTargetMin = computeProteinTargetG(latestWeightKg).min;
+  const nextMeetDateForEnergy = raw.meetsWithEvents.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0]?.date ?? null;
+  const energyPhaseForAdherence =
+    settingsRow.energyPhase ??
+    computeAutoEnergyPhase({ todayISO: today, bulkWindowEndISO: seasonData.meta.bulkWindowEnd, firstMeetDateISO: nextMeetDateForEnergy });
+  const kcalByDateForEnergy = new Map<string, number>();
+  for (const f of foodLogs) kcalByDateForEnergy.set(f.date, (kcalByDateForEnergy.get(f.date) ?? 0) + f.kcal);
+  const energyTargetForAdherence = computeEnergyTarget({
+    todayISO: today,
+    energyPhase: energyPhaseForAdherence,
+    kcalTargetOverride: settingsRow.kcalTargetOverride,
+    weighIns: weighIns.map((w) => ({ date: w.date, kg: Number(w.kg) })),
+    recentKcal: [...kcalByDateForEnergy.entries()].map(([date, kcal]) => ({ date, kcal })),
+  });
   const foodByDate = new Map<string, { kcal: number; proteinG: number }[]>();
   for (const f of foodLogs) {
     if (!foodByDate.has(f.date)) foodByDate.set(f.date, []);
@@ -168,8 +187,7 @@ async function AnalyticsContent({
   for (const [date, entries] of foodByDate) {
     const kcalTotal = entries.reduce((s, e) => s + e.kcal, 0);
     const proteinTotal = entries.reduce((s, e) => s + e.proteinG, 0);
-    const kcalTargetForDay = computeKcalTarget(date).min;
-    kcalAdherenceDaily.push({ date, pct: (kcalTotal / kcalTargetForDay) * 100 });
+    kcalAdherenceDaily.push({ date, pct: (kcalTotal / energyTargetForAdherence.low) * 100 });
     proteinAdherenceDaily.push({ date, pct: (proteinTotal / proteinTargetMin) * 100 });
   }
   const waterByDate = new Map<string, number>();
@@ -212,7 +230,7 @@ async function AnalyticsContent({
     .map((t) => t.timeMs / 1000);
 
   const foodAdherence7d = [...foodByDate.entries()]
-    .map(([date, entries]) => ({ date, pct: (entries.reduce((s, e) => s + e.kcal, 0) / computeKcalTarget(date).min) * 100 }))
+    .map(([date, entries]) => ({ date, pct: (entries.reduce((s, e) => s + e.kcal, 0) / energyTargetForAdherence.low) * 100 }))
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .slice(-7);
   const fuelAdherenceAvgPct =
@@ -283,7 +301,7 @@ async function AnalyticsContent({
         foodAdherenceByDate={[...foodByDate.entries()].map(([date, entries]) => ({
           date,
           kcal: entries.reduce((s, e) => s + e.kcal, 0),
-          kcalTargetMin: computeKcalTarget(date).min,
+          kcalTargetMin: energyTargetForAdherence.low,
         }))}
       />
   );

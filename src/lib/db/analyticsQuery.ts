@@ -140,7 +140,8 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
 
       (select row_to_json(t) from (
         select id, asean_confirmed as "aseanConfirmed", water_target_ml as "waterTargetMl", weight_unit as "weightUnit",
-               training_status as "trainingStatus", training_status_since as "trainingStatusSince"
+               training_status as "trainingStatus", training_status_since as "trainingStatusSince",
+               kcal_target_override as "kcalTargetOverride", energy_phase as "energyPhase"
         from settings where id = 'singleton'
       ) t) as "settingsRow"
   `);

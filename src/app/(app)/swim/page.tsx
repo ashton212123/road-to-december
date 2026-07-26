@@ -40,7 +40,7 @@ const SwimAnalysisView = dynamic(() => import("@/components/analytics/SwimAnalys
 // Same batch + tag (and same versioned key, see analytics/page.tsx) as
 // Analytics: one cached round trip feeds both pages, and every log write
 // revalidates it.
-const getCachedData = unstable_cache(async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO), ["analytics-page-data-v3"], {
+const getCachedData = unstable_cache(async (sinceISO: string) => getAnalyticsPageDataRaw(sinceISO), ["analytics-page-data-v4"], {
   tags: ["analytics-data"],
 });
 

@@ -47,12 +47,14 @@ import {
   getUndoneBusinessTasks,
   getWorkoutLogsSince,
   getSwimSessions,
+  getFoodLogsSince,
 } from "@/lib/db/queries";
 import { computeProfit } from "@/lib/business/profit";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
+import { computeEnergyTarget, computeAutoEnergyPhase } from "@/lib/fuel/energyModel";
 import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
 import { evaluateAlerts } from "@/lib/rules/engine";
-import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
 import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
@@ -98,7 +100,7 @@ const handler = createMcpHandler(
         const settingsRowPromise = getSettingsRow();
         const todaysFoodPromise = getFoodLogsForDate(today);
         const weighIns21Promise = getWeighIns(21);
-        const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts] =
+        const [allPhases, latestWeighIn, weighInHistory, todaysFood, todaysWater, settingsRow, alerts, recentFoodLogs, allMeets] =
           await Promise.all([
             getAllPhasesWithSessions(),
             getLatestWeighIn(),
@@ -110,9 +112,25 @@ const handler = createMcpHandler(
               ([settingsRow, todaysFood, weighIns21]) =>
                 evaluateAlerts(undefined, { settingsRow, todaysFood, weighIns21 })
             ),
+            getFoodLogsSince(addDaysISO(today, -13)),
+            getAllMeetsWithEvents(),
           ]);
         const currentPhase = getCurrentPhase(allPhases, today);
-        const kcalTarget = computeKcalTarget(today);
+        const nextMeetDate = allMeets.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0]?.date ?? null;
+        const energyPhase = settingsRow.energyPhase ?? computeAutoEnergyPhase({
+          todayISO: today,
+          bulkWindowEndISO: seasonData.meta.bulkWindowEnd,
+          firstMeetDateISO: nextMeetDate,
+        });
+        const recentKcalByDate = new Map<string, number>();
+        for (const f of recentFoodLogs) recentKcalByDate.set(f.date, (recentKcalByDate.get(f.date) ?? 0) + f.kcal);
+        const kcalTarget = computeEnergyTarget({
+          todayISO: today,
+          energyPhase,
+          kcalTargetOverride: settingsRow.kcalTargetOverride,
+          weighIns: weighInHistory.map((w) => ({ date: w.date, kg: Number(w.kg) })),
+          recentKcal: [...recentKcalByDate.entries()].map(([date, kcal]) => ({ date, kcal })),
+        });
         const avgWeight = sevenDayAverage(weighInHistory) ?? Number(latestWeighIn?.kg ?? 63);
         const proteinTarget = computeProteinTargetG(avgWeight);
 

@@ -187,7 +187,9 @@ export const settings = pgTable("settings", {
   // exactly when status is "healthy".
   trainingStatus: text("training_status").notNull().default("healthy").$type<"healthy" | "sick" | "injured" | "break">(),
   trainingStatusSince: date("training_status_since"),
-  energyPhase: text("energy_phase").notNull().default("gain").$type<"gain" | "maintain" | "sharpen">(),
+  // null = auto-follow the season calendar (computeAutoEnergyPhase, loop 38);
+  // non-null = an explicit override the athlete/coach set in Settings.
+  energyPhase: text("energy_phase").$type<"gain" | "maintain" | "sharpen">(),
   kcalTargetOverride: integer("kcal_target_override"),
   poolCourseDefault: text("pool_course_default").notNull().default("SCM").$type<"SCM" | "LCM">(),
 });

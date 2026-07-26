@@ -6,13 +6,17 @@ import {
   getCurrentPhase,
   getLatestWeighIn,
   getFoodLogsForDate,
+  getFoodLogsSince,
   getWaterLogsForDate,
   getSettingsRow,
   getWorkoutLogsSince,
   getAllMeetsWithEvents,
   getSwimTimes,
+  getWeighIns,
 } from "@/lib/db/queries";
-import { computeKcalTarget, computeProteinTargetG } from "@/lib/fuel/targets";
+import { computeProteinTargetG } from "@/lib/fuel/targets";
+import { computeEnergyTarget, computeAutoEnergyPhase } from "@/lib/fuel/energyModel";
+import { seasonData } from "@/lib/data/season-data";
 import { computeConsistencyPct } from "@/lib/analytics/streak";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
 import { addDaysISO } from "@/lib/time";
@@ -54,7 +58,7 @@ const FALLBACK_SETTINGS = {
   weightUnit: "kg" as const,
   trainingStatus: "healthy" as const,
   trainingStatusSince: null,
-  energyPhase: "gain" as const,
+  energyPhase: null,
   kcalTargetOverride: null,
   poolCourseDefault: "SCM" as const,
 };
@@ -64,7 +68,7 @@ export async function getCoachAppContext() {
   const today = todayManilaISO();
   const todayKey = todayDayKey();
 
-  const [allPhases, latestWeighIn, todaysFood, todaysWater, settingsRow, recentWorkoutLogs, meetsWithEvents, swimTimes, athleteModel] =
+  const [allPhases, latestWeighIn, todaysFood, todaysWater, settingsRow, recentWorkoutLogs, meetsWithEvents, swimTimes, athleteModel, weighInHistory, recentFoodLogs] =
     await Promise.all([
       withFallback(getAllPhasesWithSessions(), []),
       withFallback(getLatestWeighIn(), null),
@@ -75,6 +79,8 @@ export async function getCoachAppContext() {
       withFallback(getAllMeetsWithEvents(), []),
       withFallback(getSwimTimes(50), []),
       withFallback(getAthleteModel(), null),
+      withFallback(getWeighIns(21), []),
+      withFallback(getFoodLogsSince(addDaysISO(today, -13)), []),
     ]);
 
   const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
@@ -85,7 +91,19 @@ export async function getCoachAppContext() {
     loggedDates: new Set(recentWorkoutLogs.map((l) => l.date)),
     excusedFromISO: settingsRow.trainingStatus === "healthy" ? null : settingsRow.trainingStatusSince,
   });
-  const kcalTarget = computeKcalTarget(today);
+  const nextMeetDateForEnergy = meetsWithEvents.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0]?.date ?? null;
+  const energyPhase =
+    settingsRow.energyPhase ??
+    computeAutoEnergyPhase({ todayISO: today, bulkWindowEndISO: seasonData.meta.bulkWindowEnd, firstMeetDateISO: nextMeetDateForEnergy });
+  const recentKcalByDate = new Map<string, number>();
+  for (const f of recentFoodLogs) recentKcalByDate.set(f.date, (recentKcalByDate.get(f.date) ?? 0) + f.kcal);
+  const kcalTarget = computeEnergyTarget({
+    todayISO: today,
+    energyPhase,
+    kcalTargetOverride: settingsRow.kcalTargetOverride,
+    weighIns: weighInHistory.map((w) => ({ date: w.date, kg: Number(w.kg) })),
+    recentKcal: [...recentKcalByDate.entries()].map(([date, kcal]) => ({ date, kcal })),
+  });
   const proteinTarget = computeProteinTargetG(latestWeighIn ? Number(latestWeighIn.kg) : 63);
   const kcalToday = todaysFood.reduce((s, f) => s + f.kcal, 0);
   const proteinToday = todaysFood.reduce((s, f) => s + Number(f.proteinG), 0);
@@ -130,7 +148,8 @@ export async function getCoachAppContext() {
     trainingStatusSince: settingsRow.trainingStatusSince,
     weightKg: latestWeighIn ? Number(latestWeighIn.kg) : null,
     kcalToday,
-    kcalTarget: [kcalTarget.min, kcalTarget.max],
+    kcalTarget: [kcalTarget.low, kcalTarget.high],
+    kcalTargetRationale: kcalTarget.rationale,
     proteinTodayG: Math.round(proteinToday),
     proteinTargetMinG: proteinTarget.min,
     waterTodayMl: waterToday,

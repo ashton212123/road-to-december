@@ -23,16 +23,30 @@ export type AiMacroItem = {
 
 const VALID_TIME_SLOTS = ["pre_race_pace", "breakfast", "lunch", "pre_gym", "dinner", "snack", "bedtime"];
 
-const SYSTEM_PROMPT = `You are a sports-nutrition macro estimator for a 63kg competitive swimmer training in the Philippines, prepping for an NCAA meet. The athlete will describe what they ate in free text, sometimes across multiple meals in one message.
+export type MacroBudgetContext = {
+  avgWeightKg: number;
+  remainingKcal: number;
+  remainingProteinG: number;
+  remainingCarbsG: number;
+  remainingFatG: number;
+};
+
+function buildSystemPrompt(avgWeightKg: number): string {
+  return `You are a sports-nutrition macro estimator for a ${avgWeightKg.toFixed(0)}kg competitive swimmer training in the Philippines, prepping for an NCAA meet. The athlete will describe what they ate in free text, sometimes across multiple meals in one message.
 
 You know Filipino food well: adobo, sinigang, tocino, tapsilog-style meals, silog rice portions, lechon, pancit, halo-halo, etc. Rice is usually described in cups (1 cup cooked rice ≈ 200g ≈ 260 kcal) — assume standard restaurant/home portions unless the athlete specifies otherwise, and use realistic COOKED weights, not raw.
 
+Portion realism matters more than precision. When the athlete is vague, assume the LARGER realistic portion for a 17-year-old male training 15+ hours a week — under-estimating a swimmer's intake is the more costly error here. State the assumption you made.
+
 For each distinct food/meal item in the message, return one entry with your best estimate. Always state your portion assumption in one short clause (e.g. "assumed 1.5 cups cooked rice ≈ 280g"). If the athlete names a time of day or meal (breakfast/lunch/dinner/pre_gym/snack/bedtime/pre_race_pace), set timeSlot to the closest match from that exact set; otherwise omit timeSlot entirely and let the caller default it.
+
+You may be given the athlete's remaining macro budget for today -- use it only to sanity-check your estimate against what's plausible (e.g. don't casually estimate a snack at 3x his entire remaining kcal budget without noting it), never to inflate or deflate a genuine reading of what he described.
 
 Rate your own confidence: "high" for common, well-specified foods; "medium" for reasonable guesses on ambiguous portions; "low" for vague or unusual descriptions.
 
 Respond with ONLY a JSON object of this exact shape, no other text:
 {"items": [{"timeSlot": "lunch", "name": "Chicken adobo", "portionDesc": "1.5 cups rice + 200g chicken adobo", "kcal": 650, "proteinG": 35, "carbsG": 70, "fatG": 22, "confidence": "medium", "assumptions": "assumed 1.5 cups cooked rice and a standard adobo serving with skin-on thigh"}]}`;
+}
 
 function normalizeItem(raw: unknown): AiMacroItem | null {
   if (!raw || typeof raw !== "object") return null;
@@ -56,11 +70,17 @@ function normalizeItem(raw: unknown): AiMacroItem | null {
   };
 }
 
-async function callGroq(userContent: string): Promise<AiMacroItem[] | null> {
+function budgetLine(budget: MacroBudgetContext | null): string {
+  if (!budget) return "";
+  return `Remaining today's budget (for plausibility-checking only): ~${Math.round(budget.remainingKcal)} kcal, ~${Math.round(budget.remainingProteinG)}g protein, ~${Math.round(budget.remainingCarbsG)}g carbs, ~${Math.round(budget.remainingFatG)}g fat.`;
+}
+
+async function callGroq(userContent: string, budget: MacroBudgetContext | null): Promise<AiMacroItem[] | null> {
+  const avgWeightKg = budget?.avgWeightKg ?? 63;
   const content = await callGroqChat(
     [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userContent },
+      { role: "system", content: buildSystemPrompt(avgWeightKg) },
+      { role: "user", content: [userContent, budgetLine(budget)].filter(Boolean).join("\n\n") },
     ],
     { jsonMode: true, temperature: 0.2 }
   );
@@ -79,15 +99,16 @@ async function callGroq(userContent: string): Promise<AiMacroItem[] | null> {
 }
 
 /** Estimates macros for every food item described in `text`. Returns null (never throws) if GROQ_API_KEY is unset or the call fails for any reason. */
-export function estimateMacros(text: string): Promise<AiMacroItem[] | null> {
-  return callGroq(text);
+export function estimateMacros(text: string, budget: MacroBudgetContext | null = null): Promise<AiMacroItem[] | null> {
+  return callGroq(text, budget);
 }
 
 /** Re-estimates a single item, optionally steered by a user hint (e.g. "bigger serving", "no oil"). Returns the first item from the model's response. */
 export async function rethinkMacroItem(
   currentName: string,
   currentPortionDesc: string,
-  hint: string
+  hint: string,
+  budget: MacroBudgetContext | null = null
 ): Promise<AiMacroItem | null> {
   const userContent = [
     `Re-estimate this single food item: "${currentName}"${currentPortionDesc ? ` (previously: ${currentPortionDesc})` : ""}.`,
@@ -96,6 +117,6 @@ export async function rethinkMacroItem(
   ]
     .filter(Boolean)
     .join(" ");
-  const items = await callGroq(userContent);
+  const items = await callGroq(userContent, budget);
   return items?.[0] ?? null;
 }

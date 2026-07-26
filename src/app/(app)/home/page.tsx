@@ -35,8 +35,12 @@ import {
   getMainLiftLogHistory,
   getSorenessLogs,
   getSessionLoadsSince,
+  getAllMeetsWithEvents,
 } from "@/lib/db/queries";
-import { computeKcalTarget, computeProteinTargetG, computeCarbsAndFatTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { computeEnergyTarget, computeAutoEnergyPhase } from "@/lib/fuel/energyModel";
+import { buildDayFuelPlan } from "@/lib/fuel/carbPeriodization";
+import { deriveDaySchedule } from "@/lib/fuel/scheduleFromWeek";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { getCanvasSummary, getUrgentAssignments, getCriticalAssignments } from "@/lib/canvas/sync";
 import { computeConsistencyPct } from "@/lib/analytics/streak";
@@ -79,7 +83,7 @@ const MORE_ROW_ITEMS = [
 // sessionLoads -- same reasoning as analytics/page.tsx's cache key: the tag
 // alone doesn't invalidate a same-day entry warmed before this deploy.
 const getCachedHomeData = unstable_cache(
-  async (today: string, weekStart: string) => {
+  async (today: string) => {
     const canvas = await getCanvasSummary({ sync: false });
 
     const [
@@ -99,6 +103,7 @@ const getCachedHomeData = unstable_cache(
       weekFoodLogs,
       sorenessLogs,
       sessionLoads,
+      allMeets,
     ] = await Promise.all([
       getAllPhasesWithSessions(),
       getLatestWeighIn(),
@@ -113,9 +118,10 @@ const getCachedHomeData = unstable_cache(
       getCmjTests(30),
       getSwimTimes(200),
       getMainLiftLogHistory(),
-      getFoodLogsSince(weekStart),
+      getFoodLogsSince(addDaysISO(today, -13)), // 14-day window: also feeds computeEnergyTarget's weight-response average
       getSorenessLogs(1),
       getSessionLoadsSince(addDaysISO(today, -150)),
+      getAllMeetsWithEvents(),
     ]);
 
     return {
@@ -136,6 +142,7 @@ const getCachedHomeData = unstable_cache(
       weekFoodLogs,
       sorenessLogs,
       sessionLoads,
+      allMeets,
     };
   },
   ["home-page-data-v2"],
@@ -165,7 +172,8 @@ export default async function HomePage() {
     weekFoodLogs,
     sorenessLogs,
     sessionLoads,
-  } = await withRetry(() => getCachedHomeData(today, weekStart), { timeoutMs: 15000 });
+    allMeets,
+  } = await withRetry(() => getCachedHomeData(today), { timeoutMs: 15000 });
 
   const alerts = await evaluateAlerts(canvas, {
     settingsRow,
@@ -208,14 +216,33 @@ export default async function HomePage() {
   const weekDay = seasonData.WEEK[DAY_KEY_TO_WEEK_INDEX[todayKey]];
   const todaySession = currentPhase.sessions.find((s) => s.dayKey === todayKey) ?? null;
 
-  const kcalTarget = computeKcalTarget(today);
+  const nextMeetDateForEnergy = allMeets.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0]?.date ?? null;
+  const energyPhase =
+    settingsRow.energyPhase ??
+    computeAutoEnergyPhase({ todayISO: today, bulkWindowEndISO: seasonData.meta.bulkWindowEnd, firstMeetDateISO: nextMeetDateForEnergy });
+  const kcalByDate = new Map<string, number>();
+  for (const f of weekFoodLogs) kcalByDate.set(f.date, (kcalByDate.get(f.date) ?? 0) + f.kcal);
+  const energyTarget = computeEnergyTarget({
+    todayISO: today,
+    energyPhase,
+    kcalTargetOverride: settingsRow.kcalTargetOverride,
+    weighIns: weighInHistory.map((w) => ({ date: w.date, kg: Number(w.kg) })),
+    recentKcal: [...kcalByDate.entries()].map(([date, kcal]) => ({ date, kcal })),
+  });
   const proteinAvgWeight = sevenDayAverage(weighInHistory) ?? Number(latestWeighIn?.kg ?? 63);
   const proteinTarget = computeProteinTargetG(proteinAvgWeight);
   const kcalToday = todaysFood.reduce((sum, f) => sum + f.kcal, 0);
   const proteinToday = todaysFood.reduce((sum, f) => sum + Number(f.proteinG), 0);
   const carbsToday = todaysFood.reduce((sum, f) => sum + Number(f.carbsG ?? 0), 0);
   const fatToday = todaysFood.reduce((sum, f) => sum + Number(f.fatG ?? 0), 0);
-  const carbsFatTarget = computeCarbsAndFatTargetG(kcalTarget.mid, proteinTarget.mid);
+  const todaySchedule = deriveDaySchedule(weekDay);
+  const dayFuelPlan = buildDayFuelPlan({
+    dateISO: today,
+    bodyweightKg: proteinAvgWeight,
+    energyTarget,
+    ...todaySchedule,
+  });
+  const carbsFatTarget = { carbsG: dayFuelPlan.carbsG, fatG: dayFuelPlan.fatG };
   const waterToday = todaysWater.reduce((sum, w) => sum + w.ml, 0);
 
   const weightSeries = [...weighInHistory].sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -247,8 +274,8 @@ export default async function HomePage() {
       athleteWeightKg: latestWeighIn ? Number(latestWeighIn.kg) : null,
       weightTrendKg: weightTrend,
       kcalToday,
-      kcalTargetMin: kcalTarget.min,
-      kcalTargetMax: kcalTarget.max,
+      kcalTargetMin: energyTarget.low,
+      kcalTargetMax: energyTarget.high,
       proteinToday,
       proteinTargetMin: proteinTarget.min,
       consistencyPct: consistency.pct,
@@ -470,7 +497,7 @@ export default async function HomePage() {
           greenSignalCount={readinessSignals.filter((s) => s.light === "green").length}
           totalSignalCount={readinessSignals.length}
           kcalToday={kcalToday}
-          kcalTargetMid={kcalTarget.mid}
+          kcalTargetMid={energyTarget.kcal}
           consistencyPct={consistency.pct}
           className="order-2 md:order-2 col-span-full"
         />
@@ -490,7 +517,7 @@ export default async function HomePage() {
         <div className="grid grid-cols-2 gap-2.5 order-5 md:contents">
           <FuelRingCard
             kcalToday={kcalToday}
-            kcalTargetMid={kcalTarget.mid}
+            kcalTargetMid={energyTarget.kcal}
             proteinToday={proteinToday}
             proteinTargetG={proteinTarget.mid}
             carbsToday={carbsToday}

@@ -1,13 +1,66 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, gte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { foodLogs, waterLogs, weighIns } from "@/lib/db/schema";
-import { todayManilaISO, manilaHourNow } from "@/lib/time";
+import { todayManilaISO, manilaHourNow, addDaysISO, dayKeyForDate } from "@/lib/time";
 import { parseMealText, defaultTimeSlotForHour } from "@/lib/nutrition/parseMealText";
 import { searchFood, type FoodCandidate } from "@/lib/nutrition/usda";
-import { estimateMacros, rethinkMacroItem, type AiMacroItem } from "@/lib/nutrition/aiMacros";
+import { estimateMacros, rethinkMacroItem, type AiMacroItem, type MacroBudgetContext } from "@/lib/nutrition/aiMacros";
+import { computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
+import { computeEnergyTarget, computeAutoEnergyPhase } from "@/lib/fuel/energyModel";
+import { buildDayFuelPlan } from "@/lib/fuel/carbPeriodization";
+import { deriveDaySchedule } from "@/lib/fuel/scheduleFromWeek";
+import { seasonData } from "@/lib/data/season-data";
+import { getSettingsRow, getAllMeetsWithEvents } from "@/lib/db/queries";
+
+const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 };
+
+/** Self-contained: fetches its own weight/food/settings context rather than
+ * trusting client-passed values, same pattern as the swim session actions. */
+async function buildMacroBudgetContext(): Promise<MacroBudgetContext> {
+  const today = todayManilaISO();
+  const [weighInHistory, recentFoodLogs, settingsRow, todaysFood, allMeets] = await Promise.all([
+    db.select().from(weighIns).where(gte(weighIns.date, addDaysISO(today, -29))),
+    db.select().from(foodLogs).where(gte(foodLogs.date, addDaysISO(today, -13))),
+    getSettingsRow(),
+    db.select().from(foodLogs).where(eq(foodLogs.date, today)),
+    getAllMeetsWithEvents(),
+  ]);
+
+  const weighInsNum = weighInHistory.map((w) => ({ date: w.date, kg: Number(w.kg) }));
+  const avgWeightKg = sevenDayAverage(weighInHistory.map((w) => ({ date: w.date, kg: w.kg }))) ?? 63;
+  const nextMeetDate = allMeets.filter((m) => m.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1))[0]?.date ?? null;
+  const energyPhase =
+    settingsRow.energyPhase ??
+    computeAutoEnergyPhase({ todayISO: today, bulkWindowEndISO: seasonData.meta.bulkWindowEnd, firstMeetDateISO: nextMeetDate });
+  const kcalByDate = new Map<string, number>();
+  for (const f of recentFoodLogs) kcalByDate.set(f.date, (kcalByDate.get(f.date) ?? 0) + f.kcal);
+  const energyTarget = computeEnergyTarget({
+    todayISO: today,
+    energyPhase,
+    kcalTargetOverride: settingsRow.kcalTargetOverride,
+    weighIns: weighInsNum,
+    recentKcal: [...kcalByDate.entries()].map(([date, kcal]) => ({ date, kcal })),
+  });
+  const proteinTarget = computeProteinTargetG(avgWeightKg);
+  const schedule = deriveDaySchedule(seasonData.WEEK[DAY_KEY_TO_WEEK_INDEX[dayKeyForDate(today)]]);
+  const dayPlan = buildDayFuelPlan({ dateISO: today, bodyweightKg: avgWeightKg, energyTarget, ...schedule });
+
+  const kcalLogged = todaysFood.reduce((s, f) => s + f.kcal, 0);
+  const proteinLogged = todaysFood.reduce((s, f) => s + Number(f.proteinG), 0);
+  const carbsLogged = todaysFood.reduce((s, f) => s + Number(f.carbsG ?? 0), 0);
+  const fatLogged = todaysFood.reduce((s, f) => s + Number(f.fatG ?? 0), 0);
+
+  return {
+    avgWeightKg,
+    remainingKcal: Math.max(0, energyTarget.kcal - kcalLogged),
+    remainingProteinG: Math.max(0, proteinTarget.mid - proteinLogged),
+    remainingCarbsG: Math.max(0, dayPlan.carbsG - carbsLogged),
+    remainingFatG: Math.max(0, dayPlan.fatG - fatLogged),
+  };
+}
 
 export async function logFoodAction(input: {
   date?: string;
@@ -80,7 +133,8 @@ export type MealReviewItem = {
 export async function estimateMealAction(text: string): Promise<{ items: MealReviewItem[]; usedAi: boolean }> {
   const defaultSlot = defaultTimeSlotForHour(manilaHourNow());
 
-  const aiItems = await estimateMacros(text);
+  const budget = await buildMacroBudgetContext();
+  const aiItems = await estimateMacros(text, budget);
   if (aiItems) {
     return {
       usedAi: true,
@@ -129,7 +183,8 @@ export async function rethinkItemAction(
   portionDesc: string,
   hint: string
 ): Promise<AiMacroItem | null> {
-  return rethinkMacroItem(name, portionDesc, hint);
+  const budget = await buildMacroBudgetContext();
+  return rethinkMacroItem(name, portionDesc, hint, budget);
 }
 
 export async function logMealBatchAction(
