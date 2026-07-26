@@ -129,6 +129,9 @@ export const swimTimes = pgTable("swim_times", {
   splits: jsonb("splits").$type<number[]>(),
   strokeCounts: jsonb("stroke_counts").$type<number[]>(),
   isPb: boolean("is_pb").notNull().default(false),
+  course: text("course").$type<"SCM" | "LCM">(),
+  strokeRates: jsonb("stroke_rates").$type<number[]>(),
+  notes: text("notes"),
 });
 
 export const timeTo15m = pgTable("time_to_15m", {
@@ -184,6 +187,9 @@ export const settings = pgTable("settings", {
   // exactly when status is "healthy".
   trainingStatus: text("training_status").notNull().default("healthy").$type<"healthy" | "sick" | "injured" | "break">(),
   trainingStatusSince: date("training_status_since"),
+  energyPhase: text("energy_phase").notNull().default("gain").$type<"gain" | "maintain" | "sharpen">(),
+  kcalTargetOverride: integer("kcal_target_override"),
+  poolCourseDefault: text("pool_course_default").notNull().default("SCM").$type<"SCM" | "LCM">(),
 });
 
 // ---------- Business tracker ----------
@@ -259,6 +265,7 @@ export const meets = pgTable("meets", {
   name: text("name").notNull(),
   date: date("date").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  course: text("course").$type<"SCM" | "LCM">(),
 });
 
 export const meetEvents = pgTable("meet_events", {
@@ -280,6 +287,11 @@ export type SwimSessionInterval = {
   targetInterval?: string; // e.g. "1:10"
   avgTime?: string; // e.g. "38s" -- per-rep average, not the interval clock
   note?: string; // e.g. "W/U", "W/D", "drill"
+  // Phase-6 additions -- optional so existing stored intervals still typecheck.
+  zone?: string; // Zone from lib/swim/zones.ts
+  isKick?: boolean;
+  isPull?: boolean;
+  isDrill?: boolean;
 };
 
 export const swimSessions = pgTable("swim_sessions", {
@@ -294,7 +306,35 @@ export const swimSessions = pgTable("swim_sessions", {
   // parsed data.
   intervals: jsonb("intervals").$type<SwimSessionInterval[]>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  course: text("course").$type<"SCM" | "LCM">(),
+  sessionType: text("session_type"),
+  zoneDistanceM: jsonb("zone_distance_m").$type<Record<string, number>>(),
+  strokeDistanceM: jsonb("stroke_distance_m").$type<Record<string, number>>(),
+  statedTotalDistanceM: integer("stated_total_distance_m"),
+  breastKickM: integer("breast_kick_m"),
+  durationMin: integer("duration_min"),
+  sessionRpe: numeric("session_rpe", { precision: 3, scale: 1 }),
+  aiSummary: text("ai_summary"),
+  aiAnalysis: text("ai_analysis"),
 });
+
+// Unified session-load store for both swim and gym -- the sRPE (rpe x
+// duration) that drives ACWR/weekly-load everywhere, so gym-only load
+// monitoring stops being ~75% blind to a 9-swims-a-week athlete.
+export const sessionLoads = pgTable(
+  "session_loads",
+  {
+    id: serial("id").primaryKey(),
+    date: date("date").notNull(),
+    kind: text("kind").notNull().$type<"gym" | "swim">(),
+    sourceId: integer("source_id"), // swim_sessions.id when kind='swim'; null for gym
+    rpe: numeric("rpe", { precision: 3, scale: 1 }).notNull(),
+    durationMin: integer("duration_min").notNull(),
+    load: integer("load").notNull(), // rpe x durationMin, stored so it never re-derives differently
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("session_loads_date_kind_source_idx").on(table.date, table.kind, table.sourceId)]
+);
 
 // One AI-generated coach-voiced brief per day, generated on first Home load
 // and cached here so it never regenerates mid-day and never costs a second
@@ -379,6 +419,7 @@ export type CanvasAssignment = typeof canvasAssignments.$inferSelect;
 export type Meet = typeof meets.$inferSelect;
 export type MeetEvent = typeof meetEvents.$inferSelect;
 export type SwimSession = typeof swimSessions.$inferSelect;
+export type SessionLoad = typeof sessionLoads.$inferSelect;
 export type DailyBrief = typeof dailyBriefs.$inferSelect;
 export type CoachMessage = typeof coachMessages.$inferSelect;
 export type KnowledgeNote = typeof knowledge.$inferSelect;

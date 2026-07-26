@@ -54,6 +54,9 @@ const FALLBACK_SETTINGS = {
   weightUnit: "kg" as const,
   trainingStatus: "healthy" as const,
   trainingStatusSince: null,
+  energyPhase: "gain" as const,
+  kcalTargetOverride: null,
+  poolCourseDefault: "SCM" as const,
 };
 
 /** A compact snapshot of today's live training/nutrition/meet state, the same kind of data the MCP tools expose, assembled fresh for each chat turn. */
