@@ -5,7 +5,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { swimTimes, meets, meetEvents, swimSessions } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
-import { estimateDistanceM } from "@/lib/swim/parseSets";
 
 export async function logSwimTimeAction(input: {
   event: string;
@@ -56,12 +55,12 @@ export async function deleteMeetAction(meetId: number) {
   updateTag("analytics-data");
 }
 
-export async function logSwimSessionAction(input: { loadRating: number; setsText: string | null; date?: string }) {
+export async function logSwimSessionAction(input: { loadRating: number; setsText: string | null; distanceM?: number | null; date?: string }) {
   await db.insert(swimSessions).values({
     date: input.date ?? todayManilaISO(),
     loadRating: input.loadRating,
     setsText: input.setsText,
-    parsedDistanceM: input.setsText ? estimateDistanceM(input.setsText) : null,
+    parsedDistanceM: input.distanceM ?? null,
   });
   revalidatePath("/analytics");
   revalidatePath("/home");

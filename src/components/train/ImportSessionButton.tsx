@@ -4,13 +4,13 @@ import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import {
   estimateSessionImportAction,
-  saveSwimSessionImportAction,
   saveGymSessionImportAction,
   checkStravaConfiguredAction,
   sendSessionToStravaAction,
 } from "@/app/(app)/train/importActions";
 import { logSwimSessionAction } from "@/app/(app)/analytics/actions";
-import type { ParseSessionResult, ParsedSwimInterval, ParsedGymExercise } from "@/lib/train/importSession";
+import type { ParseSessionResult, ParsedGymExercise } from "@/lib/train/importSession";
+import { SwimLogSheet } from "@/components/swim/SwimLogSheet";
 
 type TodayExercise = { id: number; name: string };
 
@@ -52,9 +52,6 @@ export function ImportSessionButton({
   }
   const [text, setText] = useState("");
   const [result, setResult] = useState<ParseSessionResult | null | "error">(null);
-  const [swimIntervals, setSwimIntervals] = useState<ParsedSwimInterval[]>([]);
-  const [swimLoadRating, setSwimLoadRating] = useState(5);
-  const [swimNotable, setSwimNotable] = useState<{ event: string; timeMs: number; include: boolean }[]>([]);
   const [gymRows, setGymRows] = useState<GymRow[]>([]);
   const [estimating, startEstimate] = useTransition();
   const [saving, startSave] = useTransition();
@@ -72,8 +69,6 @@ export function ImportSessionButton({
   function reset() {
     setText("");
     setResult(null);
-    setSwimIntervals([]);
-    setSwimNotable([]);
     setGymRows([]);
     setSaved(false);
     setStravaState("idle");
@@ -88,22 +83,15 @@ export function ImportSessionButton({
         return;
       }
       setResult(parsed);
-      if (parsed.kind === "swim") {
-        setSwimIntervals(parsed.session.intervals);
-        setSwimLoadRating(parsed.session.loadRatingSuggestion);
-        setSwimNotable(parsed.session.notable.map((n) => ({ ...n, include: true })));
-      } else {
+      // Swim structuring itself is delegated to SwimLogSheet (loop 33's
+      // AI-first engine) below -- this classify-only call just needs to know
+      // which kind of session it is.
+      if (parsed.kind === "gym") {
         setGymRows(
           parsed.exercises.map((ex) => ({ ...ex, exerciseId: fuzzyMatchId(ex.exerciseName, todayExercises), discarded: false }))
         );
       }
     });
-  }
-
-  function buildSwimSetsText() {
-    return swimIntervals
-      .map((iv) => `${iv.note ? `${iv.note} ` : ""}${iv.reps}x${iv.distanceM} ${iv.stroke}${iv.targetInterval ? ` @${iv.targetInterval}` : ""}`)
-      .join(", ");
   }
 
   // Logging must never dead-end on a parse failure -- if AI structuring
@@ -117,36 +105,27 @@ export function ImportSessionButton({
     });
   }
 
+  // Gym-only now -- swim saving happens inside the embedded SwimLogSheet
+  // below, which calls onSaved to flip this same shared "saved" screen.
   function save() {
     startSave(async () => {
-      if (result === null || result === "error") return;
-      if (result.kind === "swim") {
-        await saveSwimSessionImportAction({
-          loadRating: swimLoadRating,
-          setsText: buildSwimSetsText(),
-          intervals: swimIntervals,
-          totalDistanceM: swimIntervals.reduce((sum, iv) => sum + iv.reps * iv.distanceM, 0),
-          notable: swimNotable.filter((n) => n.include).map(({ event, timeMs }) => ({ event, timeMs })),
-        });
-      } else if (phaseId) {
-        const sets = gymRows
-          .filter((r) => !r.discarded && r.exerciseId !== null)
-          .flatMap((r) => r.sets.map((s) => ({ exerciseId: r.exerciseId as number, weightKg: s.weightKg, reps: s.reps, rpe: s.rpe })));
-        await saveGymSessionImportAction({ phaseId, sets });
-      }
+      if (result === null || result === "error" || result.kind !== "gym" || !phaseId) return;
+      const sets = gymRows
+        .filter((r) => !r.discarded && r.exerciseId !== null)
+        .flatMap((r) => r.sets.map((s) => ({ exerciseId: r.exerciseId as number, weightKg: s.weightKg, reps: s.reps, rpe: s.rpe })));
+      await saveGymSessionImportAction({ phaseId, sets });
       setSaved(true);
     });
   }
 
   function sendToStrava() {
-    if (result === null || result === "error") return;
+    if (result === null || result === "error" || result.kind !== "gym") return;
     startStrava(async () => {
       setStravaState("sending");
       const ok = await sendSessionToStravaAction({
-        kind: result.kind,
-        setsText: result.kind === "swim" ? buildSwimSetsText() : gymRows.map((r) => r.exerciseName).join(", "),
-        loadRating: result.kind === "swim" ? swimLoadRating : undefined,
-        elapsedMinutes: result.kind === "swim" ? Math.max(20, Math.round(swimIntervals.reduce((s, iv) => s + iv.reps * iv.distanceM, 0) / 30)) : 60,
+        kind: "gym",
+        setsText: gymRows.map((r) => r.exerciseName).join(", "),
+        elapsedMinutes: 60,
       });
       setStravaState(ok ? "sent" : "failed");
     });
@@ -256,7 +235,7 @@ export function ImportSessionButton({
                   <span aria-hidden="true">✓</span>
                 </div>
                 <div className="text-body font-semibold text-[var(--rtd-text)]">Session saved</div>
-                {stravaConfigured && (
+                {stravaConfigured && result !== null && result !== "error" && result.kind === "gym" && (
                   <Button variant="secondary" onClick={sendToStrava} disabled={stravaState === "sending" || stravaState === "sent"}>
                     {stravaState === "sent" ? "Sent to Strava ✓" : stravaState === "sending" ? "Sending…" : stravaState === "failed" ? "Couldn't send — retry" : "Send to Strava"}
                   </Button>
@@ -275,100 +254,7 @@ export function ImportSessionButton({
             )}
 
             {!saved && result !== null && result !== "error" && result.kind === "swim" && (
-              <>
-                <div className="flex flex-col gap-2">
-                  {swimIntervals.map((iv, i) => (
-                    <div key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.04] p-2">
-                      <input
-                        type="number"
-                        value={iv.reps}
-                        onChange={(e) => {
-                          const v = Number(e.target.value) || 0;
-                          setSwimIntervals((prev) => prev.map((p, idx) => (idx === i ? { ...p, reps: v } : p)));
-                        }}
-                        className="w-12 rounded bg-white/[0.06] px-1.5 py-1 text-caption outline-none rtd-nums"
-                      />
-                      <span className="text-caption text-[var(--rtd-text-tertiary)]">x</span>
-                      <input
-                        type="number"
-                        value={iv.distanceM}
-                        onChange={(e) => {
-                          const v = Number(e.target.value) || 0;
-                          setSwimIntervals((prev) => prev.map((p, idx) => (idx === i ? { ...p, distanceM: v } : p)));
-                        }}
-                        className="w-14 rounded bg-white/[0.06] px-1.5 py-1 text-caption outline-none rtd-nums"
-                      />
-                      <input
-                        type="text"
-                        value={iv.stroke}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setSwimIntervals((prev) => prev.map((p, idx) => (idx === i ? { ...p, stroke: v } : p)));
-                        }}
-                        className="w-20 rounded bg-white/[0.06] px-1.5 py-1 text-caption outline-none"
-                      />
-                      <input
-                        type="text"
-                        value={iv.targetInterval ?? ""}
-                        placeholder="@interval"
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setSwimIntervals((prev) => prev.map((p, idx) => (idx === i ? { ...p, targetInterval: v || undefined } : p)));
-                        }}
-                        className="w-20 rounded bg-white/[0.06] px-1.5 py-1 text-caption outline-none"
-                      />
-                      {iv.note && (
-                        <span className="text-caption px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] shrink-0">
-                          {iv.note}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setSwimIntervals((prev) => prev.filter((_, idx) => idx !== i))}
-                        aria-label="Remove interval"
-                        className="ml-auto text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-red)] shrink-0"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-caption text-[var(--rtd-text-secondary)]">Session load</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={swimLoadRating}
-                    onChange={(e) => setSwimLoadRating(Math.max(1, Math.min(10, Number(e.target.value) || 5)))}
-                    className="w-14 rounded bg-white/[0.06] px-1.5 py-1 text-caption outline-none rtd-nums"
-                  />
-                  <span className="text-caption text-[var(--rtd-text-tertiary)]">/10</span>
-                </div>
-
-                {swimNotable.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    <div className="rtd-micro-label">Also log as a time</div>
-                    {swimNotable.map((n, i) => (
-                      <label key={i} className="flex items-center gap-2 text-caption text-[var(--rtd-text-secondary)] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={n.include}
-                          onChange={(e) =>
-                            setSwimNotable((prev) => prev.map((p, idx) => (idx === i ? { ...p, include: e.target.checked } : p)))
-                          }
-                        />
-                        {n.event} — {(n.timeMs / 1000).toFixed(2)}s
-                      </label>
-                    ))}
-                  </div>
-                )}
-
-                <Button onClick={save} disabled={saving || swimIntervals.length === 0}>
-                  {saving ? "Saving…" : "Confirm & save"}
-                </Button>
-              </>
+              <SwimLogSheet embedded initialText={text} autoAnalyze onSaved={() => setSaved(true)} />
             )}
 
             {!saved && result !== null && result !== "error" && result.kind === "gym" && (

@@ -15,7 +15,6 @@ import {
 } from "@/lib/db/schema";
 import { getAllPhasesWithSessions, getCurrentPhase, getFoodLogsForDate, getWaterLogsForDate, getWorkoutLogsSince, getSwimTimes } from "@/lib/db/queries";
 import { todayManilaISO, todayDayKey } from "@/lib/time";
-import { estimateDistanceM } from "@/lib/swim/parseSets";
 import { withFallback } from "@/lib/db/withFallback";
 import type { GroqToolDef } from "@/lib/ai/groq";
 
@@ -348,11 +347,15 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
       const rawText = String(args.raw_text ?? "").trim();
       const loadRating = Math.round(Number(args.load_rating)) || 5;
       if (!rawText) return JSON.stringify({ error: "raw_text is required" });
+      // No auto-distance-estimate here -- the regex parser that used to
+      // guess a total from raw_text is retired (loop 33); this coach-tool
+      // path logs load + text only, same as before AI-first swim logging
+      // existed. Use the Log tab for a session with a real distance total.
       await db.insert(swimSessions).values({
         date: today,
         loadRating: Math.min(10, Math.max(1, loadRating)),
         setsText: rawText,
-        parsedDistanceM: estimateDistanceM(rawText),
+        parsedDistanceM: null,
       });
       revalidatePath("/analytics");
       revalidatePath("/swim");

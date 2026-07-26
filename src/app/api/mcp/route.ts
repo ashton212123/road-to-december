@@ -50,7 +50,6 @@ import {
 } from "@/lib/db/queries";
 import { computeProfit } from "@/lib/business/profit";
 import { computeMeetReadiness } from "@/lib/swim/readiness";
-import { estimateDistanceM } from "@/lib/swim/parseSets";
 import { getCanvasSummary, getUrgentAssignments } from "@/lib/canvas/sync";
 import { evaluateAlerts } from "@/lib/rules/engine";
 import { computeKcalTarget, computeProteinTargetG, sevenDayAverage } from "@/lib/fuel/targets";
@@ -637,11 +636,13 @@ const handler = createMcpHandler(
         },
       },
       async ({ load_rating, sets_text, date }) => {
+        // No auto-distance-estimate here -- the regex parser is retired
+        // (loop 33); this MCP path logs load + text only.
         await db.insert(swimSessions).values({
           date: date ?? todayManilaISO(),
           loadRating: load_rating,
           setsText: sets_text ?? null,
-          parsedDistanceM: sets_text ? estimateDistanceM(sets_text) : null,
+          parsedDistanceM: null,
         });
         revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged swim session: load ${load_rating}/10${sets_text ? `, ${sets_text}` : ""}.` }] };

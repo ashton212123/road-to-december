@@ -9,7 +9,7 @@ import {
   SwimLatestSessionCard,
   SwimMeetReadinessCard,
 } from "@/components/analytics/SwimTrainingBlock";
-import { SwimLogHero } from "@/components/analytics/SwimLogHero";
+import { SwimLogSheet } from "@/components/swim/SwimLogSheet";
 import { SwimViewSelector, type SwimView } from "@/components/analytics/SwimViewSelector";
 import { SwimSessionList } from "@/components/analytics/SwimSessionList";
 import { SwimHero } from "@/components/analytics/SwimHero";
@@ -70,7 +70,7 @@ async function SwimContent({ view }: { view: SwimView }) {
 
       {view === "log" && (
         <div className="flex flex-col gap-4">
-          <SwimLogHero />
+          <SwimLogSheet />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             <SwimWeeklyVolumeCard weeks={vm.swimWeekly} />
             <SwimMonthDotsCard

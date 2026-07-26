@@ -3,8 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { workoutLogs, swimSessions, swimTimes } from "@/lib/db/schema";
-import type { SwimSessionInterval } from "@/lib/db/schema";
+import { workoutLogs } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
 import { parseTrainingSession, type ParseSessionResult } from "@/lib/train/importSession";
 import { isStravaConfigured, sendManualActivityToStrava } from "@/lib/integrations/strava";
@@ -15,38 +14,6 @@ import { isStravaConfigured, sendManualActivityToStrava } from "@/lib/integratio
 export async function estimateSessionImportAction(text: string): Promise<ParseSessionResult | null> {
   if (!text.trim()) return null;
   return parseTrainingSession(text);
-}
-
-export async function saveSwimSessionImportAction(input: {
-  date?: string;
-  loadRating: number;
-  setsText: string;
-  intervals: SwimSessionInterval[];
-  totalDistanceM: number;
-  notable: { event: string; timeMs: number }[];
-}) {
-  const date = input.date ?? todayManilaISO();
-
-  await db.insert(swimSessions).values({
-    date,
-    loadRating: input.loadRating,
-    setsText: input.setsText,
-    // Exact, computed from the structured intervals themselves (reps x
-    // distance summed) -- not re-derived via the regex-based estimator the
-    // manual free-text logger uses, which would be strictly lossier here.
-    parsedDistanceM: input.totalDistanceM,
-    intervals: input.intervals,
-  });
-
-  if (input.notable.length > 0) {
-    await db.insert(swimTimes).values(input.notable.map((n) => ({ date, event: n.event, timeMs: n.timeMs })));
-  }
-
-  revalidatePath("/train");
-  revalidatePath("/analytics");
-  revalidatePath("/home");
-  updateTag("analytics-data");
-  updateTag("home-data");
 }
 
 /** Sets are pre-matched to real exercise ids client-side (fuzzy-matched
