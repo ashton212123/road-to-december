@@ -327,7 +327,7 @@ export async function getAllMeetsWithEvents() {
     .leftJoin(meetEvents, eq(meetEvents.meetId, meets.id))
     .orderBy(asc(meets.date));
 
-  const byMeetId = new Map<number, { id: number; name: string; date: string; createdAt: Date; events: (typeof meetEvents.$inferSelect)[] }>();
+  const byMeetId = new Map<number, typeof meets.$inferSelect & { events: (typeof meetEvents.$inferSelect)[] }>();
   for (const { meet, event } of rows) {
     if (!byMeetId.has(meet.id)) byMeetId.set(meet.id, { ...meet, events: [] });
     if (event) byMeetId.get(meet.id)!.events.push(event);

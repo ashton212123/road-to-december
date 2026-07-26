@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { swimSessions, sessionLoads, meets, swimTimes } from "@/lib/db/schema";
 import type { SwimSessionInterval } from "@/lib/db/schema";
 import { todayManilaISO, addDaysISO } from "@/lib/time";
-import { parseSwimSession, type AiSwimSession } from "@/lib/swim/aiSession";
+import { parseSwimSession, parseSwimTimeText, type AiSwimSession, type AiSwimTime } from "@/lib/swim/aiSession";
 import type { Course } from "@/lib/swim/course";
 import { classifySession } from "@/lib/swim/sessionType";
 import type { ZoneDistance } from "@/lib/swim/zones";
@@ -16,6 +16,11 @@ import { generateSessionAnalysis } from "@/lib/swim/sessionAnalysis";
 export async function analyzeSwimSessionAction(text: string): Promise<AiSwimSession | null> {
   if (!text.trim()) return null;
   return parseSwimSession(text);
+}
+
+export async function analyzeSwimTimeAction(text: string): Promise<AiSwimTime | null> {
+  if (!text.trim()) return null;
+  return parseSwimTimeText(text);
 }
 
 export async function saveSwimSessionAction(input: {

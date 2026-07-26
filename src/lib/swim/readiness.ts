@@ -12,19 +12,29 @@
  * projection. Practice times surface as a separate, clearly-labeled training
  * signal (practiceBestMs / practiceTrendMsPerWeek) and never feed the
  * meet-readiness math.
+ *
+ * Course separation (2026-07-26): SCM and LCM race times are also never
+ * blended into one trend -- see course.ts. The regression only ever runs
+ * over race results in the target meet's own course. When there aren't
+ * enough same-course race points, `convertedSupport` names how many
+ * other-course races exist and that a [coaching convention] estimate could
+ * bridge them, but it never becomes a silent numeric projection itself.
  */
 
-export type TimePoint = { date: string; timeMs: number; isRace: boolean };
+import { isConvertible, type Course } from "./course";
+
+export type TimePoint = { date: string; timeMs: number; isRace: boolean; course: Course | null };
 
 export type ReadinessResult = {
-  currentBestMs: number | null; // best RACE result only
+  currentBestMs: number | null; // best RACE result in the target course only
   practiceBestMs: number | null; // best practice result -- training signal, never a race prediction
-  projectedMs: number | null; // from race results only
+  projectedMs: number | null; // from same-course race results only
   gapToTargetMs: number | null; // projectedMs - targetTimeMs; positive = still slower than target
   trendMsPerWeek: number | null; // race trend; negative = getting faster
   practiceTrendMsPerWeek: number | null; // practice trend; negative = getting faster in practice
   confidence: "low" | "medium" | "high" | "none";
-  pointsUsed: number; // race points used in the projection
+  pointsUsed: number; // same-course race points used in the projection
+  convertedSupport: { fromCourse: Course; count: number; note: string } | null;
 };
 
 function daysBetweenISO(fromISO: string, toISO: string): number {
@@ -64,19 +74,34 @@ function linearRegression(points: { date: string; timeMs: number }[]) {
 }
 
 export function computeMeetReadiness(params: {
+  event: string;
   targetTimeMs: number;
-  loggedTimes: TimePoint[]; // any order, mixed race + practice
+  loggedTimes: TimePoint[]; // any order, mixed race + practice, mixed course
   meetDate: string;
   today: string;
+  targetCourse: Course;
 }): ReadinessResult {
-  const { targetTimeMs, meetDate, today, loggedTimes } = params;
+  const { event, targetTimeMs, meetDate, today, loggedTimes, targetCourse } = params;
   const raceTimes = loggedTimes.filter((p) => p.isRace);
   const practiceTimes = loggedTimes.filter((p) => !p.isRace);
 
   const practiceBestMs = practiceTimes.length > 0 ? Math.min(...practiceTimes.map((p) => p.timeMs)) : null;
   const practiceTrendMsPerWeek = practiceTimes.length >= 3 ? Math.round(linearRegression(practiceTimes).slope * 7) : null;
 
-  if (raceTimes.length === 0) {
+  const sameCourseRace = raceTimes.filter((p) => p.course === targetCourse);
+  const otherCourse: Course = targetCourse === "SCM" ? "LCM" : "SCM";
+  const otherCourseRaceCount = raceTimes.filter((p) => p.course === otherCourse).length;
+
+  let convertedSupport: ReadinessResult["convertedSupport"] = null;
+  if (sameCourseRace.length < 2 && otherCourseRaceCount >= 2 && isConvertible(event)) {
+    convertedSupport = {
+      fromCourse: otherCourse,
+      count: otherCourseRaceCount,
+      note: `Only ${sameCourseRace.length} ${targetCourse} race${sameCourseRace.length === 1 ? "" : "s"} on record. This projection uses ${otherCourseRaceCount} ${otherCourse} times converted with a standard estimate [coaching convention] — treat it as indicative, not a prediction.`,
+    };
+  }
+
+  if (sameCourseRace.length === 0) {
     return {
       currentBestMs: null,
       practiceBestMs,
@@ -86,27 +111,44 @@ export function computeMeetReadiness(params: {
       practiceTrendMsPerWeek,
       confidence: "none",
       pointsUsed: 0,
+      convertedSupport,
     };
   }
 
-  const currentBestMs = Math.min(...raceTimes.map((p) => p.timeMs));
+  const currentBestMs = Math.min(...sameCourseRace.map((p) => p.timeMs));
 
-  if (raceTimes.length === 1) {
-    const only = raceTimes[0];
-    return {
-      currentBestMs,
-      practiceBestMs,
-      projectedMs: only.timeMs,
-      gapToTargetMs: only.timeMs - targetTimeMs,
-      trendMsPerWeek: null,
-      practiceTrendMsPerWeek,
-      confidence: "low",
-      pointsUsed: 1,
-    };
+  if (sameCourseRace.length === 1) {
+    const only = sameCourseRace[0];
+    // A converted-support note is a deliberately separate, softer signal --
+    // when it fires, the single same-course point doesn't also masquerade as
+    // "the" projection (spec: "the primary projectedMs stays null in that case").
+    return convertedSupport
+      ? {
+          currentBestMs,
+          practiceBestMs,
+          projectedMs: null,
+          gapToTargetMs: null,
+          trendMsPerWeek: null,
+          practiceTrendMsPerWeek,
+          confidence: "low",
+          pointsUsed: 1,
+          convertedSupport,
+        }
+      : {
+          currentBestMs,
+          practiceBestMs,
+          projectedMs: only.timeMs,
+          gapToTargetMs: only.timeMs - targetTimeMs,
+          trendMsPerWeek: null,
+          practiceTrendMsPerWeek,
+          confidence: "low",
+          pointsUsed: 1,
+          convertedSupport: null,
+        };
   }
 
-  const { slope, intercept, r2, firstDate } = linearRegression(raceTimes);
-  const n = raceTimes.length;
+  const { slope, intercept, r2, firstDate } = linearRegression(sameCourseRace);
+  const n = sameCourseRace.length;
 
   const meetOffsetDays = daysBetweenISO(firstDate, meetDate);
   const todayOffsetDays = daysBetweenISO(firstDate, today);
@@ -130,5 +172,6 @@ export function computeMeetReadiness(params: {
     practiceTrendMsPerWeek,
     confidence,
     pointsUsed: n,
+    convertedSupport: null,
   };
 }

@@ -95,26 +95,30 @@ export async function getCoachAppContext() {
     .filter((m) => m.date >= today)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .slice(0, 2)
-    .map((meet) => ({
-      name: meet.name,
-      date: meet.date,
-      events: meet.events.map((ev) => {
-        const loggedTimes = swimTimes
-          .filter((s) => s.event === ev.event)
-          .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null }));
-        const readiness = computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today });
-        // Explicit raceBest/practiceBest keys so the LLM can't conflate the two series.
-        const { currentBestMs, practiceBestMs, practiceTrendMsPerWeek, ...rest } = readiness;
-        return {
-          event: ev.event,
-          targetTimeMs: ev.targetTimeMs,
-          raceBestMs: currentBestMs,
-          practiceBestMs,
-          practiceTrendMsPerWeek,
-          ...rest,
-        };
-      }),
-    }));
+    .map((meet) => {
+      const targetCourse = meet.course ?? "LCM";
+      return {
+        name: meet.name,
+        date: meet.date,
+        course: meet.course,
+        events: meet.events.map((ev) => {
+          const loggedTimes = swimTimes
+            .filter((s) => s.event === ev.event)
+            .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null, course: s.course }));
+          const readiness = computeMeetReadiness({ event: ev.event, targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today, targetCourse });
+          // Explicit raceBest/practiceBest keys so the LLM can't conflate the two series.
+          const { currentBestMs, practiceBestMs, practiceTrendMsPerWeek, ...rest } = readiness;
+          return {
+            event: ev.event,
+            targetTimeMs: ev.targetTimeMs,
+            raceBestMs: currentBestMs,
+            practiceBestMs,
+            practiceTrendMsPerWeek,
+            ...rest,
+          };
+        }),
+      };
+    });
 
   return {
     today,

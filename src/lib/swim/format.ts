@@ -1,3 +1,10 @@
+import type { Course } from "./course";
+
+/** Short course-label badge text, e.g. for rendering next to a time. Returns null when the course is unknown -- never guess. */
+export function courseBadge(course: Course | null): string | null {
+  return course ?? null;
+}
+
 /** Parses swim clock input ("2:24.53", "83.45", "30") into milliseconds. Returns null if unparseable. */
 export function parseSwimTime(input: string): number | null {
   const trimmed = input.trim();

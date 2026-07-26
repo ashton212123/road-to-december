@@ -26,6 +26,7 @@ export type AnalyticsMeetWithEvents = {
   id: number;
   name: string;
   date: string;
+  course: "SCM" | "LCM" | null;
   events: { id: number; event: string; currentTimeMs: number | null; targetTimeMs: number }[];
 };
 
@@ -81,7 +82,8 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
       ) t) as "jumpTestsRaw",
 
       (select coalesce(json_agg(t), '[]') from (
-        select id, date, event, time_ms as "timeMs", meet_name as "meetName", splits, stroke_counts as "strokeCounts", is_pb as "isPb"
+        select id, date, event, time_ms as "timeMs", meet_name as "meetName", splits, stroke_counts as "strokeCounts", is_pb as "isPb",
+               course, stroke_rates as "strokeRates", notes
         from swim_times order by date desc limit 200
       ) t) as "swimTimes",
 
@@ -91,7 +93,7 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
 
       (select coalesce(json_agg(t), '[]') from (
         select
-          m.id, m.name, m.date,
+          m.id, m.name, m.date, m.course,
           coalesce((
             select json_agg(json_build_object(
               'id', me.id, 'event', me.event, 'currentTimeMs', me.current_time_ms, 'targetTimeMs', me.target_time_ms
@@ -103,7 +105,10 @@ export async function getAnalyticsPageDataRaw(sinceISO: string): Promise<Analyti
 
       (select coalesce(json_agg(t), '[]') from (
         select id, date, load_rating as "loadRating", sets_text as "setsText", parsed_distance_m as "parsedDistanceM",
-               intervals, created_at as "createdAt"
+               intervals, created_at as "createdAt", course, session_type as "sessionType",
+               zone_distance_m as "zoneDistanceM", stroke_distance_m as "strokeDistanceM",
+               stated_total_distance_m as "statedTotalDistanceM", breast_kick_m as "breastKickM",
+               duration_min as "durationMin", session_rpe::text as "sessionRpe"
         from swim_sessions order by date desc limit 60
       ) t) as "swimSessions",
 

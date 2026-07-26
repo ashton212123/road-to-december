@@ -6,11 +6,13 @@ import { deleteMeetAction } from "@/app/(app)/analytics/actions";
 import { formatSwimTime } from "@/lib/swim/format";
 import { todayManilaISO, daysBetween } from "@/lib/time";
 import type { ReadinessResult } from "@/lib/swim/readiness";
+import type { Course } from "@/lib/swim/course";
 
 type Meet = {
   id: number;
   name: string;
   date: string;
+  course: Course | null;
   events: { id: number; event: string; currentTimeMs: number | null; targetTimeMs: number; readiness: ReadinessResult }[];
 };
 
@@ -35,7 +37,14 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
           <GlassCard key={meet.id} className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-body font-semibold">{meet.name}</div>
+                <div className="text-body font-semibold flex items-center gap-1.5">
+                  {meet.name}
+                  {meet.course && (
+                    <span className="text-caption font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-tertiary)]">
+                      {meet.course}
+                    </span>
+                  )}
+                </div>
                 <div className="text-caption text-[var(--rtd-text-secondary)]">
                   {meet.date} · {daysOut >= 0 ? `${daysOut}d out` : `${Math.abs(daysOut)}d ago`}
                 </div>

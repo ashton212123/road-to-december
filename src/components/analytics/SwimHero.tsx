@@ -4,6 +4,7 @@ import { useState } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { formatSwimTime } from "@/lib/swim/format";
 import type { ReadinessResult } from "@/lib/swim/readiness";
+import type { Course } from "@/lib/swim/course";
 
 const EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"];
 
@@ -13,6 +14,7 @@ type MeetEventWithReadiness = {
   readiness: ReadinessResult;
   meetName: string;
   meetDate: string;
+  course: Course | null;
 };
 
 const CONFIDENCE_COLOR: Record<ReadinessResult["confidence"], string> = {
@@ -32,14 +34,22 @@ export function SwimHero({
   const [event, setEvent] = useState("200 Breast");
 
   const times = allSwimTimesByEvent[event] ?? [];
-  const raceTimes = times.filter((t) => t.isRace);
   const practiceTimes = times.filter((t) => !t.isRace);
-  const currentBest = raceTimes.length > 0 ? Math.min(...raceTimes.map((t) => t.timeMs)) : null;
   const practiceBest = practiceTimes.length > 0 ? Math.min(...practiceTimes.map((t) => t.timeMs)) : null;
 
   const nearestMeetEvent = meetEventsFlat
     .filter((e) => e.event === event)
     .sort((a, b) => (a.meetDate < b.meetDate ? -1 : 1))[0];
+  // Course-scoped best (never blended SCM/LCM) when there's a target meet to
+  // scope against; otherwise fall back to the all-course PB, unbadged, so an
+  // event with no meet target still shows something rather than nothing.
+  const raceTimes = times.filter((t) => t.isRace);
+  const currentBest = nearestMeetEvent
+    ? nearestMeetEvent.readiness.currentBestMs
+    : raceTimes.length > 0
+      ? Math.min(...raceTimes.map((t) => t.timeMs))
+      : null;
+  const currentBestCourse = nearestMeetEvent ? nearestMeetEvent.course : null;
   // Only a real trend fit (>=2 race results) earns the "projected" label --
   // a single race point renders its own timeMs verbatim as projectedMs, which
   // would otherwise read as a prediction it isn't.
@@ -65,7 +75,14 @@ export function SwimHero({
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <div className="rtd-micro-label">Current best (race)</div>
+          <div className="rtd-micro-label flex items-center gap-1.5">
+            Current best (race)
+            {currentBestCourse && (
+              <span className="text-caption font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-tertiary)] normal-case tracking-normal">
+                {currentBestCourse}
+              </span>
+            )}
+          </div>
           <div className="rtd-display text-large-title mt-1 transition-[color,opacity] duration-500">
             {currentBest !== null ? formatSwimTime(currentBest) : "—"}
           </div>
@@ -85,6 +102,10 @@ export function SwimHero({
           </div>
         )}
       </div>
+
+      {nearestMeetEvent?.readiness.convertedSupport && (
+        <div className="text-caption text-[var(--rtd-orange)]">{nearestMeetEvent.readiness.convertedSupport.note}</div>
+      )}
 
       {nearestMeetEvent && currentBest !== null && (
         <div className="flex items-center justify-between text-footnote">

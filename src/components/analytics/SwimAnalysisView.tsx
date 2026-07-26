@@ -1,15 +1,104 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import type { SeedPbRow, SeedTarget, SeedSplitBar } from "@/lib/data/types";
+import type { SeedPbRow, SeedTarget } from "@/lib/data/types";
 import { RACE_PLANS, RACE_SKILL_NOTE } from "@/lib/swim/racePlans";
+import { formatSwimTime } from "@/lib/swim/format";
+import type { DpsAnalysis } from "@/lib/swim/dps";
+import type { Bottleneck } from "@/lib/swim/bottlenecks";
 import { chartTheme } from "./chart-theme";
 
 function formatSec(s: number): string {
   return Number.isInteger(s) ? `${s}` : s.toFixed(1);
+}
+
+const CONFIDENCE_COLOR: Record<Bottleneck["confidence"], string> = {
+  high: "var(--rtd-red)",
+  medium: "var(--rtd-orange)",
+  low: "var(--rtd-text-tertiary)",
+};
+
+function BottlenecksSection({ bottlenecks }: { bottlenecks: Bottleneck[] }) {
+  const [showAll, setShowAll] = useState(false);
+  if (bottlenecks.length === 0) return null;
+  const visible = showAll ? bottlenecks : bottlenecks.slice(0, 4);
+
+  return (
+    <div>
+      <SectionLabel>Bottlenecks</SectionLabel>
+      <div className="flex flex-col gap-2.5">
+        {visible.map((b) => (
+          <GlassCard key={b.key} variant="open" className="flex flex-col gap-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-subhead font-semibold text-[var(--rtd-text)]">{b.title}</span>
+              <span
+                className="shrink-0 text-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
+                style={{ background: `${CONFIDENCE_COLOR[b.confidence]}22`, color: CONFIDENCE_COLOR[b.confidence] }}
+              >
+                {b.confidence}
+              </span>
+            </div>
+            <p className="text-caption text-[var(--rtd-text-secondary)]">{b.evidence}</p>
+            <p className="text-caption text-[var(--rtd-text-secondary)]">{b.mechanism}</p>
+            <p className="text-footnote text-[var(--rtd-text)] font-medium">{b.whatToDo}</p>
+            <p className="text-caption text-[var(--rtd-text-tertiary)]">Data used: {b.dataUsed}</p>
+          </GlassCard>
+        ))}
+        {bottlenecks.length > 4 && (
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="text-caption text-[var(--rtd-cyan)] self-start cursor-pointer hover:brightness-110"
+          >
+            {showAll ? "Show fewer" : `Show all ${bottlenecks.length}`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DpsSection({ dps, dpsMissingReason }: { dps: DpsAnalysis | null; dpsMissingReason: string | null }) {
+  return (
+    <div>
+      <SectionLabel>Where the race is lost</SectionLabel>
+      <GlassCard variant="open" className="flex flex-col gap-3">
+        {!dps || dpsMissingReason ? (
+          <>
+            <p className="text-caption text-[var(--rtd-text-secondary)]">{dpsMissingReason}</p>
+            <Link href="/swim?view=meets#log-time" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 self-start">
+              Log a time with splits →
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="text-subhead text-[var(--rtd-text)] leading-snug">{dps.interpretation}</p>
+            <div className="flex flex-col rtd-divide-y">
+              <div className="grid grid-cols-4 gap-2 text-caption text-[var(--rtd-text-tertiary)] pb-1">
+                <span>Length</span>
+                <span className="text-right">Split</span>
+                <span className="text-right">Strokes</span>
+                <span className="text-right">DPS</span>
+              </div>
+              {dps.lengths.map((l) => (
+                <div key={l.index} className="grid grid-cols-4 gap-2 py-1.5 text-footnote rtd-nums">
+                  <span className="text-[var(--rtd-text-secondary)]">#{l.index}</span>
+                  <span className="text-right text-[var(--rtd-text)]">{formatSec(l.splitSec)}s</span>
+                  <span className="text-right text-[var(--rtd-text)]">{l.strokes}</span>
+                  <span className="text-right text-[var(--rtd-text)]">{l.dps.toFixed(2)}m</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </GlassCard>
+    </div>
+  );
 }
 
 /** The recharts-dependent half of the old monolithic SwimSection, split out
@@ -17,23 +106,42 @@ function formatSec(s: number): string {
  * actually opened (next/dynamic import site: swim/page.tsx). Log and Meets
  * views never touch this module. */
 export function SwimAnalysisView({
-  pbRows,
+  pbsByEventAndCourse,
+  seedPbRows,
   targets,
-  splitBars,
   splitAutopsy,
   timeTo15m,
+  dps,
+  dpsMissingReason,
+  bottlenecks,
 }: {
-  pbRows: SeedPbRow[];
+  pbsByEventAndCourse: { event: string; course: "SCM" | "LCM"; timeMs: number; date: string }[];
+  seedPbRows: SeedPbRow[];
   targets: SeedTarget[];
-  splitBars: SeedSplitBar[];
-  splitAutopsy: { date: string; splits: number[]; strokeCounts: number[]; isRace: boolean }[];
+  splitAutopsy: { date: string; event: string; course: "SCM" | "LCM" | null; splits: number[]; strokeCounts: number[]; isRace: boolean }[];
   timeTo15m: { date: string; seconds: number; condition: string }[];
+  dps: DpsAnalysis | null;
+  dpsMissingReason: string | null;
+  bottlenecks: Bottleneck[];
 }) {
   const swimTarget = targets.find((t) => t.id === "swim_200br_200im");
-  const latestRaceSplits = splitAutopsy.find((s) => s.isRace) ?? null;
+  const latestRaceSplits = splitAutopsy.find((s) => s.isRace && s.event === "200 Breast") ?? null;
+  const plan200Br = RACE_PLANS.find((p) => p.event === "200 Breast");
+  const splitCompareData =
+    latestRaceSplits && plan200Br?.targetSplits
+      ? latestRaceSplits.splits.map((actual, i) => ({
+          label: `50 #${i + 1}`,
+          actual,
+          target: (plan200Br.targetSplits as number[])[i],
+        }))
+      : [];
 
   return (
     <div className="flex flex-col gap-4">
+      <BottlenecksSection bottlenecks={bottlenecks} />
+
+      <DpsSection dps={dps} dpsMissingReason={dpsMissingReason} />
+
       <div>
         <SectionLabel>Race plans</SectionLabel>
         <GlassCard variant="open" className="flex flex-col gap-4">
@@ -88,14 +196,29 @@ export function SwimAnalysisView({
       <div>
         <SectionLabel>Personal bests vs goal</SectionLabel>
         <GlassCard variant="open" className="flex flex-col gap-2">
-          {pbRows.map((row) => (
-            <div key={row.name} className="flex items-center justify-between text-footnote">
-              <span className="text-[var(--rtd-text-secondary)]">{row.name}</span>
-              <span className="font-semibold" style={{ color: row.color.startsWith("#") ? row.color : "var(--rtd-text)" }}>
-                {row.time}
-              </span>
-            </div>
-          ))}
+          {pbsByEventAndCourse.length > 0 ? (
+            pbsByEventAndCourse.map((pb) => (
+              <div key={`${pb.event}|${pb.course}`} className="flex items-center justify-between text-footnote">
+                <span className="text-[var(--rtd-text-secondary)] flex items-center gap-1.5">
+                  {pb.event}
+                  <span className="text-caption px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-tertiary)]">{pb.course}</span>
+                </span>
+                <span className="font-semibold text-[var(--rtd-text)] rtd-nums">{formatSwimTime(pb.timeMs)}</span>
+              </div>
+            ))
+          ) : (
+            <>
+              <p className="text-caption text-[var(--rtd-text-tertiary)]">From your program file — no logged race yet for this event.</p>
+              {seedPbRows.map((row) => (
+                <div key={row.name} className="flex items-center justify-between text-footnote">
+                  <span className="text-[var(--rtd-text-secondary)]">{row.name}</span>
+                  <span className="font-semibold" style={{ color: row.color.startsWith("#") ? row.color : "var(--rtd-text)" }}>
+                    {row.time}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
           {swimTarget && (
             <div className="pt-2 mt-1 border-t border-[var(--rtd-hairline)] text-caption text-[var(--rtd-text-secondary)]">
               Goal: {swimTarget.goal} · {swimTarget.why}
@@ -106,22 +229,28 @@ export function SwimAnalysisView({
 
       <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
         <div>
-          <SectionLabel>200 BR split autopsy — you vs target (% of race)</SectionLabel>
+          <SectionLabel>200 BR split autopsy — you vs target (seconds)</SectionLabel>
           <GlassCard variant="open">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={splitBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid {...chartTheme.grid} />
-                <XAxis dataKey="label" {...chartTheme.axis} />
-                <YAxis {...chartTheme.axis} unit="%" />
-                <Tooltip {...chartTheme.tooltip} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="targetPct" name="Target" fill="rgba(235,235,245,0.25)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="yourPct" name="Your race" fill="var(--rtd-blue)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-caption text-[var(--rtd-text-secondary)] mt-2">
-              The 4th 50 gap is the whole story — hold 37.5 on the last 50 and the target time is there.
-            </p>
+            {splitCompareData.length === 0 ? (
+              <EmptyState title="No 200 BR splits logged yet" body="Log exact 50-splits after your next 200 breast race to see this." />
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={splitCompareData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid {...chartTheme.grid} />
+                    <XAxis dataKey="label" {...chartTheme.axis} />
+                    <YAxis {...chartTheme.axis} unit="s" />
+                    <Tooltip {...chartTheme.tooltip} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="target" name="Target" fill="rgba(235,235,245,0.25)" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="actual" name="Your race" fill="var(--rtd-blue)" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <p className="text-caption text-[var(--rtd-text-secondary)] mt-2">
+                  The final-length gap is the whole story — hold the target there and the race time follows.
+                </p>
+              </>
+            )}
           </GlassCard>
         </div>
 

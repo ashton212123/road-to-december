@@ -4,10 +4,13 @@ import { swimTakeaway } from "@/lib/analytics/takeaways";
 import { mondayOf, addDaysISO } from "@/lib/time";
 import type { SwimWeek, ZoneWeek } from "@/components/analytics/SwimTrainingBlock";
 import type { ZoneDistance } from "@/lib/swim/zones";
+import { computeCriticalSpeed } from "@/lib/swim/criticalSpeed";
+import type { Course } from "@/lib/swim/course";
 
 type Raw = Awaited<ReturnType<typeof getAnalyticsPageDataRaw>>;
 
 const SWIM_EVENTS_WITH_SPLITS = ["200 Breast"];
+const IM_EVENTS = ["200 IM", "400 IM"] as const;
 const CANONICAL_EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"];
 
 /** Everything the Swim page (and Analytics' overview takeaway card) derives
@@ -22,28 +25,50 @@ export function buildSwimViewModel(raw: Raw, today: string) {
     .slice(0, 5)
     .map((s) => ({
       date: s.date,
+      event: s.event,
+      course: s.course,
       splits: s.splits as number[],
       strokeCounts: (s.strokeCounts as number[]) ?? [],
       isRace: s.isPb || s.meetName !== null,
     }));
 
-  const meetsWithReadiness = raw.meetsWithEvents.map((meet) => ({
-    id: meet.id,
-    name: meet.name,
-    date: meet.date,
-    events: meet.events.map((ev) => {
-      const loggedTimes = swimTimes
-        .filter((s) => s.event === ev.event)
-        .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null }));
-      return {
-        id: ev.id,
-        event: ev.event,
-        currentTimeMs: ev.currentTimeMs,
-        targetTimeMs: ev.targetTimeMs,
-        readiness: computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today }),
-      };
-    }),
-  }));
+  // Most recent RACE with 4 logged splits per IM event -- the leg-by-leg
+  // splits an IM swims are structurally the same shape (4 entries) as a 200
+  // Breast's 50-splits, just fly/back/breast/free instead of 4x50 breast.
+  const imRaceSplits = Object.fromEntries(
+    IM_EVENTS.map((ev) => {
+      const row = swimTimes.find((s) => s.event === ev && (s.isPb || s.meetName !== null) && s.splits && s.splits.length === 4);
+      return [ev, row ? { splits: row.splits as number[], course: row.course, date: row.date } : null];
+    })
+  ) as Record<(typeof IM_EVENTS)[number], { splits: number[]; course: Course | null; date: string } | null>;
+
+  const criticalSpeed = computeCriticalSpeed(
+    swimTimes
+      .filter((s) => s.course !== null)
+      .map((s) => ({ event: s.event, timeMs: s.timeMs, course: s.course as Course, isRace: s.isPb || s.meetName !== null }))
+  );
+
+  const meetsWithReadiness = raw.meetsWithEvents.map((meet) => {
+    const targetCourse = meet.course ?? "LCM";
+    return {
+      id: meet.id,
+      name: meet.name,
+      date: meet.date,
+      course: meet.course,
+      events: meet.events.map((ev) => {
+        const loggedTimes = swimTimes
+          .filter((s) => s.event === ev.event)
+          .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null, course: s.course }));
+        return {
+          id: ev.id,
+          event: ev.event,
+          currentTimeMs: ev.currentTimeMs,
+          targetTimeMs: ev.targetTimeMs,
+          readiness: computeMeetReadiness({ event: ev.event, targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: meet.date, today, targetCourse }),
+        };
+      }),
+    };
+  });
 
   const latestByEvent = new Map<string, number>();
   for (const s of [...swimTimes].sort((a, b) => (a.date < b.date ? 1 : -1))) {
@@ -81,19 +106,42 @@ export function buildSwimViewModel(raw: Raw, today: string) {
     return { weekStart: w.weekStart, totalM: w.distanceM, zoneDistance };
   });
 
+  const breastKickByWeek = new Map<string, number>();
+  for (const s of swimSessions) {
+    const wk = mondayOf(s.date);
+    breastKickByWeek.set(wk, (breastKickByWeek.get(wk) ?? 0) + (s.breastKickM ?? 0));
+  }
+  const breastKickWeekly = swimWeekly.map((w) => ({ weekStart: w.weekStart, m: breastKickByWeek.get(w.weekStart) ?? 0 }));
+
   const latestSwimSession =
     [...swimSessions].sort((a, b) => (a.date < b.date ? 1 : -1)).find((s) => s.intervals && s.intervals.length > 0) ?? null;
 
   return {
     splitAutopsy,
+    imRaceSplits,
+    criticalSpeed,
+    breastKickWeekly,
     meetsWithReadiness,
     latestTimeByEvent: Object.fromEntries(latestByEvent),
     allSwimTimesByEvent: Object.fromEntries(
       allEventNames.map((ev) => [
         ev,
-        swimTimes.filter((s) => s.event === ev).map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null })),
+        swimTimes
+          .filter((s) => s.event === ev)
+          .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null, course: s.course })),
       ])
     ),
+    pbsByEventAndCourse: (() => {
+      const best = new Map<string, { event: string; course: "SCM" | "LCM"; timeMs: number; date: string }>();
+      for (const s of swimTimes) {
+        if (!(s.isPb || s.meetName !== null)) continue; // race results only -- never a practice-derived PB
+        if (!s.course) continue; // course-unknown times can't be placed in either bucket
+        const key = `${s.event}|${s.course}`;
+        const cur = best.get(key);
+        if (!cur || s.timeMs < cur.timeMs) best.set(key, { event: s.event, course: s.course, timeMs: s.timeMs, date: s.date });
+      }
+      return [...best.values()].sort((a, b) => (a.event === b.event ? a.course.localeCompare(b.course) : a.event.localeCompare(b.event)));
+    })(),
     swimWeekly,
     zoneWeekly,
     latestSwimSession,

@@ -3,8 +3,10 @@
 import { useState, useTransition } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { createMeetAction } from "@/app/(app)/analytics/actions";
 import { parseSwimTime } from "@/lib/swim/format";
+import type { Course } from "@/lib/swim/course";
 
 const EVENTS = ["50 Breast", "100 Breast", "200 Breast", "200 IM", "400 IM"];
 
@@ -14,6 +16,7 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
+  const [course, setCourse] = useState<Course>("LCM");
   const [rows, setRows] = useState<EventRow[]>(
     EVENTS.map((event) => ({ event, targetTime: "", currentTime: "" }))
   );
@@ -54,10 +57,11 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
       return;
     }
     startTransition(async () => {
-      await createMeetAction({ name: name.trim(), date, events });
+      await createMeetAction({ name: name.trim(), date, course, events });
       setOpen(false);
       setName("");
       setDate("");
+      setCourse("LCM");
       setRows(EVENTS.map((event) => ({ event, targetTime: "", currentTime: "" })));
     });
   }
@@ -79,6 +83,15 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
           className="rounded-lg bg-white/[0.06] px-2.5 py-2 text-subhead outline-none col-span-2"
         />
       </div>
+
+      <SegmentedControl
+        options={[
+          { value: "LCM", label: "LCM (50m)" },
+          { value: "SCM", label: "SCM (25m)" },
+        ]}
+        value={course}
+        onChange={(v) => setCourse(v as Course)}
+      />
 
       <div className="flex flex-col gap-1.5">
         {rows.map((row, i) => (

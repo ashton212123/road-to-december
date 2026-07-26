@@ -6,6 +6,7 @@ import { formatSwimTime } from "@/lib/swim/format";
 import { ZONES, type ZoneDistance } from "@/lib/swim/zones";
 import type { SwimSessionInterval } from "@/lib/db/schema";
 import type { ReadinessResult } from "@/lib/swim/readiness";
+import type { Course } from "@/lib/swim/course";
 
 // The swim-training trio: weekly volume, month dot calendar, latest imported
 // session breakdown. First components on the liquid-gradient direction --
@@ -248,11 +249,12 @@ export type MeetReadinessMeet = {
   id: number;
   name: string;
   date: string;
+  course: Course | null;
   events: {
     id: number;
     event: string;
     targetTimeMs: number;
-    readiness: Pick<ReadinessResult, "currentBestMs" | "confidence" | "practiceBestMs" | "practiceTrendMsPerWeek">;
+    readiness: Pick<ReadinessResult, "currentBestMs" | "confidence" | "practiceBestMs" | "practiceTrendMsPerWeek" | "convertedSupport">;
   }[];
 };
 
@@ -306,7 +308,14 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
           return (
             <div key={meet.id} className="flex flex-col gap-1.5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-subhead font-semibold text-[var(--rtd-text)] truncate">{meet.name}</span>
+                <span className="text-subhead font-semibold text-[var(--rtd-text)] truncate flex items-center gap-1.5">
+                  {meet.name}
+                  {meet.course && (
+                    <span className="text-caption font-semibold px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-tertiary)]">
+                      {meet.course}
+                    </span>
+                  )}
+                </span>
                 <span className="shrink-0 text-caption font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] rtd-nums">
                   {daysOut(today, meet.date)}d out
                 </span>
@@ -343,6 +352,9 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
                             practice: {formatSwimTime(practiceBestMs)}
                             {practiceTrend !== null && ` · trending ${formatTrend(practiceTrend)}`}
                           </span>
+                        )}
+                        {ev.readiness.convertedSupport && (
+                          <span className="text-caption text-[var(--rtd-orange)]">{ev.readiness.convertedSupport.note}</span>
                         )}
                       </div>
                     );

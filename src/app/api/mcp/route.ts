@@ -399,16 +399,18 @@ const handler = createMcpHandler(
           event: z.string().describe("e.g. '200 Breast', '200 IM'"),
           time_ms: z.number().describe("Total time in milliseconds"),
           meet_name: z.string().optional(),
+          course: z.enum(["SCM", "LCM"]).optional().describe("25m (SCM) or 50m (LCM) pool -- omit if unknown, never guess"),
           splits: z.array(z.number()).optional().describe("50m split times in seconds"),
           stroke_counts: z.array(z.number()).optional(),
         },
       },
-      async ({ event, time_ms, meet_name, splits, stroke_counts }) => {
+      async ({ event, time_ms, meet_name, course, splits, stroke_counts }) => {
         await db.insert(swimTimes).values({
           date: todayManilaISO(),
           event,
           timeMs: time_ms,
           meetName: meet_name ?? null,
+          course: course ?? null,
           splits: splits ?? null,
           strokeCounts: stroke_counts ?? null,
         });
@@ -665,20 +667,24 @@ const handler = createMcpHandler(
         }
         const today = todayManilaISO();
         const allSwimTimes = await getSwimTimes(200);
-        const result = filtered.map((m) => ({
-          meet: m.name,
-          date: m.date,
-          events: m.events.map((ev) => {
-            const loggedTimes = allSwimTimes
-              .filter((s) => s.event === ev.event)
-              .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null }));
-            return {
-              event: ev.event,
-              targetTimeMs: ev.targetTimeMs,
-              ...computeMeetReadiness({ targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: m.date, today }),
-            };
-          }),
-        }));
+        const result = filtered.map((m) => {
+          const targetCourse = m.course ?? "LCM";
+          return {
+            meet: m.name,
+            date: m.date,
+            course: m.course,
+            events: m.events.map((ev) => {
+              const loggedTimes = allSwimTimes
+                .filter((s) => s.event === ev.event)
+                .map((s) => ({ date: s.date, timeMs: s.timeMs, isRace: s.isPb || s.meetName !== null, course: s.course }));
+              return {
+                event: ev.event,
+                targetTimeMs: ev.targetTimeMs,
+                ...computeMeetReadiness({ event: ev.event, targetTimeMs: ev.targetTimeMs, loggedTimes, meetDate: m.date, today, targetCourse }),
+              };
+            }),
+          };
+        });
         return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
       }
     );

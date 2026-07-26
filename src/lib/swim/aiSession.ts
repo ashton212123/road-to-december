@@ -167,6 +167,91 @@ export async function parseSwimSession(text: string): Promise<AiSwimSession | nu
   }
 }
 
+export type AiSwimTime = {
+  event: string;
+  timeMs: number;
+  meetName: string | null;
+  isRace: boolean;
+  course: Course | null;
+  splits: number[] | null;
+  strokeCounts: number[] | null;
+  strokeRates: number[] | null;
+  notes: string | null;
+};
+
+const TIME_SYSTEM_PROMPT = `You parse a competitive swimmer's description of a single logged time into JSON. He trains in a 25m (SCM) pool and races in 50m (LCM). Examples of what he might type: "200 breast 2:24.53 at champs, splits 33.5/35.0/36.5/38.0" or "did a 100 free time trial in practice today, 58.2, felt flat" or "50 br 30.46 SCM".
+
+Return ONLY a JSON object. No markdown fences, no commentary.
+
+{"event":"200 Breast","timeMs":144530,"meetName":"Champs","isRace":true,"course":null,"splits":[33.5,35.0,36.5,38.0],"strokeCounts":null,"strokeRates":null,"notes":null}
+
+RULES
+
+1. event: use the canonical name ("50 Breast","100 Breast","200 Breast","200 IM","400 IM") when the stroke/distance clearly matches one of those (br/breast=Breast, im/medley=IM). Otherwise use his own words, title-cased (e.g. "100 Free").
+
+2. timeMs: convert his stated clock time to integer milliseconds ("2:24.53" -> 144530, "30.46" -> 30460, "58.2" -> 58200). This is required -- if no clear single time is stated, you cannot produce a result.
+
+3. meetName: the meet/competition name if he names one, else null. A generic "time trial" or "practice" is NOT a meet name -- null.
+
+4. isRace: true only if this was swum at a meet or a formal time trial (something other than a normal practice rep). Plain practice/set times are false.
+
+5. course: "SCM" or "LCM" ONLY if he states or clearly implies the pool length (25m/short course = SCM, 50m/long course = LCM). Otherwise null -- never guess from the event or the meet name.
+
+6. splits: if he gives per-50 (or per-distance-segment) split times, an array of that many entries in SECONDS (e.g. 33.5, not 33500), in order. Otherwise null. Do not fabricate splits from the total time.
+
+7. strokeCounts: array of per-segment stroke counts if he states them, else null.
+
+8. strokeRates: array of per-segment stroke rates (strokes/min) if he states them, else null.
+
+9. notes: one short factual sentence capturing anything else he says about the swim (how it felt, taper status, conditions, technical note) -- no praise, no invented detail. null if he adds nothing beyond the time itself.`;
+
+function normalizeNumArray(v: unknown): number[] | null {
+  if (!Array.isArray(v) || v.length === 0) return null;
+  const nums = v.map((x) => num(x));
+  if (nums.some((n) => n === null || n <= 0)) return null;
+  return nums as number[];
+}
+
+/** Parses a described single swim time. Returns null if Groq is unavailable,
+ * the call fails, or no usable event+time was extracted -- the caller falls
+ * back to the manual structured form. */
+export async function parseSwimTimeText(text: string): Promise<AiSwimTime | null> {
+  const content = await callGroqChat(
+    [
+      { role: "system", content: TIME_SYSTEM_PROMPT },
+      { role: "user", content: text },
+    ],
+    { jsonMode: true, temperature: 0.1 }
+  );
+  if (!content) return null;
+
+  try {
+    const raw = JSON.parse(content) as Record<string, unknown>;
+    const timeMs = num(raw.timeMs);
+    if (typeof raw.event !== "string" || !raw.event.trim() || timeMs === null || timeMs <= 0) return null;
+
+    const statedMeetName = typeof raw.meetName === "string" && raw.meetName.trim() ? raw.meetName.trim() : null;
+    const isRace = raw.isRace === true;
+    // Race-ness downstream is keyed off meetName !== null (readiness.ts, viewModel.ts) --
+    // a time-trial with no named meet still needs a non-null marker to count as a race.
+    const meetName = statedMeetName ?? (isRace ? "Time trial" : null);
+
+    return {
+      event: raw.event.trim(),
+      timeMs: Math.round(timeMs),
+      meetName,
+      isRace,
+      course: normalizeCourse(raw.course),
+      splits: normalizeNumArray(raw.splits),
+      strokeCounts: normalizeNumArray(raw.strokeCounts),
+      strokeRates: normalizeNumArray(raw.strokeRates),
+      notes: typeof raw.notes === "string" && raw.notes.trim() ? raw.notes.trim() : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export type DistanceReconciliation = {
   finalM: number;
   source: "stated" | "computed";
