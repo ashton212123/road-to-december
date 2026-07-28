@@ -9,6 +9,9 @@ import { LogoutButton } from "@/components/more/LogoutButton";
 // are periodic, Settings is occasional.
 const LINKS = [
   { href: "/more/coach-ai", label: "Coach", desc: "Full-screen chat with today's context", icon: "✨" },
+  { href: "/life/crm", label: "CRM", desc: "Every task in one place -- yours, business, and school", icon: "📋" },
+  { href: "/life/journal", label: "Journal", desc: "Speak your day, keep the raw text forever", icon: "📓" },
+  { href: "/life/brain", label: "Brain", desc: "Ask your season anything, grounded in your own data", icon: "🧠" },
   { href: "/more/recovery", label: "Recovery", desc: "Sleep, soreness, readiness lights", icon: "🌙" },
   { href: "/learn", label: "Learn", desc: "Python, ML, cybersecurity, project-based tracks", icon: "📚" },
   { href: "/school", label: "School", desc: "Courses, assignments, Canvas sync", icon: "🎓" },
