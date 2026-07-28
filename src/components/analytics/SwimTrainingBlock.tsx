@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
 import { ZoneDistributionBar, ZONE_ORDER } from "@/components/swim/ZoneDistributionBar";
 import { formatSwimTime } from "@/lib/swim/format";
@@ -32,7 +32,7 @@ export function SwimWeeklyVolumeCard({ weeks }: { weeks: SwimWeek[] }) {
   const max = Math.max(1, ...weeks.map((w) => w.distanceM));
   const hasAny = weeks.some((w) => w.sessions > 0);
   return (
-    <BentoCard variant="open" label="Weekly swim volume" colSpan={6}>
+    <TerminalPanel variant="open" label="Weekly swim volume" colSpan={6}>
       {!hasAny ? (
         <div className="flex flex-col gap-2 items-start">
           <p className="text-caption text-[var(--rtd-text-tertiary)]">Import or log a swim session and weekly volume starts tracking here.</p>
@@ -56,12 +56,12 @@ export function SwimWeeklyVolumeCard({ weeks }: { weeks: SwimWeek[] }) {
                   }}
                 />
               </div>
-              <span className="w-14 shrink-0 text-footnote text-right text-[var(--rtd-text)] rtd-nums">{fmtKm(w.distanceM)}</span>
+              <span className="w-14 shrink-0 text-footnote text-right text-[var(--rtd-text)] rtd-nums rtd-mono">{fmtKm(w.distanceM)}</span>
             </div>
           ))}
         </div>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }
 
@@ -74,7 +74,7 @@ export function SwimZoneWeeklyCard({ weeks }: { weeks: ZoneWeek[] }) {
   const zonesPresent = ZONE_ORDER.filter((z) => weeks.some((w) => (w.zoneDistance[z] ?? 0) > 0));
 
   return (
-    <BentoCard variant="open" label="Zone distribution · last 8 weeks" colSpan={12}>
+    <TerminalPanel variant="open" label="Zone distribution · last 8 weeks" colSpan={12}>
       {!hasAny ? (
         <p className="text-caption text-[var(--rtd-text-tertiary)]">Log a swim session and its zone breakdown starts tracking here.</p>
       ) : (
@@ -85,7 +85,7 @@ export function SwimZoneWeeklyCard({ weeks }: { weeks: ZoneWeek[] }) {
               <div className="flex-1">
                 <ZoneDistributionBar zoneDistance={w.zoneDistance} totalM={w.totalM} height={8} />
               </div>
-              <span className="w-14 shrink-0 text-footnote text-right text-[var(--rtd-text)] rtd-nums">{fmtKm(w.totalM)}</span>
+              <span className="w-14 shrink-0 text-footnote text-right text-[var(--rtd-text)] rtd-nums rtd-mono">{fmtKm(w.totalM)}</span>
             </div>
           ))}
           {zonesPresent.length > 0 && (
@@ -100,7 +100,7 @@ export function SwimZoneWeeklyCard({ weeks }: { weeks: ZoneWeek[] }) {
           )}
         </div>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }
 
@@ -154,7 +154,7 @@ export function SwimMonthDotsCard({
   const ym = monthStartISO.slice(0, 7);
 
   return (
-    <BentoCard variant="open" label={`Swim month · ${monthLabel}`} colSpan={6}>
+    <TerminalPanel variant="open" label={`Swim month · ${monthLabel}`} colSpan={6}>
       <div className="grid grid-cols-7 gap-1.5 justify-items-center">
         {WEEKDAYS.map((d, i) => (
           <span key={`h${i}`} className="text-caption text-[var(--rtd-text-tertiary)]">
@@ -194,7 +194,7 @@ export function SwimMonthDotsCard({
           </span>
         ))}
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }
 
@@ -204,7 +204,7 @@ export function SwimLatestSessionCard({
   session: { date: string; parsedDistanceM: number | null; setsText: string | null; intervals: SwimSessionInterval[] | null } | null;
 }) {
   return (
-    <BentoCard variant="open" label="Latest imported session" colSpan={12}>
+    <TerminalPanel variant="open" label="Latest imported session" colSpan={12}>
       {!session || !session.intervals || session.intervals.length === 0 ? (
         <div className="flex flex-col gap-2 items-start">
           <p className="text-caption text-[var(--rtd-text-tertiary)]">
@@ -217,7 +217,7 @@ export function SwimLatestSessionCard({
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-subhead font-medium text-[var(--rtd-text)]">{shortDate(session.date)}</span>
             {session.parsedDistanceM !== null && (
-              <span className="text-subhead rtd-nums text-[var(--rtd-text-secondary)]">{fmtKm(session.parsedDistanceM)} total</span>
+              <span className="text-subhead rtd-nums rtd-mono text-[var(--rtd-text-secondary)]">{fmtKm(session.parsedDistanceM)} total</span>
             )}
           </div>
           <div className="flex flex-col rtd-divide-y">
@@ -226,7 +226,7 @@ export function SwimLatestSessionCard({
               return (
                 <div key={i} className="flex items-center gap-2 py-1.5 first:pt-0 last:pb-0">
                   <span
-                    className="text-subhead rtd-nums"
+                    className="text-subhead rtd-nums rtd-mono"
                     style={{ color: warmish ? "var(--rtd-text-tertiary)" : "var(--rtd-text)" }}
                   >
                     {iv.reps > 1 ? `${iv.reps}×${iv.distanceM}` : iv.distanceM}m {iv.stroke}
@@ -234,14 +234,14 @@ export function SwimLatestSessionCard({
                   </span>
                   {iv.note && <span className="text-caption text-[var(--rtd-text-tertiary)]">{iv.note}</span>}
                   <span className="flex-1" />
-                  {iv.avgTime && <span className="text-footnote rtd-nums text-[var(--rtd-cyan)]">avg {iv.avgTime}</span>}
+                  {iv.avgTime && <span className="text-footnote rtd-nums rtd-mono text-[var(--rtd-cyan)]">avg {iv.avgTime}</span>}
                 </div>
               );
             })}
           </div>
         </div>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }
 
@@ -275,7 +275,7 @@ function daysOut(todayISO: string, dateISO: string): number {
 function GapChip({ gapMs }: { gapMs: number | null }) {
   if (gapMs === null) {
     return (
-      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] rtd-nums text-caption">
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] rtd-nums rtd-mono text-caption">
         —
       </span>
     );
@@ -283,7 +283,7 @@ function GapChip({ gapMs }: { gapMs: number | null }) {
   const isAhead = gapMs <= 0;
   return (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full font-semibold rtd-nums text-caption"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full font-semibold rtd-nums rtd-mono text-caption"
       style={{ color: "#0b0b0d", backgroundColor: isAhead ? "#4ade80" : "#f87171" }}
     >
       {gapMs > 0 ? "+" : "-"}
@@ -301,7 +301,7 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
   if (upcoming.length === 0) return null;
 
   return (
-    <BentoCard variant="open" label="Meet readiness" colSpan={12}>
+    <TerminalPanel variant="open" label="Meet readiness" colSpan={12}>
       <div className="flex flex-col gap-4">
         {upcoming.map((meet) => {
           const hasAnyTime = meet.events.some((ev) => ev.readiness.currentBestMs !== null || ev.readiness.practiceBestMs !== null);
@@ -316,7 +316,7 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
                     </span>
                   )}
                 </span>
-                <span className="shrink-0 text-caption font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] rtd-nums">
+                <span className="shrink-0 text-caption font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">
                   {daysOut(today, meet.date)}d out
                 </span>
               </div>
@@ -338,17 +338,17 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
                       <div key={ev.id} className="flex flex-col gap-0.5 py-1.5 first:pt-0 last:pb-0">
                         <div className="flex items-center gap-2">
                           <span className="text-subhead text-[var(--rtd-text)] flex-1 truncate">{ev.event}</span>
-                          <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">
+                          <span className="text-footnote rtd-nums rtd-mono text-[var(--rtd-text-secondary)]">
                             {currentBestMs !== null ? formatSwimTime(currentBestMs) : "—"}
                           </span>
                           <span className="text-caption text-[var(--rtd-text-tertiary)]" aria-hidden="true">
                             →
                           </span>
-                          <span className="text-footnote rtd-nums text-[var(--rtd-text-secondary)]">{formatSwimTime(ev.targetTimeMs)}</span>
+                          <span className="text-footnote rtd-nums rtd-mono text-[var(--rtd-text-secondary)]">{formatSwimTime(ev.targetTimeMs)}</span>
                           <GapChip gapMs={gapMs} />
                         </div>
                         {practiceBestMs !== null && (
-                          <span className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums">
+                          <span className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums rtd-mono">
                             practice: {formatSwimTime(practiceBestMs)}
                             {practiceTrend !== null && ` · trending ${formatTrend(practiceTrend)}`}
                           </span>
@@ -365,6 +365,6 @@ export function SwimMeetReadinessCard({ meets, today }: { meets: MeetReadinessMe
           );
         })}
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

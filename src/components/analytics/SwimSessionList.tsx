@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TYPE_LABELS, type SessionType } from "@/lib/swim/sessionType";
 
@@ -18,7 +18,7 @@ export function SwimSessionList({ sessions }: { sessions: Session[] }) {
   }
 
   return (
-    <GlassCard variant="open" className="flex flex-col rtd-divide-y">
+    <TerminalPanel variant="open" gap="none" className="rtd-divide-y">
       {sessions.slice(0, 10).map((s) => (
         <Link
           key={s.id}
@@ -26,7 +26,7 @@ export function SwimSessionList({ sessions }: { sessions: Session[] }) {
           className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         >
           <div className="min-w-0">
-            <span className="text-footnote text-[var(--rtd-text)]">{s.date}</span>
+            <span className="text-footnote text-[var(--rtd-text)] rtd-mono">{s.date}</span>
             {s.setsText && <div className="text-caption text-[var(--rtd-text-tertiary)] truncate">{s.setsText}</div>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -35,12 +35,12 @@ export function SwimSessionList({ sessions }: { sessions: Session[] }) {
                 {TYPE_LABELS[s.sessionType as SessionType]?.replace(" session", "") ?? s.sessionType}
               </span>
             )}
-            <span className="text-caption rtd-nums text-[var(--rtd-text-tertiary)] w-16 text-right">
+            <span className="text-caption rtd-nums rtd-mono text-[var(--rtd-text-tertiary)] w-16 text-right">
               {s.parsedDistanceM ? `${s.parsedDistanceM.toLocaleString()}m` : "—"}
             </span>
           </div>
         </Link>
       ))}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { logSessionRpeAction } from "@/app/(app)/train/actions";
 
@@ -38,8 +38,9 @@ export function SessionCompleteSummary({
       aria-modal="true"
       aria-label="Session complete"
     >
-      <GlassCard
-        className="rtd-glass-blur rtd-session-complete rtd-hero-glow flex flex-col items-center gap-3 text-center max-w-sm w-full py-8"
+      <TerminalPanel
+        fill={false}
+        className="rtd-glass-blur rtd-session-complete rtd-hero-glow items-center text-center max-w-sm w-full py-8"
         style={{ backgroundColor: "rgba(28,28,30,0.72)" }}
       >
         <div
@@ -52,11 +53,11 @@ export function SessionCompleteSummary({
         <div className="text-subhead text-[var(--rtd-text-secondary)]">{sessionTitle}</div>
         <div className="flex gap-6 mt-2">
           <div className="flex flex-col items-center">
-            <span className="text-title-1 rtd-display">{exerciseCount}</span>
+            <span className="text-title-1 rtd-display rtd-mono">{exerciseCount}</span>
             <span className="rtd-micro-label">exercises</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-title-1 rtd-display">{durationMin}</span>
+            <span className="text-title-1 rtd-display rtd-mono">{durationMin}</span>
             <span className="rtd-micro-label">minutes</span>
           </div>
         </div>
@@ -93,7 +94,7 @@ export function SessionCompleteSummary({
         <Button variant="secondary" onClick={onDismiss} className="mt-3 w-full">
           Done
         </Button>
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }

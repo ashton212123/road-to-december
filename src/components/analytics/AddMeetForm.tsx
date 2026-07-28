@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { createMeetAction } from "@/app/(app)/analytics/actions";
@@ -67,7 +67,7 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel fill={false}>
       <div className="text-title-3">Add meet</div>
       <div className="grid grid-cols-2 gap-2">
         <input
@@ -125,6 +125,6 @@ export function AddMeetForm({ latestTimeByEvent }: { latestTimeByEvent: Record<s
           Cancel
         </Button>
       </div>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

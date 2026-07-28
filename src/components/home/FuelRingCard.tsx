@@ -1,4 +1,4 @@
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 
 function MacroBar({ label, current, targetG, color }: { label: string; current: number; targetG: number; color: string }) {
@@ -7,7 +7,7 @@ function MacroBar({ label, current, targetG, color }: { label: string; current: 
     <div className="flex flex-col gap-0.5">
       <div className="flex items-baseline justify-between gap-2 text-caption">
         <span className="text-[var(--rtd-text-tertiary)] min-w-0 truncate">{label}</span>
-        <span className="text-[var(--rtd-text-secondary)] rtd-nums shrink-0">
+        <span className="text-[var(--rtd-text-secondary)] rtd-nums rtd-mono shrink-0">
           {Math.round(current)}/{Math.round(targetG)}g
         </span>
       </div>
@@ -52,7 +52,7 @@ export function FuelRingCard({
   const waterPct = waterTargetMl > 0 ? Math.min(100, (waterMl / waterTargetMl) * 100) : 0;
 
   return (
-    <BentoCard href="/fuel" label="Fuel" className={className}>
+    <TerminalPanel href="/fuel" label="08 // FUEL" colSpan={4} rowSpan={2} className={className}>
       <div className="flex items-center gap-4 flex-1 min-h-0">
         <ProgressRing
           pct={kcalPct}
@@ -71,7 +71,7 @@ export function FuelRingCard({
           <MacroBar label="Fat" current={fatToday} targetG={fatTargetG} color="var(--rtd-purple)" />
           <div className="flex items-baseline justify-between gap-2 text-caption">
             <span className="text-[var(--rtd-text-tertiary)] min-w-0 truncate">Water</span>
-            <span className="text-[var(--rtd-text-secondary)] rtd-nums shrink-0">
+            <span className="text-[var(--rtd-text-secondary)] rtd-nums rtd-mono shrink-0">
               {(waterMl / 1000).toFixed(1)}/{(waterTargetMl / 1000).toFixed(1)}L
             </span>
           </div>
@@ -83,6 +83,6 @@ export function FuelRingCard({
           </div>
         </div>
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

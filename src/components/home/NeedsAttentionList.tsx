@@ -1,13 +1,14 @@
 import Link from "next/link";
 import clsx from "clsx";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { IconCheck } from "@/components/ui/icons";
 import { DOMAIN_META, sortAttentionItems, type AttentionItem } from "@/lib/dashboard/needsAttention";
 
 export function NeedsAttentionList({ items, className }: { items: AttentionItem[]; className?: string }) {
   if (items.length === 0) {
     return (
-      <GlassCard variant="open" className={clsx("flex flex-col items-center justify-center gap-2 text-center", className)}>
+      <TerminalPanel variant="open" className={clsx("items-center justify-center text-center", className)}>
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
           style={{ background: "color-mix(in srgb, var(--rtd-green) 16%, transparent)", color: "var(--rtd-green)" }}
@@ -18,14 +19,14 @@ export function NeedsAttentionList({ items, className }: { items: AttentionItem[
           All clear
         </span>
         <span className="text-caption text-[var(--rtd-text-tertiary)]">No alerts yet today</span>
-      </GlassCard>
+      </TerminalPanel>
     );
   }
   const sorted = sortAttentionItems(items);
   const domainsPresent = [...new Set(sorted.map((i) => i.domain))];
 
   return (
-    <GlassCard variant="open" className={clsx("flex flex-col gap-3", className)}>
+    <TerminalPanel variant="open" label="09 // ATTENTION" className={className}>
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {domainsPresent.map((d) => (
           <div key={d} className="flex items-center gap-1.5 text-caption text-[var(--rtd-text-secondary)]">
@@ -47,14 +48,10 @@ export function NeedsAttentionList({ items, className }: { items: AttentionItem[
               <div className="text-footnote text-[var(--rtd-text)] truncate">{item.label}</div>
               {item.detail && <div className="text-caption text-[var(--rtd-text-secondary)] truncate">{item.detail}</div>}
             </div>
-            {item.urgent && (
-              <span className="shrink-0 text-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--rtd-red)]/15 text-[var(--rtd-red)]">
-                Urgent
-              </span>
-            )}
+            {item.urgent && <StatusChip label="Urgent" tone="danger" />}
           </Link>
         ))}
       </div>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

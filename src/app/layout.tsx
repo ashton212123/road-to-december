@@ -7,6 +7,16 @@ import { ServiceWorkerRegister } from "@/components/system/ServiceWorkerRegister
 // never fail the deploy -- it did once, in loop 4.
 const inter = localFont({ src: "./fonts/InterVariable.woff2", display: "swap", variable: "--font-inter" });
 
+// Terminal design system (Phase 9, §9a): every number/stat/time/score
+// routes through this, Inter stays for prose. Self-hosted for the same
+// build-reliability reason as Inter above -- latin subset (covers digits).
+const jetbrainsMono = localFont({
+  src: "./fonts/JetBrainsMono-Variable.woff2",
+  display: "swap",
+  variable: "--font-jetbrains-mono",
+  weight: "100 800",
+});
+
 export const metadata: Metadata = {
   title: "Road to December",
   description: "Personal athlete command center — training, fuel and rules for the road to NCAA Dec 4.",
@@ -42,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable}`}>
+    <html lang="en" className={`h-full antialiased ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col rtd-app-bg">
         <div className="rtd-wallpaper" aria-hidden="true" />
         <ServiceWorkerRegister />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { IconChevronDown } from "@/components/ui/icons";
@@ -116,7 +116,7 @@ export function SwimTimeLogger() {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel fill={false}>
       <div className="text-title-3">Log a swim time</div>
 
       <textarea
@@ -284,6 +284,6 @@ export function SwimTimeLogger() {
           </Button>
         </div>
       )}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

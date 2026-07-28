@@ -13,7 +13,13 @@
   --rtd-border: rgba(255, 255, 255, 0.14);
   --rtd-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 30px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.15);
   --rtd-blur: 10px;
-  --rtd-radius-card: 20px;
+  /* Phase 9 (§9a): terminal, not iOS -- panels drop from a 20px iOS-style
+     radius to a crisp 4px. Applies immediately, app-wide, in this one token
+     commit (deliberately ahead of Phase 9b's tab-by-tab structural
+     conversion): a shared low-level polish pass, not the per-tab
+     GlassCard/BentoCard -> TerminalPanel/SectionHeader/MonoStat rebuild,
+     which is the higher-risk work that stays gated one tab at a time. */
+  --rtd-radius-card: 4px;
   --rtd-radius-control: 12px;
 
   --rtd-blue: #0a84ff;
@@ -54,6 +60,16 @@
   --rtd-text-tertiary: rgba(255, 255, 255, 0.55);
 
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  /* Phase 9 (§9a): every number/stat/time/score routes through this via
+     .rtd-mono -- Inter (--font-sans) stays for prose. */
+  --rtd-font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Semantic OK/WARN/DANGER, mapped onto the existing domain palette --
+     aliases, not renames, so the hundreds of existing --rtd-green/orange/red
+     usages are untouched. */
+  --rtd-ok: var(--rtd-green);
+  --rtd-warn: var(--rtd-orange);
+  --rtd-danger: var(--rtd-red);
 }
 
 @theme inline {
@@ -160,8 +176,17 @@ body {
 .rtd-glass {
   background-color: var(--rtd-glass-bg-mobile);
   border: 1px solid var(--rtd-border);
-  box-shadow: var(--rtd-shadow);
+  /* Phase 9 (§9a): "Terminal, not iOS" -- drop shadow removed from panel
+     material. --rtd-shadow itself is untouched (still used deliberately by
+     floating chrome: the tab dock, sheets, dropdowns -- surfaces that still
+     want elevation above the terminal-flat panels). */
   border-radius: var(--rtd-radius-card);
+}
+
+/* Phase 9 (§9a): every number/stat/time/score routes through this. */
+.rtd-mono {
+  font-family: var(--rtd-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (min-width: 768px) {

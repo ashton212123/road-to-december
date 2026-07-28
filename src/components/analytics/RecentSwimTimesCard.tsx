@@ -1,9 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { deleteSwimTimeAction } from "@/app/(app)/analytics/actions";
 import { formatSwimTime } from "@/lib/swim/format";
 
@@ -16,8 +16,8 @@ export function RecentSwimTimesCard({ recentTimes }: { recentTimes: RecentSwimTi
 
   return (
     <div>
-      <SectionLabel>Recent logged times</SectionLabel>
-      <GlassCard variant="open" className="flex flex-col gap-2">
+      <SectionHeader title="Recent logged times" className="mb-2" />
+      <TerminalPanel variant="open">
         {recentTimes.length === 0 ? (
           <EmptyState title="No times logged yet" body="Log one above after your next set or meet." />
         ) : (
@@ -25,9 +25,9 @@ export function RecentSwimTimesCard({ recentTimes }: { recentTimes: RecentSwimTi
             <div key={t.id} className="flex items-center justify-between text-footnote">
               <div className="min-w-0">
                 <span className="text-[var(--rtd-text)] font-medium">{t.event}</span>{" "}
-                <span className="text-[var(--rtd-text-secondary)]">{formatSwimTime(t.timeMs)}</span>
+                <span className="text-[var(--rtd-text-secondary)] rtd-mono">{formatSwimTime(t.timeMs)}</span>
                 <div className="text-caption text-[var(--rtd-text-secondary)]">
-                  {t.date}
+                  <span className="rtd-mono">{t.date}</span>
                   {t.meetName ? ` · ${t.meetName}` : ""}
                 </div>
               </div>
@@ -43,7 +43,7 @@ export function RecentSwimTimesCard({ recentTimes }: { recentTimes: RecentSwimTi
             </div>
           ))
         )}
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }

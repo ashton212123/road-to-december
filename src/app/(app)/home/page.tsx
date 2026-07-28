@@ -12,12 +12,16 @@ import { CoachBriefCard } from "@/components/home/CoachBriefCard";
 import { WeekMapCard } from "@/components/home/WeekMapCard";
 import { TrainingLoadCard } from "@/components/home/TrainingLoadCard";
 import { RecentPRsCard } from "@/components/home/RecentPRsCard";
+import { HabitsCard } from "@/components/home/HabitsCard";
+import { GoalsCard } from "@/components/home/GoalsCard";
+import { CalendarStripCard } from "@/components/home/CalendarStripCard";
+import { OperatorCard } from "@/components/home/OperatorCard";
+import { KeyTasksCard } from "@/components/home/KeyTasksCard";
 import { StatCard } from "@/components/ui/StatCard";
-import { IconTrain } from "@/components/ui/icons";
 import { seasonData } from "@/lib/data/season-data";
 import { todayManilaISO, todayDayKey, dayKeyForDate, daysBetween, addDaysISO, manilaHourNow, mondayOf } from "@/lib/time";
 import {
-  getAllPhasesWithSessions,
+  getAllPhasesWithSessionsUncached,
   getCurrentPhase,
   getLatestWeighIn,
   getWeighIns,
@@ -49,6 +53,10 @@ import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 import { buildWeekMap } from "@/lib/dashboard/weekMap";
 import { findRecentPRs } from "@/lib/dashboard/recentPRs";
 import { withRetry } from "@/lib/db/withRetry";
+import { getHomeHabitsData } from "@/lib/habits/queries";
+import { buildHabitStreakDots } from "@/lib/habits/streak";
+import { getHomeGoalsData } from "@/lib/goals/queries";
+import { getHomeKeyTasks } from "@/lib/crm/queries";
 import { getDailyBrief } from "@/lib/coach/dailyBrief";
 import { computeReadinessSignals } from "@/lib/rules/readiness";
 import { computeDailySessionLoads, computeAcwr, computeWeeklyLoad, computeWeekOverWeekRamp } from "@/lib/analytics/load";
@@ -95,8 +103,11 @@ const getCachedHomeData = unstable_cache(
       sorenessLogs,
       sessionLoads,
       allMeets,
+      habitsData,
+      goalsData,
+      keyTasks,
     ] = await Promise.all([
-      getAllPhasesWithSessions(),
+      getAllPhasesWithSessionsUncached(),
       getLatestWeighIn(),
       getWeighIns(21),
       getFoodLogsForDate(today),
@@ -112,6 +123,9 @@ const getCachedHomeData = unstable_cache(
       getSorenessLogs(1),
       getSessionLoadsSince(addDaysISO(today, -150)),
       getAllMeetsWithEvents(),
+      getHomeHabitsData(today, addDaysISO(today, -29)),
+      getHomeGoalsData(),
+      getHomeKeyTasks(),
     ]);
 
     return {
@@ -132,9 +146,12 @@ const getCachedHomeData = unstable_cache(
       sorenessLogs,
       sessionLoads,
       allMeets,
+      habitsData,
+      goalsData,
+      keyTasks,
     };
   },
-  ["home-page-data-v3"],
+  ["home-page-data-v6"],
   { tags: ["home-data"] }
 );
 
@@ -161,7 +178,12 @@ export default async function HomePage() {
     sorenessLogs,
     sessionLoads,
     allMeets,
+    habitsData,
+    goalsData,
+    keyTasks,
   } = await withRetry(() => getCachedHomeData(today), { timeoutMs: 15000 });
+
+  const habitStreakDots = buildHabitStreakDots(habitsData.dailyCompletion, habitsData.habits.length, today);
 
   const alerts = await evaluateAlerts(canvas, {
     settingsRow,
@@ -183,7 +205,35 @@ export default async function HomePage() {
     excusedFromISO: settingsRow.trainingStatus === "healthy" ? null : settingsRow.trainingStatusSince,
   });
 
-  const currentPhase = getCurrentPhase(allPhases, today) ?? allPhases[0];
+  // `allPhases` is the static 6-phase season program -- it should never be
+  // empty in real operation. If it transiently is (a caching/DB hiccup), the
+  // page must degrade honestly (empty session list, no fabricated phase name)
+  // rather than crash the whole Home page on a missing-property TypeError.
+  const currentPhase =
+    getCurrentPhase(allPhases, today) ??
+    allPhases[0] ??
+    (() => {
+      console.error(`[home] allPhases was empty for ${today} -- falling back to a placeholder phase`);
+      return {
+        id: "unknown",
+        tag: "—",
+        name: "Program data unavailable",
+        weeks: "",
+        dates: "",
+        color: "#8a8a8e",
+        blurb: "",
+        note: null,
+        startDate: today,
+        endDate: today,
+        isDeload: false,
+        deloadWeek: null,
+        isRaceBlock: false,
+        waveScheme: null,
+        blocks: null,
+        orderIndex: 0,
+        sessions: [],
+      };
+    })();
   const phaseWeek = computePhaseWeek(currentPhase, today);
   const seasonStart = seasonData.meta.seasonStart;
   const seasonEnd = seasonData.meta.seasonEnd;
@@ -424,6 +474,20 @@ export default async function HomePage() {
 
   const recentPRs = findRecentPRs({ swimTimes, cmjTests });
 
+  // Phase 7's Home strip: 7 days starting today, overlaying this app's own
+  // known dates (meets, planned swim/gym) onto whatever the external
+  // calendar feed returns client-side -- no new DB queries, reuses
+  // allMeets/allPhases/seasonData already fetched above for the week map.
+  const calendarStripDays = Array.from({ length: 7 }, (_, i) => {
+    const date = addDaysISO(today, i);
+    const dayKey = dayKeyForDate(date);
+    const dayMeets = allMeets.filter((m) => m.date === date).map((m) => m.name);
+    const wd = seasonData.WEEK[DAY_KEY_TO_WEEK_INDEX[dayKey]];
+    const phaseForDate = getCurrentPhase(allPhases, date) ?? currentPhase;
+    const sessionForDate = phaseForDate.sessions.find((s) => s.dayKey === dayKey) ?? null;
+    return { date, meets: dayMeets, swimPlanned: Boolean(wd.swim), gymTitle: sessionForDate?.title ?? null };
+  });
+
   const followUps = [
     todaySession ? `What should I focus on in ${todaySession.title}?` : "How's my training this week?",
     "How's my nutrition looking today?",
@@ -432,6 +496,8 @@ export default async function HomePage() {
   // Same underlying facts the brief's system prompt is told to reference --
   // surfaced as bullets so the brief text is never the only place the data
   // behind it shows up.
+  const todaysFocus = todaySession ? todaySession.title : weekDay.swim ? "Swim" : "Rest day";
+
   const coachBriefBullets = [
     consistency.pct !== null ? `${consistency.pct}% consistency · 4wk` : "New to the plan — no consistency data yet",
     todaySession ? `Today: ${todaySession.title}` : weekDay.swim ? "Today: Swim" : "Today: Rest day",
@@ -457,17 +523,27 @@ export default async function HomePage() {
 
       <AlertCardList alerts={alerts} />
 
-      {/* Every module renders exactly once. Mobile order (order-N) and
-          desktop order (md:order-N) are two independent sequences declared
-          explicitly on every child -- rather than left to fall back on
-          default/tied ordering, since the fuel/stat cluster sits in the
-          MIDDLE of the mobile sequence but near the TOP of the desktop one;
-          a partial override would place it wrong on one side. Desktop order
-          is untouched by loop 39 -- only the mobile sequence changed, per
-          the athlete's primary device being an iPhone.
-          Mobile:  Hero(1) Dials(2) Plan(3) Needs(4) Brief(5) FuelCluster(6) [More today: WeekMap(7) Load(8) PRs(9)]
-          Desktop: Hero(1) Dials(2) Calendar(3) FuelCluster(4) Plan(5) Brief(6) Needs(7) WeekMap(8) Load(9) PRs(10) */}
+      {/* Phase 8 (§8b): Home is the 9 numbered operator sections, in this
+          exact order on mobile (single column) and flowing 3-per-row on
+          desktop (each section colSpan={4} of the 12-col grid, Operator
+          alone spanning all 12) -- no per-section order-N classes needed
+          since JSX order already matches both breakpoints' required order.
+          The pre-Phase-8 dashboard modules that aren't part of the 9
+          (readiness header, doorway dials, AI daily brief, week map, recent
+          PRs, month calendar) are kept, not deleted -- placed around the 9
+          rather than folded into them, per an explicit product decision
+          logged in PERSONAL_OS_LOG.md rather than silently cut to match the
+          spec table literally. */}
       <div className="rtd-home-grid">
+        <OperatorCard
+          role={seasonData.meta.athlete}
+          daysToDecember={daysToNcaa}
+          todaysFocus={todaysFocus}
+          consistencyPct={consistency.pct}
+          consistencyDone={consistency.done}
+          consistencyPlanned={consistency.planned}
+          className="col-span-full"
+        />
         <HomeHeroBand
           daysToNcaa={daysToNcaa}
           daysToAsean={daysToAsean}
@@ -481,7 +557,7 @@ export default async function HomePage() {
           readinessOverall={readinessOverall}
           readinessSignals={readinessSignals}
           actionLine={readinessActionLineText}
-          className="order-1 md:order-1"
+          className="col-span-full"
         />
         <HomeDoorwayDials
           readinessOverall={readinessOverall}
@@ -490,55 +566,8 @@ export default async function HomePage() {
           kcalToday={kcalToday}
           kcalTargetMid={energyTarget.kcal}
           consistencyPct={consistency.pct}
-          className="order-2 md:order-2 col-span-full"
+          className="col-span-full"
         />
-        <MonthCalendarCard
-          today={today}
-          gymDates={recentWorkoutLogs.map((l) => l.date)}
-          swimDates={recentSwimSessions.map((s) => s.date)}
-          className="hidden md:flex md:order-3"
-        />
-
-        {/* FuelRingCard + the two stat tiles share one wrapper so they can
-            be a compact 2-col cluster on mobile (Fuel spans both cols,
-            stats split the row below) while dissolving via md:contents on
-            desktop so each keeps its own independent col-span in the 12-col
-            grid. display:contents makes the WRAPPER's own order inert at
-            desktop, so md:order-4 has to live on each child individually. */}
-        <div className="grid grid-cols-2 gap-2.5 order-6 md:contents">
-          <FuelRingCard
-            kcalToday={kcalToday}
-            kcalTargetMid={energyTarget.kcal}
-            proteinToday={proteinToday}
-            proteinTargetG={proteinTarget.mid}
-            carbsToday={carbsToday}
-            carbsTargetG={carbsFatTarget.carbsG}
-            fatToday={fatToday}
-            fatTargetG={carbsFatTarget.fatG}
-            waterMl={waterToday}
-            waterTargetMl={settingsRow.waterTargetMl}
-            className="col-span-2 md:col-span-6 md:row-span-2 md:order-4"
-          />
-          <StatCard
-            label="Bodyweight (7d)"
-            numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
-            decimals={1}
-            suffix=" kg"
-            domainColor="var(--rtd-cyan)"
-            deltaPct={weightTrendPct}
-            goodDirection="up"
-            sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
-            className="md:col-span-3 md:row-span-2 md:order-4"
-          />
-          <StatCard
-            label="Consistency"
-            value={consistency.pct !== null ? `${consistency.pct}%` : "—"}
-            domainColor="var(--rtd-blue)"
-            icon={<IconTrain />}
-            sub={consistency.pct !== null ? `${consistency.done}/${consistency.planned} · 4wk` : "no data yet"}
-            className="md:col-span-3 md:row-span-2 md:order-4"
-          />
-        </div>
 
         <TodaysPlanCard
           rows={planRows}
@@ -546,37 +575,57 @@ export default async function HomePage() {
           tomorrow={tomorrowPreview}
           phaseId={todaySession ? currentPhase.id : null}
           todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
-          className="order-3 md:order-5"
         />
-        <NeedsAttentionList items={needsAttention} className="col-span-3 row-span-3 h-full order-4 md:order-7" />
-        <CoachBriefCard
-          brief={dailyBrief}
-          bullets={coachBriefBullets}
-          followUps={followUps}
-          className="order-5 md:order-6"
+        <HabitsCard habits={habitsData.habits} dots={habitStreakDots} today={today} />
+        <CalendarStripCard days={calendarStripDays} today={today} />
+        <GoalsCard data={goalsData} />
+        <KeyTasksCard tasks={keyTasks} />
+        <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
+        <FuelRingCard
+          kcalToday={kcalToday}
+          kcalTargetMid={energyTarget.kcal}
+          proteinToday={proteinToday}
+          proteinTargetG={proteinTarget.mid}
+          carbsToday={carbsToday}
+          carbsTargetG={carbsFatTarget.carbsG}
+          fatToday={fatToday}
+          fatTargetG={carbsFatTarget.fatG}
+          waterMl={waterToday}
+          waterTargetMl={settingsRow.waterTargetMl}
+        />
+        <NeedsAttentionList items={needsAttention} className="col-span-4 row-span-2 h-full" />
+
+        {/* Retained extras (not part of the 9 spec sections): AI daily
+            brief, month calendar, week map, recent PRs, and the two stat
+            tiles displaced from the old fuel cluster. Collapsed on mobile
+            behind a disclosure, same as before Phase 8. */}
+        <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} className="col-span-full md:col-span-8" />
+        <MonthCalendarCard
+          today={today}
+          gymDates={recentWorkoutLogs.map((l) => l.date)}
+          swimDates={recentSwimSessions.map((s) => s.date)}
+          className="hidden md:flex md:col-span-4"
         />
 
-        {/* Mobile-only collapsed disclosure for the three lowest-priority
-            modules -- three fewer scroll-screens on the athlete's phone.
-            display:contents on both the <details> and its content wrapper
-            at md: makes their own boxes disappear so the three cards rejoin
-            the top-level grid with their own md:order-N, same technique as
-            the fuel/stat cluster above; the summary toggle itself is
-            md:hidden so desktop never sees it. */}
-        <details className="order-7 md:contents">
+        <details className="col-span-full md:contents">
           <summary className="rtd-glass md:hidden cursor-pointer select-none list-none rounded-[10px] px-3.5 py-2.5 flex items-center justify-between text-subhead font-medium text-[var(--rtd-text-secondary)]">
             More today
             <span aria-hidden="true" className="rtd-more-today-chevron">⌄</span>
           </summary>
           <div className="flex flex-col gap-2.5 mt-2.5 md:contents">
-            <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="md:order-8" />
-            <TrainingLoadCard
-              thisWeekDaily={thisWeekDaily}
-              lastWeekDaily={lastWeekDaily}
-              takeaway={trainingLoadTakeaway}
-              className="md:order-9"
+            <WeekMapCard days={weekMap.days} rows={weekMap.rows} className="md:col-span-6" />
+            <RecentPRsCard prs={recentPRs} className="md:col-span-3" />
+            <StatCard
+              label="Bodyweight (7d)"
+              numericValue={latestWeighIn ? Number(latestWeighIn.kg) : 0}
+              decimals={1}
+              suffix=" kg"
+              domainColor="var(--rtd-cyan)"
+              deltaPct={weightTrendPct}
+              goodDirection="up"
+              sparklinePoints={weightSeries.slice(-14).map((w) => Number(w.kg))}
+              className="md:col-span-3"
             />
-            <RecentPRsCard prs={recentPRs} className="md:order-10" />
           </div>
         </details>
       </div>

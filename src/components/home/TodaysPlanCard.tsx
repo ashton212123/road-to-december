@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { IconCheck } from "@/components/ui/icons";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
 
@@ -42,9 +42,9 @@ export function TodaysPlanCard({
   className?: string;
 }) {
   return (
-    <BentoCard colSpan={5} rowSpan={3} className={className}>
+    <TerminalPanel colSpan={4} rowSpan={3} className={className}>
       <div className="flex items-center justify-between gap-2 mb-1 shrink-0">
-        <span className="rtd-micro-label truncate">Today&apos;s plan</span>
+        <span className="rtd-micro-label truncate">02 // SESSION</span>
         <ImportSessionButton phaseId={phaseId} todayExercises={todayExercises} compact />
       </div>
       <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto">
@@ -113,6 +113,6 @@ export function TodaysPlanCard({
           Start session →
         </Link>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }

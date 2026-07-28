@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { MiniBarList } from "@/components/ui/MiniBarList";
 import { ZoneDistributionBar, ZONE_ORDER } from "@/components/swim/ZoneDistributionBar";
 import { DeleteSessionButton } from "@/components/swim/DeleteSessionButton";
@@ -76,30 +75,30 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
       </div>
 
       <div className="flex flex-col gap-1">
-        <SectionLabel>{formatDate(session.date)}</SectionLabel>
+        <SectionHeader title={formatDate(session.date)} className="mb-1" />
         <p className="text-subhead text-[var(--rtd-text)] font-semibold">{classification.label}</p>
         <p className="text-caption text-[var(--rtd-text-secondary)]">{classification.why}</p>
       </div>
 
-      <GlassCard className="flex flex-col gap-2">
+      <TerminalPanel fill={false}>
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-title-2 font-semibold text-[var(--rtd-text)] rtd-nums">
+          <span className="text-title-2 font-semibold text-[var(--rtd-text)] rtd-nums rtd-mono">
             {totalM > 0 ? `${totalM.toLocaleString()}m` : "—"}
           </span>
-          <div className="flex items-center gap-3 text-footnote text-[var(--rtd-text-secondary)] rtd-nums">
+          <div className="flex items-center gap-3 text-footnote text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">
             {session.durationMin !== null && <span>{session.durationMin} min</span>}
             {session.sessionRpe !== null && <span>RPE {Number(session.sessionRpe)}/10</span>}
           </div>
         </div>
         {reconciliation.message && <p className="text-caption text-[var(--rtd-orange)]">{reconciliation.message}</p>}
-      </GlassCard>
+      </TerminalPanel>
 
       {context.length > 0 && (
         <div>
-          <SectionLabel>This week</SectionLabel>
+          <SectionHeader title="This week" className="mb-2" />
           <div className="flex flex-wrap gap-1.5">
             {context.map((c) => (
-              <span key={c.id} className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] rtd-nums">
+              <span key={c.id} className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">
                 {c.date.slice(5)} · {c.sessionType ? prettyType(c.sessionType) : "—"}
               </span>
             ))}
@@ -107,7 +106,7 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
         </div>
       )}
 
-      <BentoCard variant="open" label="Zone distribution" colSpan={12}>
+      <TerminalPanel variant="open" label="Zone distribution" colSpan={12}>
         {totalM > 0 && ZONE_ORDER.some((z) => (zoneDistance[z] ?? 0) > 0) ? (
           <div className="flex flex-col gap-3">
             <ZoneDistributionBar zoneDistance={zoneDistance} totalM={totalM} />
@@ -120,9 +119,9 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
         ) : (
           <p className="text-caption text-[var(--rtd-text-tertiary)]">No zone breakdown logged for this session.</p>
         )}
-      </BentoCard>
+      </TerminalPanel>
 
-      <BentoCard variant="open" label="Stroke distribution" colSpan={12}>
+      <TerminalPanel variant="open" label="Stroke distribution" colSpan={12}>
         {strokeRows.length > 0 ? (
           <>
             <MiniBarList rows={strokeRows} color="var(--rtd-cyan)" formatValue={(v) => `${v}m`} />
@@ -135,9 +134,9 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
         ) : (
           <p className="text-caption text-[var(--rtd-text-tertiary)]">No stroke breakdown logged for this session.</p>
         )}
-      </BentoCard>
+      </TerminalPanel>
 
-      <BentoCard variant="open" label="Pace by zone" colSpan={12}>
+      <TerminalPanel variant="open" label="Pace by zone" colSpan={12}>
         {zonePace.length > 0 ? (
           <div className="flex flex-col gap-2">
             <MiniBarList
@@ -150,11 +149,11 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
         ) : (
           <p className="text-caption text-[var(--rtd-text-tertiary)]">No timed intervals logged for this session.</p>
         )}
-      </BentoCard>
+      </TerminalPanel>
 
       <div>
-        <SectionLabel>Analysis</SectionLabel>
-        <GlassCard className="flex flex-col gap-2.5">
+        <SectionHeader title="Analysis" className="mb-2" />
+        <TerminalPanel fill={false}>
           {analysisParagraphs.length > 0 ? (
             analysisParagraphs.map((p, i) => (
               <p key={i} className="text-subhead text-[var(--rtd-text)] leading-snug">
@@ -164,18 +163,18 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
           ) : (
             <p className="text-caption text-[var(--rtd-text-tertiary)]">No analysis available for this session.</p>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       {intervals.length > 0 && (
         <div>
-          <SectionLabel>Sets</SectionLabel>
-          <GlassCard variant="open" className="flex flex-col rtd-divide-y">
+          <SectionHeader title="Sets" className="mb-2" />
+          <TerminalPanel variant="open" gap="none" className="rtd-divide-y">
             {intervals.map((iv, i) => {
               const zoneMeta = iv.zone ? ZONES[iv.zone as Zone] : undefined;
               return (
                 <div key={i} className="flex items-center gap-2 py-1.5 first:pt-0 last:pb-0">
-                  <span className="text-subhead rtd-nums text-[var(--rtd-text)]">
+                  <span className="text-subhead rtd-nums rtd-mono text-[var(--rtd-text)]">
                     {iv.reps > 1 ? `${iv.reps}×${iv.distanceM}` : iv.distanceM}m {iv.stroke}
                     {iv.targetInterval ? ` @${iv.targetInterval}` : ""}
                   </span>
@@ -189,11 +188,11 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
                   )}
                   {iv.note && <span className="text-caption text-[var(--rtd-text-tertiary)] truncate">{iv.note}</span>}
                   <span className="flex-1" />
-                  {iv.avgTime && <span className="text-footnote rtd-nums text-[var(--rtd-cyan)] shrink-0">avg {iv.avgTime}</span>}
+                  {iv.avgTime && <span className="text-footnote rtd-nums rtd-mono text-[var(--rtd-cyan)] shrink-0">avg {iv.avgTime}</span>}
                 </div>
               );
             })}
-          </GlassCard>
+          </TerminalPanel>
         </div>
       )}
 

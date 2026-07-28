@@ -49,7 +49,7 @@ export function WaterLogger({
         ariaLabel={`Water: ${(ml / 1000).toFixed(2)} of ${(targetMl / 1000).toFixed(1)} liters`}
       />
       <div className="flex-1">
-        <div className="text-body font-semibold">
+        <div className="text-body font-semibold rtd-mono">
           {(ml / 1000).toFixed(2)}L <span className="text-[var(--rtd-text-secondary)] font-normal">/ {(targetMl / 1000).toFixed(1)}L</span>
         </div>
         {!readOnly && (
@@ -59,7 +59,7 @@ export function WaterLogger({
                 key={amt}
                 disabled={pending}
                 onClick={() => startTransition(() => logWaterAction(amt))}
-                className="text-caption px-2.5 py-1.5 rounded-full bg-[var(--rtd-cyan)]/15 text-[var(--rtd-cyan)] disabled:opacity-40 cursor-pointer rtd-tap-target hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+                className="text-caption px-2.5 py-1.5 rounded-full bg-[var(--rtd-cyan)]/15 text-[var(--rtd-cyan)] disabled:opacity-40 cursor-pointer rtd-tap-target hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-mono"
               >
                 +{amt}ml
               </button>

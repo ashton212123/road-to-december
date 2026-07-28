@@ -1,4 +1,5 @@
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import type { TaperPlan } from "@/lib/swim/taper";
 
 const PHASE_LABEL: Record<TaperPlan["phase"], string> = {
@@ -8,10 +9,10 @@ const PHASE_LABEL: Record<TaperPlan["phase"], string> = {
   post: "Post-meet",
 };
 
-const ADHERENCE_LABEL: Record<TaperPlan["adherence"], { text: string; color: string } | null> = {
-  "on-plan": { text: "On plan", color: "var(--rtd-green)" },
-  "too-much-volume": { text: "Volume above target", color: "var(--rtd-orange)" },
-  "too-little-intensity": { text: "Quality share below baseline", color: "var(--rtd-orange)" },
+const ADHERENCE_LABEL: Record<TaperPlan["adherence"], { text: string; tone: StatusTone } | null> = {
+  "on-plan": { text: "On plan", tone: "ok" },
+  "too-much-volume": { text: "Volume above target", tone: "warn" },
+  "too-little-intensity": { text: "Quality share below baseline", tone: "warn" },
   unknown: null,
 };
 
@@ -26,20 +27,13 @@ export function TaperPlanCard({ plan, meetName }: { plan: TaperPlan; meetName: s
   const adherence = ADHERENCE_LABEL[plan.adherence];
 
   return (
-    <BentoCard variant="open" label={`Taper plan · ${meetName}`} colSpan={12}>
+    <TerminalPanel variant="open" label={`Taper plan · ${meetName}`} colSpan={12}>
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-subhead font-semibold text-[var(--rtd-text)]">
             {PHASE_LABEL[plan.phase]} · {plan.daysOut}d out
           </span>
-          {adherence && (
-            <span
-              className="text-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0"
-              style={{ background: `${adherence.color}22`, color: adherence.color }}
-            >
-              {adherence.text}
-            </span>
-          )}
+          {adherence && <StatusChip label={adherence.text} tone={adherence.tone} />}
         </div>
 
         <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
@@ -50,13 +44,17 @@ export function TaperPlanCard({ plan, meetName }: { plan: TaperPlan; meetName: s
         </div>
 
         <div className="flex items-center justify-between text-footnote">
-          <span className="text-[var(--rtd-text-secondary)]">Baseline {fmtM(plan.baselineWeeklyM)}/wk</span>
-          <span className="text-[var(--rtd-text)] font-medium">Target {fmtM(plan.targetWeeklyM)}/wk</span>
+          <span className="text-[var(--rtd-text-secondary)]">
+            Baseline <span className="rtd-mono">{fmtM(plan.baselineWeeklyM)}</span>/wk
+          </span>
+          <span className="text-[var(--rtd-text)] font-medium">
+            Target <span className="rtd-mono">{fmtM(plan.targetWeeklyM)}</span>/wk
+          </span>
         </div>
 
         {plan.thisWeekActualM !== null && (
           <div className="text-footnote text-[var(--rtd-text-secondary)]">
-            This week so far: <span className="text-[var(--rtd-text)] font-medium rtd-nums">{fmtM(plan.thisWeekActualM)}</span>
+            This week so far: <span className="text-[var(--rtd-text)] font-medium rtd-nums rtd-mono">{fmtM(plan.thisWeekActualM)}</span>
           </div>
         )}
 
@@ -64,6 +62,6 @@ export function TaperPlanCard({ plan, meetName }: { plan: TaperPlan; meetName: s
         <p className="text-caption text-[var(--rtd-text-tertiary)] leading-snug">{plan.intensityRule}</p>
         <p className="text-caption text-[var(--rtd-text-tertiary)] leading-snug">{plan.frequencyRule}</p>
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

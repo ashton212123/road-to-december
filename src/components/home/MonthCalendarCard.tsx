@@ -1,4 +1,4 @@
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -32,7 +32,7 @@ export function MonthCalendarCard({
   const sessionsThisMonth = new Set([...gym, ...swim]).size;
 
   return (
-    <BentoCard label={monthLabel} colSpan={colSpan} rowSpan={rowSpan} className={className}>
+    <TerminalPanel label={monthLabel} colSpan={colSpan} rowSpan={rowSpan} className={className}>
       <div className="grid grid-cols-7 gap-1 flex-1 content-start">
         {WEEKDAYS.map((d, i) => (
           <span key={`h${i}`} className="text-caption text-[var(--rtd-text-tertiary)] text-center pb-0.5">
@@ -51,7 +51,7 @@ export function MonthCalendarCard({
           return (
             <span
               key={dateISO}
-              className="aspect-square rounded-[9px] flex items-center justify-center text-footnote rtd-nums"
+              className="aspect-square rounded-[9px] flex items-center justify-center text-footnote rtd-nums rtd-mono"
               style={{
                 background: trained
                   ? both
@@ -71,11 +71,11 @@ export function MonthCalendarCard({
         })}
       </div>
       <div className="mt-3 rounded-[14px] border border-[var(--rtd-border)] bg-black/40 px-4 py-2.5 flex items-baseline justify-between">
-        <span className="rtd-big-num" style={{ fontSize: 28 }}>
+        <span className="rtd-big-num rtd-mono" style={{ fontSize: 28 }}>
           {sessionsThisMonth}
         </span>
         <span className="text-footnote text-[var(--rtd-text-secondary)]">training days this month</span>
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

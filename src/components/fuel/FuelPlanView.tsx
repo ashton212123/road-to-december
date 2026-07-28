@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MiniBarList } from "@/components/ui/MiniBarList";
 import { chartTheme } from "@/components/analytics/chart-theme";
@@ -54,12 +54,12 @@ function DayRow({ plan, isToday }: { plan: DayFuelPlan; isToday: boolean }) {
           {isToday && <span className="text-[var(--rtd-cyan)]"> •</span>}
         </span>
         <span className="text-caption text-[var(--rtd-text-secondary)] flex-1 truncate">{plan.dayDemand} demand</span>
-        <span className="text-footnote rtd-nums text-[var(--rtd-text)]">{plan.kcal.toLocaleString()} kcal</span>
-        <span className="text-caption rtd-nums text-[var(--rtd-text-tertiary)] w-16 text-right">{plan.carbGPerKg}g/kg C</span>
+        <span className="text-footnote rtd-nums rtd-mono text-[var(--rtd-text)]">{plan.kcal.toLocaleString()} kcal</span>
+        <span className="text-caption rtd-nums rtd-mono text-[var(--rtd-text-tertiary)] w-16 text-right">{plan.carbGPerKg}g/kg C</span>
       </button>
       {open && (
         <div className="pb-2.5 pl-4 flex flex-col gap-1.5 rtd-fade-in">
-          <div className="flex gap-3 text-caption rtd-nums text-[var(--rtd-text-secondary)]">
+          <div className="flex gap-3 text-caption rtd-nums rtd-mono text-[var(--rtd-text-secondary)]">
             <span>C {plan.carbsG}g ({plan.carbGPerKg}g/kg)</span>
             <span>P {plan.proteinG}g</span>
             <span>F {plan.fatG}g</span>
@@ -107,8 +107,8 @@ export function FuelPlanView({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <SectionLabel>Current phase</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-1">
+        <SectionHeader title="Current phase" className="mb-2" />
+        <TerminalPanel variant="open">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-title-3 font-semibold text-[var(--rtd-text)]">
               {phaseLabel} phase{phaseDaysLeft !== null && phaseDaysLeft >= 0 ? ` · ${phaseDaysLeft}d left` : ""}
@@ -118,15 +118,15 @@ export function FuelPlanView({
             </span>
           </div>
           <p className="text-caption text-[var(--rtd-text-secondary)] leading-snug">{phaseTransitionExplainer}</p>
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>Energy target</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-2.5">
+        <SectionHeader title="Energy target" className="mb-2" />
+        <TerminalPanel variant="open">
           <div className="flex items-baseline gap-2">
-            <span className="rtd-display text-title-1 rtd-nums">{energyTarget.kcal.toLocaleString()}</span>
-            <span className="text-subhead text-[var(--rtd-text-secondary)] rtd-nums">kcal/day ({energyTarget.low.toLocaleString()}-{energyTarget.high.toLocaleString()})</span>
+            <span className="rtd-display text-title-1 rtd-nums rtd-mono">{energyTarget.kcal.toLocaleString()}</span>
+            <span className="text-subhead text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">kcal/day ({energyTarget.low.toLocaleString()}-{energyTarget.high.toLocaleString()})</span>
           </div>
           <span className="text-caption text-[var(--rtd-text-tertiary)]">{BASIS_LABEL[energyTarget.basis]}</span>
           <p className="text-caption text-[var(--rtd-text-secondary)] leading-snug">{energyTarget.rationale}</p>
@@ -154,21 +154,21 @@ export function FuelPlanView({
           ) : (
             <EmptyState title="Not enough weigh-ins yet" body="Log weight regularly to see your trend against the target rate." />
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>This week&apos;s day-by-day plan</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col">
+        <SectionHeader title="This week's day-by-day plan" className="mb-2" />
+        <TerminalPanel variant="open" gap="none">
           {weekPlan.map((plan) => (
             <DayRow key={plan.dateISO} plan={plan} isToday={plan.dateISO === todayISO} />
           ))}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>Protein distribution</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-2">
+        <SectionHeader title="Protein distribution" className="mb-2" />
+        <TerminalPanel variant="open">
           <p className="text-caption text-[var(--rtd-text-secondary)]">
             Target: ~{Math.round(proteinTargetG.mid / 4)}g × 4-5 feedings across the day ({evidenceLabel("E10")}).
           </p>
@@ -177,17 +177,17 @@ export function FuelPlanView({
           ) : (
             <p className="text-caption text-[var(--rtd-text-tertiary)]">No protein logged yet today.</p>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>What changes and when</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-1.5">
+        <SectionHeader title="What changes and when" className="mb-2" />
+        <TerminalPanel variant="open">
           <p className="text-caption text-[var(--rtd-text-secondary)] leading-snug">{phaseTransitionExplainer}</p>
           <p className="text-caption text-[var(--rtd-text-tertiary)] leading-snug">
             Carb targets move with training demand every day ({evidenceLabel("E9")}) — rest days sit at 5g/kg, very-high-demand days (doubles, 5 AM race-pace) at 10g/kg. Protein and the 0.8g/kg fat floor stay constant across the phase.
           </p>
-        </GlassCard>
+        </TerminalPanel>
       </div>
     </div>
   );

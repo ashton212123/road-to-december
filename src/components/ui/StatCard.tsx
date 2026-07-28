@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import clsx from "clsx";
-import { BentoCard } from "./BentoCard";
+import { TerminalPanel } from "./TerminalPanel";
 import { AnimatedNumber } from "./AnimatedNumber";
 import { DeltaChip } from "./DeltaChip";
 import { Sparkline } from "./Sparkline";
@@ -42,7 +42,7 @@ export function StatCard({
   const color = accent ?? domainColor ?? "var(--rtd-text)";
 
   return (
-    <BentoCard className={clsx("gap-1 relative overflow-hidden", className)}>
+    <TerminalPanel className={clsx("gap-1 relative overflow-hidden", className)}>
       {domainColor && (
         <div
           aria-hidden="true"
@@ -54,7 +54,7 @@ export function StatCard({
       <div className="flex items-baseline gap-1.5 min-w-0 relative">
         {/* Mobile keeps V4's 28px density; desktop steps up to the shared
             big-num scale (44px) instead of the old ad-hoc 32px. */}
-        <span className="rtd-display rtd-nums leading-tight truncate text-[28px] md:text-[44px]" style={{ color }}>
+        <span className="rtd-display rtd-nums rtd-mono leading-tight truncate text-[28px] md:text-[44px]" style={{ color }}>
           {numericValue !== undefined ? <AnimatedNumber value={numericValue} decimals={decimals} suffix={suffix} /> : value}
         </span>
         {deltaPct !== undefined && <DeltaChip pct={deltaPct} goodDirection={goodDirection} />}
@@ -76,6 +76,6 @@ export function StatCard({
           )}
         </div>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }

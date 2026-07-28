@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import {
   SwimWeeklyVolumeCard,
@@ -72,7 +72,7 @@ export default async function SwimPage({ searchParams }: { searchParams: Promise
 
   return (
     <div className="flex flex-col gap-4 pt-1">
-      <SectionLabel>Swim</SectionLabel>
+      <SectionHeader title="Swim" className="mb-2" />
       <Suspense fallback={<AnalyticsSkeleton />}>
         <SwimContent view={view} />
       </Suspense>
@@ -131,7 +131,7 @@ async function SwimContent({ view }: { view: SwimView }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {vm.takeaway && <p className="rtd-glass px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{vm.takeaway}</p>}
+      {vm.takeaway && <p className="rtd-glass rounded-[var(--rtd-radius-card)] px-4 py-3 text-subhead text-[var(--rtd-text)] leading-snug">{vm.takeaway}</p>}
       <SwimViewSelector current={view} />
 
       {view === "log" && (
@@ -158,15 +158,15 @@ async function SwimContent({ view }: { view: SwimView }) {
             }
           />
           <div>
-            <SectionLabel
-              right={
-                <Link href="/swim/sessions" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110">
+            <SectionHeader
+              title="Recent sessions"
+              className="mb-2"
+              statusChip={
+                <Link href="/swim/sessions" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 whitespace-nowrap">
                   See all sessions →
                 </Link>
               }
-            >
-              Recent sessions
-            </SectionLabel>
+            />
             <SwimSessionList
               sessions={raw.swimSessions.map((s) => ({
                 id: s.id,
@@ -188,7 +188,7 @@ async function SwimContent({ view }: { view: SwimView }) {
           <SwimMeetReadinessCard meets={vm.meetsWithReadiness} today={today} />
           <SwimHero allSwimTimesByEvent={vm.allSwimTimesByEvent} meetEventsFlat={meetEventsFlat} />
           <div>
-            <SectionLabel>Meets & targets</SectionLabel>
+            <SectionHeader title="Meets & targets" className="mb-2" />
             <div className="flex flex-col gap-3">
               <MeetsList meets={vm.meetsWithReadiness} />
               <AddMeetForm latestTimeByEvent={vm.latestTimeByEvent} />

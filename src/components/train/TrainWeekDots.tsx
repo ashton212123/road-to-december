@@ -1,10 +1,10 @@
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 
 const LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function TrainWeekDots({ scheduled, logged }: { scheduled: boolean[]; logged: boolean[] }) {
   return (
-    <BentoCard label="This week" colSpan={4} rowSpan={2}>
+    <TerminalPanel label="This week" colSpan={4} rowSpan={2}>
       <div className="flex-1 flex items-center justify-between gap-1">
         {LABELS.map((label, i) => (
           <div key={i} className="flex flex-col items-center gap-1.5">
@@ -23,6 +23,6 @@ export function TrainWeekDots({ scheduled, logged }: { scheduled: boolean[]; log
           </div>
         ))}
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

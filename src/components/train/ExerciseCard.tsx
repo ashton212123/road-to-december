@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { Button } from "@/components/ui/Button";
 import { IconBolt, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { logSetAction, deleteSetAction, updateSetAction } from "@/app/(app)/train/actions";
@@ -167,7 +168,7 @@ export function ExerciseCard({
     elapsed === null ? null : !restPrescribed ? "on-target" : !isOver ? "on-target" : elapsed > restPrescribed * 1.3 ? "over-hard" : "over-mild";
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel fill={false}>
       <div className="flex items-start gap-3">
         <button
           type="button"
@@ -198,11 +199,7 @@ export function ExerciseCard({
                 <IconBolt />
               </span>
             )}
-            {exercise.isMainLift && (
-              <span className="text-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--rtd-blue)]/20 text-[var(--rtd-blue)] shrink-0">
-                Main
-              </span>
-            )}
+            {exercise.isMainLift && <StatusChip label="Main" tone="live" />}
           </div>
           <div className="text-footnote text-[var(--rtd-text-secondary)]">{exercise.prescription || "—"}</div>
           <div className="text-caption text-[var(--rtd-text-tertiary)] mt-0.5">{transfer.why}</div>
@@ -225,7 +222,7 @@ export function ExerciseCard({
 
       {!expanded && lastSessionSets.length > 0 && (
         <div className="text-footnote text-[var(--rtd-text-secondary)]">
-          Last session: {lastSessionSets.map((s) => formatPastSet(s, weightUnit)).join("  ·  ")}
+          Last session: <span className="rtd-mono">{lastSessionSets.map((s) => formatPastSet(s, weightUnit)).join("  ·  ")}</span>
         </div>
       )}
 
@@ -239,7 +236,7 @@ export function ExerciseCard({
         <div className="flex flex-col gap-3 rtd-fade-in">
           {lastSessionSets.length > 0 && (
             <div className="text-footnote text-[var(--rtd-text-secondary)]">
-              Last session: {lastSessionSets.map((s) => formatPastSet(s, weightUnit)).join("  ·  ")}
+              Last session: <span className="rtd-mono">{lastSessionSets.map((s) => formatPastSet(s, weightUnit)).join("  ·  ")}</span>
             </div>
           )}
 
@@ -253,7 +250,7 @@ export function ExerciseCard({
 
           {elapsed !== null && (
             <div
-              className="text-center text-footnote rounded-[8px] py-2"
+              className="text-center text-footnote rtd-mono rounded-[8px] py-2"
               style={{
                 background:
                   restSeverity === "over-mild"
@@ -310,15 +307,22 @@ export function ExerciseCard({
               {isPastTarget ? "Add extra set" : "Add set"}
             </Button>
           </div>
-          {ghostReps && !reps && <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">Logs {ghostReps} reps unless you change it.</div>}
+          {ghostReps && !reps && (
+            <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">
+              Logs <span className="rtd-mono">{ghostReps}</span> reps unless you change it.
+            </div>
+          )}
           {targetSets !== null && (
             <div className="text-caption text-[var(--rtd-text-tertiary)] -mt-1">
-              {Math.min(todaysSets.length, targetSets)}/{targetSets} prescribed sets done
+              <span className="rtd-mono">
+                {Math.min(todaysSets.length, targetSets)}/{targetSets}
+              </span>{" "}
+              prescribed sets done
             </div>
           )}
         </div>
       )}
-    </GlassCard>
+    </TerminalPanel>
   );
 }
 
@@ -398,12 +402,12 @@ function SetRow({ set, phaseId, weightUnit, hasLoad }: { set: LoggedSet; phaseId
         onClick={() => setEditing(true)}
         className="flex-1 text-left rounded-md cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
       >
-        <span className="text-[var(--rtd-text-secondary)]">Set {set.setNumber}</span>{" "}
-        <span className="text-[var(--rtd-text)]">
+        <span className="text-[var(--rtd-text-secondary)] rtd-mono">Set {set.setNumber}</span>{" "}
+        <span className="text-[var(--rtd-text)] rtd-mono">
           {formatSetParts(initialWeightKg !== null ? kgToDisplay(initialWeightKg, weightUnit) : null, set.reps, set.rpe, weightUnit)}
           {set.restSeconds !== null && <span className="text-[var(--rtd-text-secondary)]"> · rest {set.restSeconds}s</span>}
-          {set.notes && <span className="text-[var(--rtd-text-secondary)]"> · {set.notes}</span>}
         </span>
+        {set.notes && <span className="text-[var(--rtd-text-secondary)]"> · {set.notes}</span>}
       </button>
       <button
         type="button"

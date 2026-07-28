@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { formatSwimTime } from "@/lib/swim/format";
 import type { ReadinessResult } from "@/lib/swim/readiness";
 import type { Course } from "@/lib/swim/course";
@@ -56,7 +56,7 @@ export function SwimHero({
   const showProjection = nearestMeetEvent && nearestMeetEvent.readiness.pointsUsed >= 2 && nearestMeetEvent.readiness.projectedMs !== null;
 
   return (
-    <GlassCard className="flex flex-col gap-3 rtd-fade-in">
+    <TerminalPanel fill={false} className="rtd-fade-in">
       <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5">
         {EVENTS.map((ev) => (
           <button
@@ -83,18 +83,18 @@ export function SwimHero({
               </span>
             )}
           </div>
-          <div className="rtd-display text-large-title mt-1 transition-[color,opacity] duration-500">
+          <div className="rtd-display rtd-mono text-large-title mt-1 transition-[color,opacity] duration-500">
             {currentBest !== null ? formatSwimTime(currentBest) : "—"}
           </div>
           {practiceBest !== null && (
-            <div className="text-footnote text-[var(--rtd-text-tertiary)] rtd-nums mt-0.5">practice best {formatSwimTime(practiceBest)}</div>
+            <div className="text-footnote text-[var(--rtd-text-tertiary)] rtd-nums rtd-mono mt-0.5">practice best {formatSwimTime(practiceBest)}</div>
           )}
         </div>
         {showProjection && (
           <div className="text-right">
             <div className="rtd-micro-label">Projected from race results · {nearestMeetEvent.meetName}</div>
             <div
-              className="text-title-1 mt-1 transition-colors duration-500"
+              className="text-title-1 rtd-mono mt-1 transition-colors duration-500"
               style={{ color: CONFIDENCE_COLOR[nearestMeetEvent.readiness.confidence] }}
             >
               {formatSwimTime(nearestMeetEvent.readiness.projectedMs as number)}
@@ -109,7 +109,7 @@ export function SwimHero({
 
       {nearestMeetEvent && currentBest !== null && (
         <div className="flex items-center justify-between text-footnote">
-          <span className="text-[var(--rtd-text-secondary)]">
+          <span className="text-[var(--rtd-text-secondary)] rtd-mono">
             Target {formatSwimTime(nearestMeetEvent.targetTimeMs)}
             {nearestMeetEvent.readiness.gapToTargetMs !== null && (
               <span style={{ color: nearestMeetEvent.readiness.gapToTargetMs <= 0 ? "var(--rtd-green)" : "var(--rtd-orange)" }}>
@@ -139,6 +139,6 @@ export function SwimHero({
           Practice times only — log a meet result to project readiness for {event}.
         </div>
       )}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

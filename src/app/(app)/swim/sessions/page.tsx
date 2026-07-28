@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ZoneDistributionBar } from "@/components/swim/ZoneDistributionBar";
 import { SwimSessionTypeFilter } from "@/components/swim/SwimSessionTypeFilter";
@@ -52,12 +52,15 @@ export default async function SwimSessionsPage({ searchParams }: { searchParams:
 
   return (
     <div className="flex flex-col gap-4 pt-1">
-      <div className="flex items-center justify-between gap-2">
-        <SectionLabel>All sessions</SectionLabel>
-        <Link href="/swim" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110">
-          ← Back
-        </Link>
-      </div>
+      <SectionHeader
+        title="All sessions"
+        className="mb-2"
+        statusChip={
+          <Link href="/swim" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 whitespace-nowrap">
+            ← Back
+          </Link>
+        }
+      />
 
       <SwimSessionTypeFilter current={typeFilter} />
 
@@ -84,7 +87,7 @@ export default async function SwimSessionsPage({ searchParams }: { searchParams:
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-footnote font-semibold text-[var(--rtd-text)]">{weekLabel(weekStart)}</span>
-                  <span className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">
+                  <span className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">
                     {weekSessions.length} session{weekSessions.length === 1 ? "" : "s"}
                     {totalM > 0 ? ` · ${totalM.toLocaleString()}m` : ""}
                     {breastKickM > 0 ? ` · ${breastKickM}m BR kick` : ""}
@@ -92,25 +95,25 @@ export default async function SwimSessionsPage({ searchParams }: { searchParams:
                 </div>
                 <ZoneDistributionBar zoneDistance={combinedZone} totalM={totalM} height={6} />
               </div>
-              <GlassCard variant="open" className="flex flex-col rtd-divide-y">
+              <TerminalPanel variant="open" gap="none" className="rtd-divide-y">
                 {sorted.map((s) => (
                   <Link
                     key={s.id}
                     href={`/swim/session/${s.id}`}
                     className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
                   >
-                    <span className="text-footnote text-[var(--rtd-text)] shrink-0">{shortDate(s.date)}</span>
+                    <span className="text-footnote text-[var(--rtd-text)] shrink-0 rtd-mono">{shortDate(s.date)}</span>
                     <span className="flex items-center gap-2 min-w-0">
                       <span className="text-caption px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-secondary)] shrink-0 truncate">
                         {TYPE_LABELS[s.type].replace(" session", "")}
                       </span>
-                      <span className="text-caption rtd-nums text-[var(--rtd-text-tertiary)] shrink-0 w-16 text-right">
+                      <span className="text-caption rtd-nums rtd-mono text-[var(--rtd-text-tertiary)] shrink-0 w-16 text-right">
                         {s.parsedDistanceM ? `${s.parsedDistanceM.toLocaleString()}m` : "—"}
                       </span>
                     </span>
                   </Link>
                 ))}
-              </GlassCard>
+              </TerminalPanel>
             </div>
           );
         })

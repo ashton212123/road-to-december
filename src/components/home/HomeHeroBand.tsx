@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import type { ReadinessLight } from "@/lib/rules/readiness";
 import type { PhaseWeek } from "@/lib/train/phaseWeek";
 
@@ -52,13 +52,13 @@ export function HomeHeroBand({
   className?: string;
 }) {
   return (
-    <BentoCard colSpan={8} rowSpan={3} className={clsx("rtd-hero-glow", className)}>
+    <TerminalPanel colSpan={8} rowSpan={3} className={clsx("rtd-hero-glow", className)}>
       <div className="flex flex-col md:flex-row gap-4 md:gap-5 flex-1 min-h-0">
         <div className="flex-1 flex flex-col justify-between min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="rtd-micro-label">Days to NCAA · Dec 4</div>
-              <div className="rtd-big-num mt-1">
+              <div className="rtd-big-num rtd-mono mt-1">
                 <AnimatedNumber value={daysToNcaa} />
               </div>
             </div>
@@ -76,7 +76,7 @@ export function HomeHeroBand({
             </div>
             <div className="flex items-center justify-between mt-1.5">
               <span className="text-caption text-[var(--rtd-text-secondary)]">{seasonPct}% through the 21-week season</span>
-              <span className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums">
+              <span className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums rtd-mono">
                 {aseanConfirmed !== false ? (
                   <>
                     <AnimatedNumber value={daysToAsean} /> to ASEAN · {aseanDateLabel}
@@ -111,6 +111,6 @@ export function HomeHeroBand({
           </div>
         </div>
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

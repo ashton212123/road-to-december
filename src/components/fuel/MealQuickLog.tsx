@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import {
   estimateMealAction,
@@ -244,7 +244,7 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel fill={false}>
       <div className="text-title-3">Quick log — describe your day</div>
 
       {!items && (
@@ -391,7 +391,7 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
                     key={factor}
                     type="button"
                     onClick={() => scalePortion(row.clientId, factor)}
-                    className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target"
+                    className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out rtd-tap-target rtd-mono"
                   >
                     ×{factor}
                   </button>
@@ -456,6 +456,6 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
           </div>
         </div>
       )}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

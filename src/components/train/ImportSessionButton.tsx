@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import {
   estimateSessionImportAction,
   saveGymSessionImportAction,
@@ -159,8 +160,9 @@ export function ImportSessionButton({
           aria-modal="true"
           aria-label="Import session"
         >
-          <div
-            className="rtd-glass rtd-glass-blur rtd-dialog-enter p-3.5 md:p-4 flex flex-col gap-3 max-w-lg w-full max-h-[85vh] overflow-y-auto"
+          <TerminalPanel
+            fill={false}
+            className="rtd-glass-blur rtd-dialog-enter max-w-lg w-full max-h-[85vh] overflow-y-auto"
             style={{ backgroundColor: "rgba(20,20,22,0.9)" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -287,7 +289,7 @@ export function ImportSessionButton({
                           {row.discarded ? "Discarded" : "Discard"}
                         </button>
                       </div>
-                      <div className="text-caption text-[var(--rtd-text-tertiary)]">
+                      <div className="text-caption text-[var(--rtd-text-tertiary)] rtd-mono">
                         {row.sets.map((s) => `${s.weightKg ?? "–"}kg x ${s.reps ?? "–"}${s.rpe ? ` @${s.rpe}` : ""}`).join(" · ")}
                       </div>
                     </div>
@@ -298,7 +300,7 @@ export function ImportSessionButton({
                 </Button>
               </>
             )}
-          </div>
+          </TerminalPanel>
         </div>
       )}
     </>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import clsx from "clsx";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { logFoodAction, deleteFoodLogAction } from "@/app/(app)/fuel/actions";
 import { FOOD_LIBRARY } from "@/lib/fuel/food-library";
@@ -70,7 +70,7 @@ export function MealSlot({
   const totalKcal = loggedItems.reduce((s, i) => s + i.kcal, 0);
 
   return (
-    <GlassCard className="flex flex-col gap-2.5">
+    <TerminalPanel fill={false}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-body font-semibold text-[var(--rtd-text)]">{time}</div>
@@ -99,7 +99,7 @@ export function MealSlot({
             <div key={item.id} className="flex items-center justify-between text-footnote bg-white/[0.04] rounded-lg px-2.5 py-1.5">
               <span className="truncate text-[var(--rtd-text-secondary)]">{item.description}</span>
               <span className="shrink-0 ml-2 text-[var(--rtd-text-secondary)]">
-                {item.kcal} kcal
+                <span className="rtd-mono">{item.kcal} kcal</span>
                 {!readOnly && (
                   <button
                     onClick={() => startTransition(() => deleteFoodLogAction(item.id))}
@@ -112,7 +112,7 @@ export function MealSlot({
               </span>
             </div>
           ))}
-          <div className="text-caption text-[var(--rtd-text-secondary)] text-right">{totalKcal} kcal logged</div>
+          <div className="text-caption text-[var(--rtd-text-secondary)] text-right rtd-mono">{totalKcal} kcal logged</div>
         </div>
       )}
 
@@ -148,7 +148,7 @@ export function MealSlot({
                   onClick={() => quickAdd(food.id)}
                   className="text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] disabled:opacity-40 cursor-pointer rtd-tap-target hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
                 >
-                  {food.name} · {food.kcal}kcal
+                  {food.name} · <span className="rtd-mono">{food.kcal}kcal</span>
                 </button>
               ))}
             </div>
@@ -179,6 +179,6 @@ export function MealSlot({
           )}
         </div>
       )}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

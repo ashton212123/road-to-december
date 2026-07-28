@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -18,7 +18,7 @@ export function TrainingLoadCard({
   const hasAnyData = thisWeekDaily.some((v) => v !== null) || lastWeekDaily.some((v) => v !== null);
 
   return (
-    <BentoCard variant="open" label="Training load" colSpan={4} rowSpan={2} className={className}>
+    <TerminalPanel variant="open" label="07 // LOAD PULSE" colSpan={4} rowSpan={2} className={className}>
       {!hasAnyData ? (
         <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
           <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
@@ -35,6 +35,6 @@ export function TrainingLoadCard({
           {takeaway && <p className="text-caption text-[var(--rtd-text-secondary)] mt-1 leading-snug">{takeaway}</p>}
         </>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }

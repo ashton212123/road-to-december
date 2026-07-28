@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { ZONES, breastKickMetres, type Zone, type ZoneDistance } from "@/lib/swim/zones";
 import { classifySession } from "@/lib/swim/sessionType";
@@ -196,9 +196,9 @@ export function SwimLogSheet({
 
   if (status === "saved") {
     return embedded ? null : (
-      <GlassCard className="flex flex-col items-center gap-2 py-6 text-center">
+      <TerminalPanel fill={false} className="items-center py-6 text-center">
         <div className="text-title-3">Session saved</div>
-      </GlassCard>
+      </TerminalPanel>
     );
   }
 
@@ -287,7 +287,7 @@ export function SwimLogSheet({
               {reconciliation.message}
             </div>
           )}
-          <div className="text-title-1 rtd-nums">{reconciliation.finalM.toLocaleString()}m</div>
+          <div className="text-title-1 rtd-nums rtd-mono">{reconciliation.finalM.toLocaleString()}m</div>
 
           <div className="flex flex-col gap-1.5">
             <div className="flex h-3 rounded-full overflow-hidden">
@@ -377,7 +377,7 @@ export function SwimLogSheet({
 
           {breastKickM > 0 && (
             <div className="text-caption text-[var(--rtd-text-secondary)]">
-              Breaststroke kick: <span className="rtd-nums font-semibold">{breastKickM.toLocaleString()}m</span> this session
+              Breaststroke kick: <span className="rtd-nums rtd-mono font-semibold">{breastKickM.toLocaleString()}m</span> this session
               [moderate — breaststroker&apos;s knee tracks kick volume]
             </div>
           )}
@@ -392,7 +392,7 @@ export function SwimLogSheet({
                     checked={n.include}
                     onChange={(e) => setNotable((prev) => prev.map((p, idx) => (idx === i ? { ...p, include: e.target.checked } : p)))}
                   />
-                  {n.event} — {(n.timeMs / 1000).toFixed(2)}s{n.isRace ? " (race)" : ""}
+                  {n.event} — <span className="rtd-mono">{(n.timeMs / 1000).toFixed(2)}s</span>{n.isRace ? " (race)" : ""}
                 </label>
               ))}
             </div>
@@ -441,9 +441,9 @@ export function SwimLogSheet({
   if (embedded) return body;
 
   return (
-    <GlassCard className="flex flex-col gap-2.5">
+    <TerminalPanel fill={false}>
       <div className="text-title-3">Log a swim</div>
       {body}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

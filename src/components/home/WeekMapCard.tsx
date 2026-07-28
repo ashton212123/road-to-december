@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import type { WeekMapRow } from "@/lib/dashboard/weekMap";
 
 const CELL_COLOR: Record<string, string> = {
@@ -20,7 +20,7 @@ export function WeekMapCard({
   className?: string;
 }) {
   return (
-    <BentoCard variant="open" label="Week map" colSpan={4} rowSpan={2} className={className}>
+    <TerminalPanel variant="open" label="Week map" colSpan={4} rowSpan={2} className={className}>
       <div className="grid gap-y-1.5" style={{ gridTemplateColumns: "44px repeat(7, 1fr) 32px" }}>
         <div />
         {days.map((d) => (
@@ -37,12 +37,12 @@ export function WeekMapCard({
                 <span className="w-2 h-2 rounded-full" style={{ background: CELL_COLOR[cell] }} />
               </div>
             ))}
-            <div className="text-caption text-[var(--rtd-text-tertiary)] text-right rtd-nums flex items-center justify-end">
+            <div className="text-caption text-[var(--rtd-text-tertiary)] text-right rtd-nums rtd-mono flex items-center justify-end">
               {row.adherencePct !== null ? `${row.adherencePct}%` : "—"}
             </div>
           </Fragment>
         ))}
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

@@ -90,7 +90,7 @@ export function RestPill({
       <span className="text-subhead font-semibold truncate max-w-[140px] text-[var(--rtd-text)]">
         {activeRest.exerciseName}
       </span>
-      <span className="text-subhead font-bold rtd-nums" style={{ color }}>
+      <span className="text-subhead font-bold rtd-nums rtd-mono" style={{ color }}>
         {label}
       </span>
     </button>

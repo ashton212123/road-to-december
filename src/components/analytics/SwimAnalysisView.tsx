@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { SeedPbRow, SeedTarget } from "@/lib/data/types";
 import { RACE_PLANS, RACE_SKILL_NOTE } from "@/lib/swim/racePlans";
 import { formatSwimTime } from "@/lib/swim/format";
@@ -30,10 +30,10 @@ function BottlenecksSection({ bottlenecks }: { bottlenecks: Bottleneck[] }) {
 
   return (
     <div>
-      <SectionLabel>Bottlenecks</SectionLabel>
+      <SectionHeader title="Bottlenecks" className="mb-2" />
       <div className="flex flex-col gap-2.5">
         {visible.map((b) => (
-          <GlassCard key={b.key} variant="open" className="flex flex-col gap-1.5">
+          <TerminalPanel key={b.key} variant="open" fill={false}>
             <div className="flex items-start justify-between gap-2">
               <span className="text-subhead font-semibold text-[var(--rtd-text)]">{b.title}</span>
               <span
@@ -47,7 +47,7 @@ function BottlenecksSection({ bottlenecks }: { bottlenecks: Bottleneck[] }) {
             <p className="text-caption text-[var(--rtd-text-secondary)]">{b.mechanism}</p>
             <p className="text-footnote text-[var(--rtd-text)] font-medium">{b.whatToDo}</p>
             <p className="text-caption text-[var(--rtd-text-tertiary)]">Data used: {b.dataUsed}</p>
-          </GlassCard>
+          </TerminalPanel>
         ))}
         {bottlenecks.length > 4 && (
           <button
@@ -66,8 +66,8 @@ function BottlenecksSection({ bottlenecks }: { bottlenecks: Bottleneck[] }) {
 function DpsSection({ dps, dpsMissingReason }: { dps: DpsAnalysis | null; dpsMissingReason: string | null }) {
   return (
     <div>
-      <SectionLabel>Where the race is lost</SectionLabel>
-      <GlassCard variant="open" className="flex flex-col gap-3">
+      <SectionHeader title="Where the race is lost" className="mb-2" />
+      <TerminalPanel variant="open" fill={false}>
         {!dps || dpsMissingReason ? (
           <>
             <p className="text-caption text-[var(--rtd-text-secondary)]">{dpsMissingReason}</p>
@@ -86,7 +86,7 @@ function DpsSection({ dps, dpsMissingReason }: { dps: DpsAnalysis | null; dpsMis
                 <span className="text-right">DPS</span>
               </div>
               {dps.lengths.map((l) => (
-                <div key={l.index} className="grid grid-cols-4 gap-2 py-1.5 text-footnote rtd-nums">
+                <div key={l.index} className="grid grid-cols-4 gap-2 py-1.5 text-footnote rtd-nums rtd-mono">
                   <span className="text-[var(--rtd-text-secondary)]">#{l.index}</span>
                   <span className="text-right text-[var(--rtd-text)]">{formatSec(l.splitSec)}s</span>
                   <span className="text-right text-[var(--rtd-text)]">{l.strokes}</span>
@@ -96,7 +96,7 @@ function DpsSection({ dps, dpsMissingReason }: { dps: DpsAnalysis | null; dpsMis
             </div>
           </>
         )}
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }
@@ -143,8 +143,8 @@ export function SwimAnalysisView({
       <DpsSection dps={dps} dpsMissingReason={dpsMissingReason} />
 
       <div>
-        <SectionLabel>Race plans</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-4">
+        <SectionHeader title="Race plans" className="mb-2" />
+        <TerminalPanel variant="open" fill={false}>
           {RACE_PLANS.map((plan) => {
             const deltas =
               plan.targetSplits && plan.targetSplits.length === 4 && latestRaceSplits && plan.event === "200 Breast"
@@ -161,7 +161,7 @@ export function SwimAnalysisView({
                     {plan.targetSplits.map((s, i) => (
                       <span
                         key={i}
-                        className="px-2 py-1 rounded-full bg-white/[0.06] text-caption font-semibold text-[var(--rtd-text)] rtd-nums"
+                        className="px-2 py-1 rounded-full bg-white/[0.06] text-caption font-semibold text-[var(--rtd-text)] rtd-nums rtd-mono"
                       >
                         {formatSec(s)}
                       </span>
@@ -173,7 +173,7 @@ export function SwimAnalysisView({
                     {deltas.map((d, i) => (
                       <span
                         key={i}
-                        className="px-2 py-1 rounded-full text-caption font-semibold rtd-nums"
+                        className="px-2 py-1 rounded-full text-caption font-semibold rtd-nums rtd-mono"
                         style={{
                           background: d <= 0 ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.15)",
                           color: d <= 0 ? "var(--rtd-green)" : "var(--rtd-red)",
@@ -190,12 +190,12 @@ export function SwimAnalysisView({
             );
           })}
           <p className="text-caption text-[var(--rtd-text-tertiary)] pt-1 border-t border-[var(--rtd-hairline)]">{RACE_SKILL_NOTE}</p>
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>Personal bests vs goal</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-2">
+        <SectionHeader title="Personal bests vs goal" className="mb-2" />
+        <TerminalPanel variant="open" fill={false}>
           {pbsByEventAndCourse.length > 0 ? (
             pbsByEventAndCourse.map((pb) => (
               <div key={`${pb.event}|${pb.course}`} className="flex items-center justify-between text-footnote">
@@ -203,7 +203,7 @@ export function SwimAnalysisView({
                   {pb.event}
                   <span className="text-caption px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--rtd-text-tertiary)]">{pb.course}</span>
                 </span>
-                <span className="font-semibold text-[var(--rtd-text)] rtd-nums">{formatSwimTime(pb.timeMs)}</span>
+                <span className="font-semibold text-[var(--rtd-text)] rtd-nums rtd-mono">{formatSwimTime(pb.timeMs)}</span>
               </div>
             ))
           ) : (
@@ -212,7 +212,7 @@ export function SwimAnalysisView({
               {seedPbRows.map((row) => (
                 <div key={row.name} className="flex items-center justify-between text-footnote">
                   <span className="text-[var(--rtd-text-secondary)]">{row.name}</span>
-                  <span className="font-semibold" style={{ color: row.color.startsWith("#") ? row.color : "var(--rtd-text)" }}>
+                  <span className="font-semibold rtd-mono" style={{ color: row.color.startsWith("#") ? row.color : "var(--rtd-text)" }}>
                     {row.time}
                   </span>
                 </div>
@@ -224,13 +224,13 @@ export function SwimAnalysisView({
               Goal: {swimTarget.goal} · {swimTarget.why}
             </div>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
         <div>
-          <SectionLabel>200 BR split autopsy — you vs target (seconds)</SectionLabel>
-          <GlassCard variant="open">
+          <SectionHeader title="200 BR split autopsy — you vs target (seconds)" className="mb-2" />
+          <TerminalPanel variant="open" fill={false}>
             {splitCompareData.length === 0 ? (
               <EmptyState title="No 200 BR splits logged yet" body="Log exact 50-splits after your next 200 breast race to see this." />
             ) : (
@@ -251,12 +251,12 @@ export function SwimAnalysisView({
                 </p>
               </>
             )}
-          </GlassCard>
+          </TerminalPanel>
         </div>
 
         <div>
-          <SectionLabel>Time to 15m (dive) — the #1 weakness metric</SectionLabel>
-          <GlassCard variant="open">
+          <SectionHeader title="Time to 15m (dive) — the #1 weakness metric" className="mb-2" />
+          <TerminalPanel variant="open" fill={false}>
             {timeTo15m.length === 0 ? (
               <EmptyState title="No time-to-15m logs yet" body="Ask coach to hand-time 3 dives, fresh and fatigued." />
             ) : (
@@ -270,24 +270,24 @@ export function SwimAnalysisView({
                 </LineChart>
               </ResponsiveContainer>
             )}
-          </GlassCard>
+          </TerminalPanel>
         </div>
       </div>
 
       <div>
-        <SectionLabel>Stroke counts per 50 (200 BR)</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-2">
+        <SectionHeader title="Stroke counts per 50 (200 BR)" className="mb-2" />
+        <TerminalPanel variant="open" fill={false}>
           {splitAutopsy.length === 0 ? (
             <EmptyState title="No 200 BR splits logged yet" body="Log exact 50-splits and stroke counts after your next meet." />
           ) : (
             splitAutopsy.map((race) => (
               <div key={race.date} className="flex items-center justify-between text-footnote">
-                <span className="text-[var(--rtd-text-secondary)]">{race.date}</span>
-                <span className="text-[var(--rtd-text)]">{race.strokeCounts.join(" · ") || "—"}</span>
+                <span className="text-[var(--rtd-text-secondary)] rtd-mono">{race.date}</span>
+                <span className="text-[var(--rtd-text)] rtd-mono">{race.strokeCounts.join(" · ") || "—"}</span>
               </div>
             ))
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
     </div>
   );

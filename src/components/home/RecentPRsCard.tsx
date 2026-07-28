@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { DeltaChip } from "@/components/ui/DeltaChip";
 import type { PrEntry } from "@/lib/dashboard/recentPRs";
 
 export function RecentPRsCard({ prs, className }: { prs: PrEntry[]; className?: string }) {
   return (
-    <BentoCard variant="open" label="Recent PRs" colSpan={4} rowSpan={2} className={className}>
+    <TerminalPanel variant="open" label="Recent PRs" colSpan={4} rowSpan={2} className={className}>
       {prs.length === 0 ? (
         <div className="flex-1 min-h-0 flex flex-col justify-end gap-1 pb-0.5">
           <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
@@ -19,7 +19,7 @@ export function RecentPRsCard({ prs, className }: { prs: PrEntry[]; className?: 
             <div key={`${pr.kind}-${pr.name}-${pr.date}`} className="flex items-center justify-between gap-2 min-w-0">
               <div className="min-w-0">
                 <div className="text-subhead font-medium text-[var(--rtd-text)] truncate">{pr.name}</div>
-                <div className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums">
+                <div className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums rtd-mono">
                   {pr.valueLabel} · {pr.date}
                 </div>
               </div>
@@ -28,6 +28,6 @@ export function RecentPRsCard({ prs, className }: { prs: PrEntry[]; className?: 
           ))}
         </div>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }

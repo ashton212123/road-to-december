@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { IconSparkle } from "@/components/ui/icons";
 
 export function CoachBriefCard({
@@ -14,7 +14,7 @@ export function CoachBriefCard({
   className?: string;
 }) {
   return (
-    <BentoCard variant="open" colSpan={4} rowSpan={3} className={className}>
+    <TerminalPanel variant="open" colSpan={4} rowSpan={3} className={className}>
       <Link href="/more/coach-ai" className="flex items-center gap-2 mb-1 w-fit cursor-pointer">
         <span className="text-[var(--rtd-purple)]">
           <IconSparkle />
@@ -47,6 +47,6 @@ export function CoachBriefCard({
           ))}
         </div>
       )}
-    </BentoCard>
+    </TerminalPanel>
   );
 }

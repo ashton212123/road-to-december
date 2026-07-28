@@ -8,11 +8,13 @@ export const chartTheme = {
     contentStyle: {
       background: "#1c1c1e",
       border: "0.5px solid rgba(255,255,255,0.1)",
-      borderRadius: 12,
+      borderRadius: "var(--rtd-radius-card)",
       fontSize: 11,
+      fontFamily: "var(--rtd-font-mono)",
       color: "#F5F5F7",
     },
-    labelStyle: { color: "rgba(235,235,245,0.6)" },
+    labelStyle: { color: "rgba(235,235,245,0.6)", fontFamily: "var(--rtd-font-mono)" },
+    itemStyle: { fontFamily: "var(--rtd-font-mono)" },
   },
 };
 

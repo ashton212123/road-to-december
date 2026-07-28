@@ -70,10 +70,10 @@ export function MacroDonut({
           ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-title-1 text-[var(--rtd-text)]">
+          <span className="text-title-1 text-[var(--rtd-text)] rtd-mono">
             <AnimatedNumber value={kcalLogged} />
           </span>
-          <span className="text-caption text-[var(--rtd-text-secondary)]">/ {kcalTarget} kcal</span>
+          <span className="text-caption text-[var(--rtd-text-secondary)] rtd-mono">/ {kcalTarget} kcal</span>
         </div>
       </div>
       <div className="flex flex-col gap-2">
@@ -81,7 +81,7 @@ export function MacroDonut({
           <div key={ring.label} className="flex items-center gap-2 text-footnote">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ring.color }} />
             <span className="text-[var(--rtd-text-secondary)] w-14">{ring.label}</span>
-            <span className="font-semibold text-[var(--rtd-text)]">
+            <span className="font-semibold text-[var(--rtd-text)] rtd-mono">
               {Math.round(ring.loggedG)}g <span className="text-[var(--rtd-text-secondary)] font-normal">/ {ring.targetG}g</span>
             </span>
           </div>

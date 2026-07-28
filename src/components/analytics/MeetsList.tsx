@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { deleteMeetAction } from "@/app/(app)/analytics/actions";
 import { formatSwimTime } from "@/lib/swim/format";
 import { todayManilaISO, daysBetween } from "@/lib/time";
@@ -34,7 +34,7 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
       {meets.map((meet) => {
         const daysOut = daysBetween(today, meet.date);
         return (
-          <GlassCard key={meet.id} className="flex flex-col gap-2">
+          <TerminalPanel key={meet.id} fill={false}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-body font-semibold flex items-center gap-1.5">
@@ -46,7 +46,8 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
                   )}
                 </div>
                 <div className="text-caption text-[var(--rtd-text-secondary)]">
-                  {meet.date} · {daysOut >= 0 ? `${daysOut}d out` : `${Math.abs(daysOut)}d ago`}
+                  <span className="rtd-mono">{meet.date}</span> ·{" "}
+                  <span className="rtd-mono">{daysOut >= 0 ? `${daysOut}d out` : `${Math.abs(daysOut)}d ago`}</span>
                 </div>
               </div>
               <button
@@ -63,7 +64,7 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
               {meet.events.map((ev) => (
                 <div key={ev.id} className="flex items-center justify-between text-footnote">
                   <span className="text-[var(--rtd-text-secondary)]">{ev.event}</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 rtd-mono">
                     <span className="text-[var(--rtd-text-secondary)]">target {formatSwimTime(ev.targetTimeMs)}</span>
                     {ev.readiness.projectedMs !== null && (
                       <span
@@ -77,7 +78,7 @@ export function MeetsList({ meets }: { meets: Meet[] }) {
                 </div>
               ))}
             </div>
-          </GlassCard>
+          </TerminalPanel>
         );
       })}
     </div>

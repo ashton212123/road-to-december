@@ -1,8 +1,8 @@
 import type { PhaseWeek } from "@/lib/train/phaseWeek";
 
 /** "Which week of which phase am I in" -- reused on both /train and
- * /train/[phaseId], same SectionLabel-adjacent pattern as everywhere else
- * in the app (rtd-micro-label + a semibold subtitle line). */
+ * /train/[phaseId], sits directly under the page's own SectionHeader
+ * (rtd-micro-label + a semibold subtitle line, not a section heading itself). */
 export function PhaseWeekHeader({ phaseWeek, isDeload }: { phaseWeek: PhaseWeek; isDeload: boolean }) {
   return (
     <div className="-mt-2 flex flex-col gap-0.5">

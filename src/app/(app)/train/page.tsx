@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { IconChevronRight, IconBolt } from "@/components/ui/icons";
 import { PhaseWeekHeader } from "@/components/train/PhaseWeekHeader";
 import { getAllPhasesWithSessions, getCurrentPhase } from "@/lib/db/queries";
@@ -15,7 +16,7 @@ export default async function TrainPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-1">
-      <SectionLabel>Train — 21-week program</SectionLabel>
+      <SectionHeader title="Train — 21-week program" className="mb-2" />
       {currentPhase && <PhaseWeekHeader phaseWeek={computePhaseWeek(currentPhase, today)} isDeload={currentPhase.isDeload} />}
       <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4 rtd-stagger">
         {allPhases.map((phase) => {
@@ -30,14 +31,10 @@ export default async function TrainPage() {
           // ceiling (the intermittent "database connection hiccup").
           return (
             <Link key={phase.id} href={`/train/${phase.id}`} prefetch={false}>
-              <GlassCard
+              <TerminalPanel
                 interactive
-                className="flex flex-col gap-3"
-                style={
-                  isCurrent
-                    ? { borderColor: `${phase.color}55`, boxShadow: `0 0 0 1px ${phase.color}33, var(--rtd-shadow)` }
-                    : undefined
-                }
+                fill={false}
+                style={isCurrent ? { borderColor: `${phase.color}55`, boxShadow: `0 0 0 1px ${phase.color}33` } : undefined}
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -49,16 +46,8 @@ export default async function TrainPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-body font-semibold truncate">{phase.name}</span>
-                      {isCurrent && (
-                        <span className="text-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--rtd-blue)] text-white shrink-0">
-                          Now
-                        </span>
-                      )}
-                      {phase.isDeload && (
-                        <span className="text-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-white/10 text-[var(--rtd-text-secondary)] shrink-0">
-                          Deload wk {phase.deloadWeek}
-                        </span>
-                      )}
+                      {isCurrent && <StatusChip label="Now" tone="live" />}
+                      {phase.isDeload && <StatusChip label={`Deload wk ${phase.deloadWeek}`} tone="warn" />}
                       {hasExplosive && <IconBolt />}
                     </div>
                     <div className="text-footnote text-[var(--rtd-text-tertiary)] truncate">
@@ -73,7 +62,7 @@ export default async function TrainPage() {
                     style={{ width: `${pctComplete}%`, background: phase.color }}
                   />
                 </div>
-              </GlassCard>
+              </TerminalPanel>
             </Link>
           );
         })}

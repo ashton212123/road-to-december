@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 
 type Block = { id: string; title: string; body: string };
 
@@ -33,7 +33,7 @@ export function TaperChecklist({ blocks }: { blocks: Block[] }) {
   return (
     <div className="flex flex-col gap-3">
       {blocks.map((block) => (
-        <GlassCard key={block.id} className="flex flex-col gap-2">
+        <TerminalPanel key={block.id} fill={false}>
           <div className="text-body font-semibold">{block.title}</div>
           {block.body.split("\n\n").map((line, i) => {
             const key = `${block.id}:${i}`;
@@ -65,7 +65,7 @@ export function TaperChecklist({ blocks }: { blocks: Block[] }) {
               </button>
             );
           })}
-        </GlassCard>
+        </TerminalPanel>
       ))}
     </div>
   );

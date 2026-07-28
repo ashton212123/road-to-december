@@ -1,7 +1,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { MealSlot } from "@/components/fuel/MealSlot";
@@ -167,8 +167,10 @@ export default async function FuelPage({
 
   return (
     <div className="flex flex-col gap-3 pt-1">
-      <SectionLabel
-        right={
+      <SectionHeader
+        title="Fuel"
+        className="mb-2"
+        statusChip={
           view === "history" ? (
             <div className="flex items-center gap-1">
               <Link
@@ -197,9 +199,7 @@ export default async function FuelPage({
             </div>
           ) : undefined
         }
-      >
-        Fuel
-      </SectionLabel>
+      />
 
       <FuelViewSelector current={view} />
 
@@ -234,7 +234,7 @@ export default async function FuelPage({
           )}
 
           <div className="rtd-bento-grid">
-            <BentoCard variant="open" colSpan={8} rowSpan={2} label="Today's intake">
+            <TerminalPanel variant="open" colSpan={8} rowSpan={2} label="Today's intake">
               <div className="grid grid-cols-3 gap-2 flex-1 items-center">
                 <div className="flex flex-col items-center gap-1.5">
                   <ProgressRing
@@ -246,8 +246,8 @@ export default async function FuelPage({
                     ariaLabel={`Calories: ${kcalToday} of ${energyTarget.low} to ${energyTarget.high}`}
                   />
                   <div className="text-center">
-                    <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={kcalToday} /></div>
-                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {energyTarget.low}-{energyTarget.high}</div>
+                    <div className="text-footnote font-semibold rtd-nums rtd-mono"><AnimatedNumber value={kcalToday} /></div>
+                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">/ {energyTarget.low}-{energyTarget.high}</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
@@ -260,8 +260,8 @@ export default async function FuelPage({
                     ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`}
                   />
                   <div className="text-center">
-                    <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
-                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {proteinTarget.min}-{proteinTarget.max}g</div>
+                    <div className="text-footnote font-semibold rtd-nums rtd-mono"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
+                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">/ {proteinTarget.min}-{proteinTarget.max}g</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
@@ -274,20 +274,20 @@ export default async function FuelPage({
                     ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`}
                   />
                   <div className="text-center">
-                    <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
-                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
+                    <div className="text-footnote font-semibold rtd-nums rtd-mono"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
+                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
                   </div>
                 </div>
               </div>
-            </BentoCard>
+            </TerminalPanel>
 
-            <BentoCard colSpan={4} rowSpan={2} label="Water">
+            <TerminalPanel colSpan={4} rowSpan={2} label="Water">
               <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} readOnly={!isToday} />
-            </BentoCard>
+            </TerminalPanel>
 
             {isToday ? (
               <div id="quick-log" style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0">
-                <SectionLabel>Quick log</SectionLabel>
+                <SectionHeader title="Quick log" className="mb-2" />
                 <div className="flex-1 min-h-0">
                   <MealQuickLog
                     recentFoods={recentFoodRows.map((r) => ({
@@ -302,14 +302,14 @@ export default async function FuelPage({
                 </div>
               </div>
             ) : (
-              <BentoCard colSpan={7} rowSpan={3} label="Quick log">
+              <TerminalPanel colSpan={7} rowSpan={3} label="Quick log">
                 <div className="flex-1 flex items-center justify-center text-caption text-[var(--rtd-text-tertiary)]">
                   Logging is only available for today.
                 </div>
-              </BentoCard>
+              </TerminalPanel>
             )}
 
-            <BentoCard variant="open" colSpan={5} rowSpan={3} label="Macros">
+            <TerminalPanel variant="open" colSpan={5} rowSpan={3} label="Macros">
               <MacroDonut
                 kcalLogged={kcalToday}
                 kcalTarget={kcalTargetMid}
@@ -326,11 +326,11 @@ export default async function FuelPage({
                   <MiniBarList rows={proteinByMealSlot} color="var(--rtd-green)" formatValue={(v) => `${v}g`} />
                 </div>
               )}
-            </BentoCard>
+            </TerminalPanel>
 
             {mealsWithLogs.length > 0 && (
               <div style={{ gridColumn: "span 7 / span 7", gridRow: "span 3 / span 3" }} className="flex flex-col min-h-0 gap-2">
-                <SectionLabel>Today&apos;s meals</SectionLabel>
+                <SectionHeader title="Today's meals" className="mb-2" />
                 <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
                   {mealsWithLogs.map(({ meal, logged }) => (
                     <MealSlot key={meal.tag} time={meal.time} desc={meal.desc} tag={meal.tag} loggedItems={logged} readOnly={!isToday} />
@@ -339,24 +339,24 @@ export default async function FuelPage({
               </div>
             )}
 
-            <BentoCard colSpan={5} rowSpan={3} label="Weekly review">
+            <TerminalPanel colSpan={5} rowSpan={3} label="Weekly review">
               <div className="grid grid-cols-2 gap-3 flex-1">
                 <div>
                   <div className="rtd-micro-label">Adherence</div>
-                  <div className="text-title-3 rtd-nums">{adherencePct}%</div>
+                  <div className="text-title-3 rtd-nums rtd-mono">{adherencePct}%</div>
                 </div>
                 <div>
                   <div className="rtd-micro-label">Avg kcal/day</div>
-                  <div className="text-title-3 rtd-nums">{avgKcalWeek}</div>
+                  <div className="text-title-3 rtd-nums rtd-mono">{avgKcalWeek}</div>
                 </div>
                 <div>
                   <div className="rtd-micro-label">Avg protein/day</div>
-                  <div className="text-title-3 rtd-nums">{avgProteinWeek}g</div>
+                  <div className="text-title-3 rtd-nums rtd-mono">{avgProteinWeek}g</div>
                 </div>
                 <div>
                   <div className="rtd-micro-label">Weight response</div>
                   <div
-                    className="text-title-3 rtd-nums"
+                    className="text-title-3 rtd-nums rtd-mono"
                     style={{
                       color:
                         weightDelta === null
@@ -371,7 +371,7 @@ export default async function FuelPage({
                   <div className="text-caption text-[var(--rtd-text-secondary)]">target {energyTarget.targetRateKgPerWk >= 0 ? "+" : ""}{energyTarget.targetRateKgPerWk.toFixed(2)} kg/wk</div>
                 </div>
               </div>
-            </BentoCard>
+            </TerminalPanel>
           </div>
 
           {/* Mobile stack */}
@@ -381,22 +381,22 @@ export default async function FuelPage({
                 <div className="flex flex-col items-center gap-1.5">
                   <ProgressRing pct={(kcalToday / kcalTargetMid) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-orange)", "#ff375f"]} glow ariaLabel={`Calories: ${kcalToday} of ${energyTarget.low} to ${energyTarget.high}`} />
                   <div className="text-center">
-                    <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={kcalToday} /></div>
-                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {energyTarget.low}-{energyTarget.high}</div>
+                    <div className="text-footnote font-semibold rtd-nums rtd-mono"><AnimatedNumber value={kcalToday} /></div>
+                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">/ {energyTarget.low}-{energyTarget.high}</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
                   <ProgressRing pct={(proteinToday / proteinTarget.mid) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-green)", "var(--rtd-teal)"]} glow ariaLabel={`Protein: ${Math.round(proteinToday)} of ${proteinTarget.min} to ${proteinTarget.max} grams`} />
                   <div className="text-center">
-                    <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
-                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {proteinTarget.min}-{proteinTarget.max}g</div>
+                    <div className="text-footnote font-semibold rtd-nums rtd-mono"><AnimatedNumber value={Math.round(proteinToday)} />g</div>
+                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">/ {proteinTarget.min}-{proteinTarget.max}g</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
                   <ProgressRing pct={(waterToday / settingsRow.waterTargetMl) * 100} size={68} strokeWidth={7} gradient={["var(--rtd-cyan)", "var(--rtd-blue)"]} glow ariaLabel={`Water: ${(waterToday / 1000).toFixed(1)} of ${(settingsRow.waterTargetMl / 1000).toFixed(1)} liters`} />
                   <div className="text-center">
-                    <div className="text-footnote font-semibold rtd-nums"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
-                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
+                    <div className="text-footnote font-semibold rtd-nums rtd-mono"><AnimatedNumber value={waterToday / 1000} decimals={1} suffix="L" /></div>
+                    <div className="text-caption text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">/ {(settingsRow.waterTargetMl / 1000).toFixed(1)}L</div>
                   </div>
                 </div>
               </div>
@@ -404,7 +404,7 @@ export default async function FuelPage({
 
             {isToday && (
               <div id="quick-log-mobile">
-                <SectionLabel>Quick log</SectionLabel>
+                <SectionHeader title="Quick log" className="mb-2" />
                 <MealQuickLog
                   recentFoods={recentFoodRows.map((r) => ({
                     description: r.description,
@@ -419,14 +419,14 @@ export default async function FuelPage({
             )}
 
             <div>
-              <SectionLabel>Water</SectionLabel>
+              <SectionHeader title="Water" className="mb-2" />
               <div className="rtd-glass p-4">
                 <WaterLogger ml={waterToday} targetMl={settingsRow.waterTargetMl} readOnly={!isToday} />
               </div>
             </div>
 
             <div>
-              <SectionLabel>Macros</SectionLabel>
+              <SectionHeader title="Macros" className="mb-2" />
               <div className="rtd-open-section">
                 <MacroDonut
                   kcalLogged={kcalToday}
@@ -449,7 +449,7 @@ export default async function FuelPage({
 
             {mealsWithLogs.length > 0 && (
               <div>
-                <SectionLabel>Today&apos;s meals</SectionLabel>
+                <SectionHeader title="Today's meals" className="mb-2" />
                 <div className="flex flex-col gap-3">
                   {mealsWithLogs.map(({ meal, logged }) => (
                     <MealSlot key={meal.tag} time={meal.time} desc={meal.desc} tag={meal.tag} loggedItems={logged} readOnly={!isToday} />
@@ -459,24 +459,24 @@ export default async function FuelPage({
             )}
 
             <div>
-              <SectionLabel>Weekly review</SectionLabel>
+              <SectionHeader title="Weekly review" className="mb-2" />
               <div className="rtd-glass p-4 grid grid-cols-2 gap-3">
                 <div>
                   <div className="rtd-micro-label">Adherence</div>
-                  <div className="text-title-3 rtd-nums">{adherencePct}%</div>
+                  <div className="text-title-3 rtd-nums rtd-mono">{adherencePct}%</div>
                 </div>
                 <div>
                   <div className="rtd-micro-label">Avg kcal/day</div>
-                  <div className="text-title-3 rtd-nums">{avgKcalWeek}</div>
+                  <div className="text-title-3 rtd-nums rtd-mono">{avgKcalWeek}</div>
                 </div>
                 <div>
                   <div className="rtd-micro-label">Avg protein/day</div>
-                  <div className="text-title-3 rtd-nums">{avgProteinWeek}g</div>
+                  <div className="text-title-3 rtd-nums rtd-mono">{avgProteinWeek}g</div>
                 </div>
                 <div>
                   <div className="rtd-micro-label">Weight response</div>
                   <div
-                    className="text-title-3 rtd-nums"
+                    className="text-title-3 rtd-nums rtd-mono"
                     style={{
                       color:
                         weightDelta === null

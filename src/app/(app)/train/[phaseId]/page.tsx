@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DaySelector } from "@/components/train/DaySelector";
 import { WorkoutSession } from "@/components/train/WorkoutSession";
@@ -77,11 +76,11 @@ export default async function PhaseSessionPage({
 
     return (
       <div className="flex flex-col gap-4 pt-1">
-        <SectionLabel>
-          {phase.tag} · {phase.name}
-        </SectionLabel>
+        <SectionHeader title={`${phase.tag} · ${phase.name}`} className="mb-2" />
         <PhaseWeekHeader phaseWeek={phaseWeek} isDeload={phase.isDeload} />
-        <GlassCard className="text-subhead text-[var(--rtd-text-secondary)]">{phase.note}</GlassCard>
+        <TerminalPanel fill={false} className="text-subhead text-[var(--rtd-text-secondary)]">
+          {phase.note}
+        </TerminalPanel>
         {taperPlan && nextMeet && <TaperPlanCard plan={taperPlan} meetName={nextMeet.name} />}
         <TaperChecklist blocks={blocks} />
       </div>
@@ -157,9 +156,7 @@ export default async function PhaseSessionPage({
 
   return (
     <div className="flex flex-col gap-4 pt-1">
-      <SectionLabel>
-        {phase.tag} · {phase.name}
-      </SectionLabel>
+      <SectionHeader title={`${phase.tag} · ${phase.name}`} className="mb-2" />
       <PhaseWeekHeader phaseWeek={phaseWeek} isDeload={phase.isDeload} />
       {phase.note && <p className="text-subhead text-[var(--rtd-text-secondary)] -mt-2">{phase.note}</p>}
       <DaySelector phaseId={phase.id} days={availableDays} current={selectedDay} />
@@ -167,7 +164,7 @@ export default async function PhaseSessionPage({
       {session ? (
         <>
           <div className="rtd-bento-grid">
-            <BentoCard colSpan={8} rowSpan={2} className="justify-center">
+            <TerminalPanel colSpan={8} rowSpan={2} className="justify-center">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
@@ -182,24 +179,26 @@ export default async function PhaseSessionPage({
                   />
                 )}
               </div>
-            </BentoCard>
+            </TerminalPanel>
             <TrainWeekDots scheduled={weekScheduled} logged={weekLogged} />
           </div>
-          <div className="rtd-glass p-4 md:hidden flex items-center justify-between gap-2">
-            <div>
-              <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
-              <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
-                {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+          <TerminalPanel fill={false} className="md:hidden">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-body font-semibold text-[var(--rtd-text)]">{session.title}</div>
+                <div className="text-footnote text-[var(--rtd-text-tertiary)] mt-1">
+                  {session.exercises.length} exercise{session.exercises.length === 1 ? "" : "s"}
+                </div>
               </div>
+              {selectedDay === todayDayKey() && (
+                <ImportSessionButton
+                  phaseId={phase.id}
+                  todayExercises={session.exercises.map((e) => ({ id: e.id, name: e.name }))}
+                  compact
+                />
+              )}
             </div>
-            {selectedDay === todayDayKey() && (
-              <ImportSessionButton
-                phaseId={phase.id}
-                todayExercises={session.exercises.map((e) => ({ id: e.id, name: e.name }))}
-                compact
-              />
-            )}
-          </div>
+          </TerminalPanel>
           <WorkoutSession phaseId={phase.id} sessionTitle={session.title} exercises={exerciseData} weightUnit={weightUnit} />
         </>
       ) : (
