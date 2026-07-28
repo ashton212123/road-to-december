@@ -331,30 +331,33 @@ export default async function HomePage() {
     .reverse()
     .map((s) => TYPE_LABELS[s.sessionType as SessionType] ?? s.sessionType!);
 
-  const dailyBrief = await withRetry(() =>
-    getDailyBrief({
-      today,
-      athleteWeightKg: latestWeighIn ? Number(latestWeighIn.kg) : null,
-      weightTrendKg: weightTrend,
-      kcalToday,
-      kcalTargetMin: energyTarget.low,
-      kcalTargetMax: energyTarget.high,
-      proteinToday,
-      proteinTargetMin: proteinTarget.min,
-      consistencyPct: consistency.pct,
-      todaySessionTitle: todaySession?.title ?? null,
-      todaySwim: weekDay.swim ?? null,
-      daysToNcaa,
-      daysToAsean: settingsRow.aseanConfirmed === false ? null : daysToAsean,
-      trainingStatus: settingsRow.trainingStatus,
-      trainingStatusSince: settingsRow.trainingStatusSince,
-      phaseTag: currentPhase.tag,
-      phaseName: currentPhase.name,
-      loggedWorkoutToday,
-      loggedSwimToday,
-      recentSessionTypes,
-      activeAlertHeadlines: alerts.map((a) => a.title),
-    })
+  const dailyBrief = await withFallback(
+    withRetry(() =>
+      getDailyBrief({
+        today,
+        athleteWeightKg: latestWeighIn ? Number(latestWeighIn.kg) : null,
+        weightTrendKg: weightTrend,
+        kcalToday,
+        kcalTargetMin: energyTarget.low,
+        kcalTargetMax: energyTarget.high,
+        proteinToday,
+        proteinTargetMin: proteinTarget.min,
+        consistencyPct: consistency.pct,
+        todaySessionTitle: todaySession?.title ?? null,
+        todaySwim: weekDay.swim ?? null,
+        daysToNcaa,
+        daysToAsean: settingsRow.aseanConfirmed === false ? null : daysToAsean,
+        trainingStatus: settingsRow.trainingStatus,
+        trainingStatusSince: settingsRow.trainingStatusSince,
+        phaseTag: currentPhase.tag,
+        phaseName: currentPhase.name,
+        loggedWorkoutToday,
+        loggedSwimToday,
+        recentSessionTypes,
+        activeAlertHeadlines: alerts.map((a) => a.title),
+      })
+    ),
+    null
   );
 
   // Readiness -- same transparent inputs as the Recovery page (loop 37
