@@ -77,9 +77,11 @@ export async function getCanvasSummary(opts: { sync?: boolean } = {}): Promise<C
   const isStale = cachedCourses.length === 0 || Date.now() - cachedCourses[0].syncedAt.getTime() > STALE_AFTER_MS;
 
   let error: string | null = null;
+  let courses = cachedCourses;
   if (isStale && shouldSync) {
     try {
       await syncCanvasData();
+      courses = await db.select().from(canvasCourses); // re-read: syncCanvasData just replaced this table
     } catch (err) {
       error =
         err instanceof CanvasAuthError || err instanceof CanvasError
@@ -88,7 +90,6 @@ export async function getCanvasSummary(opts: { sync?: boolean } = {}): Promise<C
     }
   }
 
-  const courses = await db.select().from(canvasCourses);
   const assignmentRows = await db.select().from(canvasAssignments);
   const courseNameById = new Map(courses.map((c) => [c.id, c.name]));
 
