@@ -78,7 +78,7 @@ export function TabBar({ items }: { items: TabItem[] }) {
 /** Fitonist-style desktop header: wordmark left, white-pill nav center,
  * secondary destinations as quiet icon buttons right. Replaces the sidebar —
  * the content field below runs full width like the reference dashboard. */
-export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] }) {
+export function TopBar({ items, extras, railSwitcher }: { items: TabItem[]; extras: TabItem[]; railSwitcher?: ReactNode }) {
   const pathname = usePathname();
   const activeItem = items.find((item) => isActive(item, pathname));
 
@@ -88,6 +88,8 @@ export function TopBar({ items, extras }: { items: TabItem[]; extras: TabItem[] 
         <span className="text-title-3 font-extrabold tracking-tight">road</span>
         <span className="text-title-3 font-extrabold tracking-tight text-[var(--rtd-lilac)]">2dec</span>
       </Link>
+
+      {railSwitcher && <div className="shrink-0">{railSwitcher}</div>}
 
       <SlidingPillNav
         activeKey={activeItem?.href ?? ""}

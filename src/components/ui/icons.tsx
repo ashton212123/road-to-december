@@ -134,6 +134,57 @@ export function IconSparkle({ size = 20 }: { size?: number } = {}) {
   );
 }
 
+export function IconTask() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 12.5l2.3 2.3L16 9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconBrain() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M9 4.5c-1.7 0-3 1.3-3 3 0 .3 0 .6.1.8C4.8 8.8 4 9.9 4 11.2c0 1.1.6 2.1 1.5 2.6-.1.3-.2.7-.2 1.1 0 1.7 1.3 3 3 3 .3 0 .6 0 .8-.1.4 1 1.4 1.7 2.5 1.7V5.7c-.5-.7-1.4-1.2-2.6-1.2Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 4.5c1.7 0 3 1.3 3 3 0 .3 0 .6-.1.8 1.3.5 2.1 1.6 2.1 2.9 0 1.1-.6 2.1-1.5 2.6.1.3.2.7.2 1.1 0 1.7-1.3 3-3 3-.3 0-.6 0-.8-.1-.4 1-1.4 1.7-2.5 1.7V5.7c.5-.7 1.4-1.2 2.6-1.2Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconJournal() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="4.5" y="3.5" width="15" height="17" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconSettings() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 3.5v2M12 18.5v2M20.5 12h-2M5.5 12h-2M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4M17.7 17.7l-1.4-1.4M7.7 7.7 6.3 6.3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconSchool() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
