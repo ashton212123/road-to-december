@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, lt, gt, desc, asc, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { sleepLogs, sorenessLogs, settings, cmjTests, jumpTests, aiTakeaways } from "@/lib/db/schema";
+import { sleepLogs, sorenessLogs, settings, cmjTests, jumpTests, aiTakeaways, habits } from "@/lib/db/schema";
 import type { Settings } from "@/lib/db/schema";
 import { todayManilaISO } from "@/lib/time";
 
@@ -95,5 +95,59 @@ export async function updateTrainingStatusAction(status: TrainingStatus) {
     .where(eq(settings.id, "singleton"));
   revalidatePath("/", "layout");
   updateTag("analytics-data");
+  updateTag("home-data");
+}
+
+/** Habit editor (§4a "Settings gets a habit editor: add / rename / reorder /
+ * archive habits and subtasks"). Kept in more/actions.ts alongside the rest
+ * of Settings' server actions rather than a dedicated file, matching this
+ * file's existing scope. */
+export async function addHabitAction(name: string, category: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const [{ maxOrder }] = await db.select({ maxOrder: sql<number>`coalesce(max(${habits.sortOrder}), -1)` }).from(habits);
+  await db.insert(habits).values({ name: trimmed, category, sortOrder: Number(maxOrder) + 1, subtasks: [] });
+  revalidatePath("/more/settings");
+  revalidatePath("/home");
+  updateTag("home-data");
+}
+
+export async function renameHabitAction(id: number, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  await db.update(habits).set({ name: trimmed }).where(eq(habits.id, id));
+  revalidatePath("/more/settings");
+  revalidatePath("/home");
+  updateTag("home-data");
+}
+
+export async function updateHabitSubtasksAction(id: number, subtasks: { id: string; label: string }[]) {
+  await db.update(habits).set({ subtasks }).where(eq(habits.id, id));
+  revalidatePath("/more/settings");
+  revalidatePath("/home");
+  updateTag("home-data");
+}
+
+export async function setHabitActiveAction(id: number, active: boolean) {
+  await db.update(habits).set({ active }).where(eq(habits.id, id));
+  revalidatePath("/more/settings");
+  revalidatePath("/home");
+  updateTag("home-data");
+}
+
+export async function reorderHabitAction(id: number, direction: "up" | "down") {
+  const [habit] = await db.select().from(habits).where(eq(habits.id, id));
+  if (!habit) return;
+  const neighbor = await db
+    .select()
+    .from(habits)
+    .where(direction === "up" ? lt(habits.sortOrder, habit.sortOrder) : gt(habits.sortOrder, habit.sortOrder))
+    .orderBy(direction === "up" ? desc(habits.sortOrder) : asc(habits.sortOrder))
+    .limit(1);
+  if (neighbor.length === 0) return;
+  await db.update(habits).set({ sortOrder: neighbor[0].sortOrder }).where(eq(habits.id, habit.id));
+  await db.update(habits).set({ sortOrder: habit.sortOrder }).where(eq(habits.id, neighbor[0].id));
+  revalidatePath("/more/settings");
+  revalidatePath("/home");
   updateTag("home-data");
 }

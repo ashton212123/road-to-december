@@ -3,12 +3,18 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { SettingsForm } from "@/components/more/SettingsForm";
 import { TrainingStatusControl } from "@/components/more/TrainingStatusControl";
 import { CoachMemoryEditor } from "@/components/more/CoachMemoryEditor";
+import { HabitEditor } from "@/components/more/HabitEditor";
 import { getSettingsRow } from "@/lib/db/queries";
 import { withRetry } from "@/lib/db/withRetry";
 import { getAthleteModel } from "@/lib/coach/athleteModel";
+import { getAllHabitsForEditor } from "@/lib/habits/queries";
 
 export default async function SettingsPage() {
-  const [settingsRow, athleteModel] = await Promise.all([withRetry(() => getSettingsRow()), getAthleteModel()]);
+  const [settingsRow, athleteModel, allHabits] = await Promise.all([
+    withRetry(() => getSettingsRow()),
+    getAthleteModel(),
+    withRetry(() => getAllHabitsForEditor()),
+  ]);
 
   return (
     <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
@@ -21,6 +27,11 @@ export default async function SettingsPage() {
         initialWaterTargetMl={settingsRow.waterTargetMl}
         initialWeightUnit={settingsRow.weightUnit as "kg" | "lb"}
       />
+
+      <SectionLabel>Habits</SectionLabel>
+      <GlassCard>
+        <HabitEditor habits={allHabits} />
+      </GlassCard>
 
       <SectionLabel>Coach memory</SectionLabel>
       <GlassCard>
