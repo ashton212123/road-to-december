@@ -53,6 +53,7 @@ import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 import { buildWeekMap } from "@/lib/dashboard/weekMap";
 import { findRecentPRs } from "@/lib/dashboard/recentPRs";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 import { getHomeHabitsData } from "@/lib/habits/queries";
 import { buildHabitStreakDots } from "@/lib/habits/streak";
 import { getHomeGoalsData } from "@/lib/goals/queries";
@@ -70,6 +71,21 @@ const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   fri: 4,
   sat: 5,
   sun: 6,
+};
+
+// Fallback for getSettingsRow -- matches the row getSettingsRow itself
+// creates on first run (schema.ts's `settings` defaults), so a starved
+// settings query degrades to the same values a fresh install would see.
+const FALLBACK_SETTINGS = {
+  id: "singleton",
+  aseanConfirmed: null,
+  waterTargetMl: 3000,
+  weightUnit: "kg" as const,
+  trainingStatus: "healthy" as const,
+  trainingStatusSince: null,
+  energyPhase: null,
+  kcalTargetOverride: null,
+  poolCourseDefault: "SCM" as const,
 };
 
 // Every DB read Home needs, cached and tagged "home-data" -- every log-
@@ -107,25 +123,25 @@ const getCachedHomeData = unstable_cache(
       goalsData,
       keyTasks,
     ] = await Promise.all([
-      getAllPhasesWithSessionsUncached(),
-      getLatestWeighIn(),
-      getWeighIns(21),
-      getFoodLogsForDate(today),
-      getWaterLogsForDate(today),
-      getSettingsRow(),
-      getUndoneBusinessTasks(5),
-      getWorkoutLogsSince(addDaysISO(today, -150)),
-      getSwimSessions(60),
-      getSleepLogs(30),
-      getCmjTests(30),
-      getSwimTimes(200),
-      getFoodLogsSince(addDaysISO(today, -13)), // 14-day window: also feeds computeEnergyTarget's weight-response average
-      getSorenessLogs(1),
-      getSessionLoadsSince(addDaysISO(today, -150)),
-      getAllMeetsWithEvents(),
-      getHomeHabitsData(today, addDaysISO(today, -29)),
-      getHomeGoalsData(),
-      getHomeKeyTasks(),
+      withFallback(getAllPhasesWithSessionsUncached(), []),
+      withFallback(getLatestWeighIn(), null),
+      withFallback(getWeighIns(21), []),
+      withFallback(getFoodLogsForDate(today), []),
+      withFallback(getWaterLogsForDate(today), []),
+      withFallback(getSettingsRow(), FALLBACK_SETTINGS),
+      withFallback(getUndoneBusinessTasks(5), []),
+      withFallback(getWorkoutLogsSince(addDaysISO(today, -150)), []),
+      withFallback(getSwimSessions(60), []),
+      withFallback(getSleepLogs(30), []),
+      withFallback(getCmjTests(30), []),
+      withFallback(getSwimTimes(200), []),
+      withFallback(getFoodLogsSince(addDaysISO(today, -13)), []), // 14-day window: also feeds computeEnergyTarget's weight-response average
+      withFallback(getSorenessLogs(1), []),
+      withFallback(getSessionLoadsSince(addDaysISO(today, -150)), []),
+      withFallback(getAllMeetsWithEvents(), []),
+      withFallback(getHomeHabitsData(today, addDaysISO(today, -29)), { habits: [], dailyCompletion: [] }),
+      withFallback(getHomeGoalsData(), { week: [], month: [] }),
+      withFallback(getHomeKeyTasks(), []),
     ]);
 
     return {
