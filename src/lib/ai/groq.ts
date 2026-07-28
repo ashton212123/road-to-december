@@ -8,6 +8,7 @@
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_TRANSCRIBE_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 const MODEL = "llama-3.3-70b-versatile";
 
 export async function callGroqChat(
@@ -36,6 +37,35 @@ export async function callGroqChat(
 
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     return data.choices?.[0]?.message?.content ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Whisper transcription (whisper-large-v3-turbo). The multipart filename
+ * must carry the audio's real extension/content-type or Groq silently
+ * returns an empty transcript -- the same gotcha the Telegram webhook's own
+ * voice-note handler documents (api/telegram/webhook/route.ts); callers must
+ * pass the actual recorded mimeType/filename, never a guessed default.
+ * Never throws -- null on missing key, network error, or bad response. */
+export async function transcribeAudio(audio: Blob, filename: string): Promise<string | null> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  const form = new FormData();
+  form.append("file", audio, filename);
+  form.append("model", "whisper-large-v3-turbo");
+
+  try {
+    const res = await fetch(GROQ_TRANSCRIBE_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { text?: string };
+    return typeof data.text === "string" ? data.text : null;
   } catch {
     return null;
   }
