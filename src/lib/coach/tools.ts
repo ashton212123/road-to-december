@@ -1,5 +1,5 @@
 import { revalidatePath, updateTag } from "next/cache";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   waterLogs,
@@ -11,12 +11,12 @@ import {
   swimTimes,
   workoutLogs,
   settings,
-  aiTakeaways,
 } from "@/lib/db/schema";
 import { getAllPhasesWithSessions, getCurrentPhase, getFoodLogsForDate, getWaterLogsForDate, getWorkoutLogsSince, getSwimTimes } from "@/lib/db/queries";
 import { todayManilaISO, todayDayKey } from "@/lib/time";
 import { withFallback } from "@/lib/db/withFallback";
 import type { GroqToolDef } from "@/lib/ai/groq";
+import * as executors from "@/lib/capture/executors";
 
 /** Every write mutation here mirrors the exact db operation + revalidation
  * its equivalent server action performs (fuel/actions.ts, more/actions.ts,
@@ -289,7 +289,7 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
     case "log_water": {
       const ml = Number(args.ml);
       if (!Number.isFinite(ml) || ml <= 0) return JSON.stringify({ error: "ml must be a positive number" });
-      await db.insert(waterLogs).values({ date: today, ml: Math.round(ml) });
+      await executors.logWater({ ml, date: today });
       revalidateFuelAndHome();
       const total = (await getWaterLogsForDate(today)).reduce((s, w) => s + w.ml, 0);
       return JSON.stringify({ ok: true, logged: `${Math.round(ml)}ml water`, totalToday: `${(total / 1000).toFixed(2)}L` });
@@ -300,12 +300,12 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
       const proteinG = Number(args.protein_g);
       const description = String(args.name ?? "").trim();
       if (!description) return JSON.stringify({ error: "name is required" });
-      await db.insert(foodLogs).values({
-        date: today,
-        timeSlot: "snack",
+      await executors.logMeal({
         description,
         kcal: Math.round(kcal) || 0,
-        proteinG: String(Number.isFinite(proteinG) ? proteinG : 0),
+        proteinG: Number.isFinite(proteinG) ? proteinG : 0,
+        timeSlot: "snack",
+        date: today,
         source: "ai",
       });
       revalidateFuelAndHome();
@@ -315,7 +315,7 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
     case "log_sleep": {
       const hours = Number(args.hours);
       if (!Number.isFinite(hours) || hours <= 0) return JSON.stringify({ error: "hours must be a positive number" });
-      await db.insert(sleepLogs).values({ date: today, hours: String(hours), bedtime: null, onTime: null });
+      await executors.logSleep({ hours, date: today });
       revalidatePath("/more/recovery");
       revalidatePath("/home");
       updateTag("analytics-data");
@@ -326,7 +326,7 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
     case "log_weigh_in": {
       const kg = Number(args.kg);
       if (!Number.isFinite(kg) || kg <= 0) return JSON.stringify({ error: "kg must be a positive number" });
-      await db.insert(weighIns).values({ date: today, kg: String(kg) }).onConflictDoUpdate({ target: weighIns.date, set: { kg: String(kg) } });
+      await executors.logWeighIn({ kg, date: today });
       revalidateFuelAndHome();
       revalidatePath("/analytics");
       return JSON.stringify({ ok: true, logged: `${kg}kg` });
@@ -337,7 +337,7 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
       const area = String(args.area ?? "").trim();
       if (!area) return JSON.stringify({ error: "area is required" });
       if (!Number.isFinite(rating) || rating < 1 || rating > 5) return JSON.stringify({ error: "rating_1_5 must be 1-5" });
-      await db.insert(sorenessLogs).values({ date: today, rating1to5: rating, area });
+      await executors.logSoreness({ area, rating1to5: rating, date: today });
       revalidatePath("/more/recovery");
       updateTag("analytics-data");
       return JSON.stringify({ ok: true, logged: `${area} soreness ${rating}/5` });
@@ -351,12 +351,7 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
       // guess a total from raw_text is retired (loop 33); this coach-tool
       // path logs load + text only, same as before AI-first swim logging
       // existed. Use the Log tab for a session with a real distance total.
-      await db.insert(swimSessions).values({
-        date: today,
-        loadRating: Math.min(10, Math.max(1, loadRating)),
-        setsText: rawText,
-        parsedDistanceM: null,
-      });
+      await executors.logSwimSession({ loadRating, setsText: rawText, date: today });
       revalidatePath("/analytics");
       revalidatePath("/swim");
       revalidatePath("/home");
@@ -370,13 +365,11 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
       const timeSeconds = Number(args.time_seconds);
       if (!event) return JSON.stringify({ error: "event is required" });
       if (!Number.isFinite(timeSeconds) || timeSeconds <= 0) return JSON.stringify({ error: "time_seconds must be a positive number" });
-      await db.insert(swimTimes).values({
-        date: today,
+      await executors.logSwimTime({
         event,
         timeMs: Math.round(timeSeconds * 1000),
         meetName: args.meet_name ? String(args.meet_name) : null,
-        splits: null,
-        strokeCounts: null,
+        date: today,
       });
       revalidatePath("/analytics");
       revalidatePath("/swim");
@@ -399,19 +392,12 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
       }
       const weightKg = args.weight_kg !== undefined && args.weight_kg !== null ? Number(args.weight_kg) : null;
       const rpe = args.rpe !== undefined && args.rpe !== null ? Number(args.rpe) : null;
-      const priorSets = await db
-        .select({ setNumber: workoutLogs.setNumber })
-        .from(workoutLogs)
-        .where(and(eq(workoutLogs.date, today), eq(workoutLogs.exerciseId, matched.id)));
-      await db.insert(workoutLogs).values({
-        date: today,
+      await executors.logGymSet({
         exerciseId: matched.id,
-        setNumber: priorSets.length + 1,
-        weightKg: weightKg !== null ? String(weightKg) : null,
+        weightKg,
         reps: Number.isFinite(reps) ? reps : null,
-        rpe: rpe !== null ? String(rpe) : null,
-        restSeconds: null,
-        notes: null,
+        rpe,
+        date: today,
       });
       revalidatePath("/train", "layout");
       revalidatePath("/home");
@@ -446,10 +432,7 @@ export async function executeCoachTool(name: string, args: Record<string, unknow
     case "update_coach_memory": {
       const text = String(args.text ?? "").trim().slice(0, 900);
       if (!text) return JSON.stringify({ error: "text is required" });
-      await db
-        .insert(aiTakeaways)
-        .values({ date: today, key: "athlete-model", message: text })
-        .onConflictDoUpdate({ target: [aiTakeaways.date, aiTakeaways.key], set: { message: text } });
+      await executors.updateCoachMemory({ text });
       revalidatePath("/more/settings");
       return JSON.stringify({ ok: true, updated: "coach memory" });
     }

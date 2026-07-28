@@ -6,19 +6,13 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { db } from "@/lib/db";
 import {
   workoutLogs,
-  weighIns,
-  sleepLogs,
-  waterLogs,
   foodLogs,
-  swimTimes,
   cmjTests,
   jumpTests,
-  sorenessLogs,
   timeTo15m,
   settings,
   businessTransactions,
   businessTasks,
-  swimSessions,
 } from "@/lib/db/schema";
 import { todayManilaISO, daysBetween, addDaysISO, todayDayKey, manilaHourNow } from "@/lib/time";
 import { seasonData } from "@/lib/data/season-data";
@@ -59,6 +53,7 @@ import { bestSetE1RM } from "@/lib/train/e1rm";
 import { computeWeeklyTonnage } from "@/lib/analytics/tonnage";
 import { buildAttentionItems } from "@/lib/dashboard/needsAttention";
 import { withRetry } from "@/lib/db/withRetry";
+import * as executors from "@/lib/capture/executors";
 
 // MCP tool writes bypass every Next.js server action -- they need the same
 // cache invalidation those actions make (via updateTag), or a cached
@@ -277,14 +272,14 @@ const handler = createMcpHandler(
         },
       },
       async ({ date, time_slot, description, kcal, protein_g, carbs_g, fat_g }) => {
-        await db.insert(foodLogs).values({
+        await executors.logMeal({
           date: date ?? todayManilaISO(),
           timeSlot: time_slot,
           description,
-          kcal: Math.round(kcal),
-          proteinG: String(protein_g),
-          carbsG: carbs_g !== undefined ? String(carbs_g) : null,
-          fatG: fat_g !== undefined ? String(fat_g) : null,
+          kcal,
+          proteinG: protein_g,
+          carbsG: carbs_g,
+          fatG: fat_g,
           source: "ai",
         });
         revalidateTraining();
@@ -336,7 +331,7 @@ const handler = createMcpHandler(
       "log_water",
       { description: "Log water intake in milliliters.", inputSchema: { ml: z.number(), date: z.string().optional() } },
       async ({ ml, date }) => {
-        await db.insert(waterLogs).values({ date: date ?? todayManilaISO(), ml });
+        await executors.logWater({ ml, date });
         revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${ml}ml of water.` }] };
       }
@@ -347,7 +342,7 @@ const handler = createMcpHandler(
       { description: "Log a bodyweight measurement in kg.", inputSchema: { kg: z.number(), date: z.string().optional() } },
       async ({ kg, date }) => {
         const d = date ?? todayManilaISO();
-        await db.insert(weighIns).values({ date: d, kg: String(kg) }).onConflictDoUpdate({ target: weighIns.date, set: { kg: String(kg) } });
+        await executors.logWeighIn({ kg, date: d });
         revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged weigh-in: ${kg}kg on ${d}.` }] };
       }
@@ -364,7 +359,7 @@ const handler = createMcpHandler(
         const dayKey = new Date(`${today}T12:00:00Z`).getUTCDay();
         const isBedtimeCheckDay = dayKey === 2 || dayKey === 4; // Tue/Thu
         const onTime = isBedtimeCheckDay && bedtime ? bedtime <= "21:30" : null;
-        await db.insert(sleepLogs).values({ date: today, hours: String(hours), bedtime: bedtime ?? null, onTime });
+        await executors.logSleep({ hours, bedtime, onTime, date: today });
         revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${hours}h of sleep.` }] };
       }
@@ -387,23 +382,20 @@ const handler = createMcpHandler(
           return { content: [{ type: "text" as const, text: `No exercise found matching "${exercise}".` }], isError: true };
         }
         const today = todayManilaISO();
-        const existing = await db
-          .select()
-          .from(workoutLogs)
-          .where(and(eq(workoutLogs.exerciseId, match.id), eq(workoutLogs.date, today)));
-        const setNumber = existing.length + 1;
-        await db.insert(workoutLogs).values({
-          date: today,
+        const row = await executors.logGymSet({
           exerciseId: match.id,
-          setNumber,
-          weightKg: weight_kg !== undefined ? String(weight_kg) : null,
-          reps: reps ?? null,
-          rpe: rpe !== undefined ? String(rpe) : null,
+          weightKg: weight_kg,
+          reps,
+          rpe,
+          date: today,
         });
         revalidateTraining();
         return {
           content: [
-            { type: "text" as const, text: `Logged set ${setNumber} of ${match.name}: ${weight_kg ?? "–"}kg x ${reps ?? "–"} @ RPE ${rpe ?? "–"}.` },
+            {
+              type: "text" as const,
+              text: `Logged set ${row.setNumber} of ${match.name}: ${weight_kg ?? "–"}kg x ${reps ?? "–"} @ RPE ${rpe ?? "–"}.`,
+            },
           ],
         };
       }
@@ -423,14 +415,13 @@ const handler = createMcpHandler(
         },
       },
       async ({ event, time_ms, meet_name, course, splits, stroke_counts }) => {
-        await db.insert(swimTimes).values({
-          date: todayManilaISO(),
+        await executors.logSwimTime({
           event,
           timeMs: time_ms,
-          meetName: meet_name ?? null,
-          course: course ?? null,
-          splits: splits ?? null,
-          strokeCounts: stroke_counts ?? null,
+          meetName: meet_name,
+          course,
+          splits,
+          strokeCounts: stroke_counts,
         });
         revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged ${event}: ${(time_ms / 1000).toFixed(2)}s.` }] };
@@ -458,7 +449,7 @@ const handler = createMcpHandler(
         },
       },
       async ({ rating, area, date }) => {
-        await db.insert(sorenessLogs).values({ date: date ?? todayManilaISO(), rating1to5: rating, area });
+        await executors.logSoreness({ area, rating1to5: rating, date });
         revalidateTag("analytics-data", { expire: 0 });
         return { content: [{ type: "text" as const, text: `Logged soreness: ${area} at ${rating}/5.` }] };
       }
@@ -658,12 +649,7 @@ const handler = createMcpHandler(
       async ({ load_rating, sets_text, date }) => {
         // No auto-distance-estimate here -- the regex parser is retired
         // (loop 33); this MCP path logs load + text only.
-        await db.insert(swimSessions).values({
-          date: date ?? todayManilaISO(),
-          loadRating: load_rating,
-          setsText: sets_text ?? null,
-          parsedDistanceM: null,
-        });
+        await executors.logSwimSession({ loadRating: load_rating, setsText: sets_text, date });
         revalidateTraining();
         return { content: [{ type: "text" as const, text: `Logged swim session: load ${load_rating}/10${sets_text ? `, ${sets_text}` : ""}.` }] };
       }
