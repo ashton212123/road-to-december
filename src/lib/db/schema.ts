@@ -4,12 +4,16 @@ import {
   text,
   integer,
   numeric,
+  real,
   boolean,
   date,
   timestamp,
   jsonb,
+  vector,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ---------- Program data (seeded, read-mostly) ----------
 
@@ -398,6 +402,153 @@ export const knowledge = pgTable("knowledge", {
   syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ---------- Personal OS: capture pipeline, tasks, habits, goals, memory ----------
+// Merge-build additions (PERSONAL_OS_MERGE_PROMPT.md Phase 1). No user_id
+// columns -- this stays a single-user app, same as everything above.
+
+// Every voice/text note that comes in over Telegram/web/iOS, before and
+// after classification -- kept forever (even on failure) so raw input is
+// never lost. status starts 'pending', moves to 'routed'/'failed'/'discarded'.
+export const rawCaptures = pgTable(
+  "raw_captures",
+  {
+    id: serial("id").primaryKey(),
+    source: text("source").notNull().$type<"telegram" | "web" | "ios">(),
+    telegramUpdateId: integer("telegram_update_id"),
+    rawText: text("raw_text"),
+    transcript: text("transcript"),
+    audioFileId: text("audio_file_id"),
+    classification: jsonb("classification"),
+    model: text("model"),
+    routedTo: text("routed_to").array(),
+    routedIds: jsonb("routed_ids"),
+    status: text("status").notNull().default("pending").$type<"pending" | "routed" | "failed" | "discarded">(),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("raw_captures_telegram_update_id_idx").on(table.telegramUpdateId)]
+);
+
+// The universal task layer (CRM, Phase 3). Manual rows are created directly;
+// mirrored rows (sourceKind 'business'/'canvas') are read-only copies of
+// businessTasks/canvasAssignments, kept in sync by src/lib/crm/mirror.ts --
+// the partial unique index only applies to those, so manual tasks (sourceId
+// always null) are never constrained by it.
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    urgency: text("urgency").notNull().$type<"today" | "week" | "month" | "someday">(),
+    isKey: boolean("is_key").notNull().default(false),
+    priorityScore: real("priority_score").notNull().default(0),
+    timeEstimateMin: integer("time_estimate_min"),
+    tags: text("tags").array(),
+    dueDate: date("due_date"),
+    rail: text("rail").notNull().$type<"life" | "athlete">(),
+    category: text("category"),
+    sourceKind: text("source_kind").notNull().default("manual").$type<"manual" | "capture" | "business" | "canvas">(),
+    sourceId: text("source_id"),
+    captureId: integer("capture_id").references(() => rawCaptures.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("tasks_source_kind_source_id_idx")
+      .on(table.sourceKind, table.sourceId)
+      .where(sql`${table.sourceKind} <> 'manual'`),
+  ]
+);
+
+// Seeded with swimmer defaults (Phase 4), fully editable afterwards.
+export const habits = pgTable("habits", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  sortOrder: integer("sort_order").notNull(),
+  subtasks: jsonb("subtasks").$type<{ id: string; label: string }[]>(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// One row per habit per day it was touched. logDate always uses
+// todayManilaISO() (src/lib/time.ts) -- never the server clock or UTC.
+export const habitLogs = pgTable(
+  "habit_logs",
+  {
+    id: serial("id").primaryKey(),
+    habitId: integer("habit_id")
+      .notNull()
+      .references(() => habits.id, { onDelete: "cascade" }),
+    logDate: date("log_date").notNull(),
+    doneSubtaskIds: text("done_subtask_ids").array(),
+    completed: boolean("completed").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("habit_logs_habit_date_idx").on(table.habitId, table.logDate)]
+);
+
+export const journalEntries = pgTable("journal_entries", {
+  id: serial("id").primaryKey(),
+  entryDate: date("entry_date").notNull(),
+  rawText: text("raw_text"),
+  transcript: text("transcript"),
+  summary: text("summary"),
+  mood: integer("mood"),
+  tags: text("tags").array(),
+  source: text("source").notNull().$type<"telegram" | "web">(),
+  captureId: integer("capture_id").references(() => rawCaptures.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Persistent week/month lists -- a real table, not the cheat sheet's
+// sentinel-date hack (Decision 10). Nothing auto-clears.
+export const goals = pgTable("goals", {
+  id: serial("id").primaryKey(),
+  scope: text("scope").notNull().$type<"week" | "month">(),
+  text: text("text").notNull(),
+  done: boolean("done").notNull().default(false),
+  sortOrder: integer("sort_order").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+// The Brain's vector store (Phase 6). One canonical-sentence chunk per
+// source row, upserted on (sourceType, sourceId) so a re-embed (e.g. an
+// edited log) replaces rather than duplicates. HNSW over ivfflat -- needs no
+// training pass, which matters because this table starts empty.
+export const memoryChunks = pgTable(
+  "memory_chunks",
+  {
+    id: serial("id").primaryKey(),
+    sourceType: text("source_type").notNull(),
+    sourceId: text("source_id").notNull(),
+    sourceDate: date("source_date"),
+    text: text("text").notNull(),
+    embedding: vector("embedding", { dimensions: 768 }),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("memory_chunks_source_idx").on(table.sourceType, table.sourceId),
+    index("memory_chunks_embedding_idx").using("hnsw", table.embedding.op("vector_cosine_ops")),
+  ]
+);
+
+// Append-only record of writes the capture pipeline (and later, CRM/habit
+// mutations) makes -- not exposed in any UI yet, just a durable trail.
+export const auditLog = pgTable("audit_log", {
+  id: serial("id").primaryKey(),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Phase = typeof phases.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
@@ -425,3 +576,11 @@ export type SessionLoad = typeof sessionLoads.$inferSelect;
 export type DailyBrief = typeof dailyBriefs.$inferSelect;
 export type CoachMessage = typeof coachMessages.$inferSelect;
 export type KnowledgeNote = typeof knowledge.$inferSelect;
+export type RawCapture = typeof rawCaptures.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type Habit = typeof habits.$inferSelect;
+export type HabitLog = typeof habitLogs.$inferSelect;
+export type JournalEntry = typeof journalEntries.$inferSelect;
+export type Goal = typeof goals.$inferSelect;
+export type MemoryChunk = typeof memoryChunks.$inferSelect;
+export type AuditLogEntry = typeof auditLog.$inferSelect;
