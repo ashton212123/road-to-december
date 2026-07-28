@@ -17,9 +17,23 @@ const globalForDb = globalThis as unknown as { rtdQueryClient?: ReturnType<typeo
 // batched statement (Analytics) or tag-cached (Home), so per-request
 // parallelism no longer needs a wide pool; a cold Home's ~14-query
 // Promise.all just queues over 3 conns in a few fast waves.
+// `statement_timeout`/`idle_in_transaction_session_timeout` close the real gap
+// behind `withRetry`'s connection-pool exhaustion bug (BACKLOG.md): withRetry's
+// Promise.race abandons a slow query from the JS side but never cancels it, so
+// an abandoned query kept running and holding one of these 3 connections
+// indefinitely -- the more retries fired, the fewer connections were ever
+// freed. Set above the largest real withRetry `timeoutMs` in the app (15000,
+// Home/Swim/Analytics) so no legitimate query is ever cut short by this; a
+// query that outlives it is by definition already abandoned by its caller.
 const queryClient =
   globalForDb.rtdQueryClient ??
-  postgres(connectionString, { prepare: false, max: 3, idle_timeout: 10, connect_timeout: 8 });
+  postgres(connectionString, {
+    prepare: false,
+    max: 3,
+    idle_timeout: 10,
+    connect_timeout: 8,
+    connection: { statement_timeout: 20000, idle_in_transaction_session_timeout: 20000 },
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.rtdQueryClient = queryClient;

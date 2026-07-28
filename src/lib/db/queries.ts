@@ -55,25 +55,30 @@ export async function getSettingsRow() {
 // 3 DB round-trips per page load across the whole app, which meaningfully
 // reduces connection pressure on the database (see DECISIONS.md -- undersized
 // free-tier compute is the real bottleneck, not a code bug).
-export const getAllPhasesWithSessions = unstable_cache(
-  async function getAllPhasesWithSessionsUncached() {
-    const phaseRows = await db.select().from(phases).orderBy(asc(phases.orderIndex));
-    const sessionRows = await db.select().from(sessions).orderBy(asc(sessions.orderIndex));
-    const exerciseRows = await db.select().from(exercises).orderBy(asc(exercises.orderIndex));
+// Exported uncached so callers that already run inside their own
+// unstable_cache (e.g. home/page.tsx's getCachedHomeData) can call this
+// directly instead of nesting one unstable_cache call inside another --
+// nesting was observed in production to sometimes resolve to an empty
+// array instead of the real rows, silently (LOOP_LOG.md).
+export async function getAllPhasesWithSessionsUncached() {
+  const phaseRows = await db.select().from(phases).orderBy(asc(phases.orderIndex));
+  const sessionRows = await db.select().from(sessions).orderBy(asc(sessions.orderIndex));
+  const exerciseRows = await db.select().from(exercises).orderBy(asc(exercises.orderIndex));
 
-    return phaseRows.map((phase) => ({
-      ...phase,
-      sessions: sessionRows
-        .filter((s) => s.phaseId === phase.id)
-        .map((session) => ({
-          ...session,
-          exercises: exerciseRows.filter((e) => e.sessionId === session.id),
-        })),
-    }));
-  },
-  ["all-phases-with-sessions"],
-  { revalidate: 300 }
-);
+  return phaseRows.map((phase) => ({
+    ...phase,
+    sessions: sessionRows
+      .filter((s) => s.phaseId === phase.id)
+      .map((session) => ({
+        ...session,
+        exercises: exerciseRows.filter((e) => e.sessionId === session.id),
+      })),
+  }));
+}
+
+export const getAllPhasesWithSessions = unstable_cache(getAllPhasesWithSessionsUncached, ["all-phases-with-sessions"], {
+  revalidate: 300,
+});
 
 export async function getPhaseById(phaseId: string) {
   const all = await getAllPhasesWithSessions();
