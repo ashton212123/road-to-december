@@ -7,17 +7,6 @@ function Block({ height, className }: { height: number | string; className?: str
   return <div className={clsx("rtd-mos-skeleton", className)} style={{ height }} />;
 }
 
-export function HeaderActionsSkeleton() {
-  return (
-    <div className="flex items-center gap-2 ml-auto">
-      <Block height={32} className="w-[92px]" />
-      <div className="md:hidden">
-        <Block height={32} className="w-8" />
-      </div>
-    </div>
-  );
-}
-
 export function CoachBriefSkeleton() {
   return (
     <div className="flex flex-col gap-2">
@@ -34,7 +23,13 @@ export function CoachBriefSkeleton() {
 export function HomeMainSkeleton() {
   return (
     <div className="flex flex-col gap-2.5 md:gap-3">
-      <Block height={44} className="w-full" />
+      <div className="flex items-center justify-between">
+        <Block height={24} className="w-16 md:hidden" />
+        <div className="flex items-center gap-2 ml-auto">
+          <Block height={32} className="w-[92px]" />
+          <Block height={32} className="w-8 md:hidden" />
+        </div>
+      </div>
       <Block height={220} className="w-full" />
       <div className="grid grid-cols-3 gap-2">
         <Block height={96} />

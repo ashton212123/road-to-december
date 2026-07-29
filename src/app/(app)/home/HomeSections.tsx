@@ -23,28 +23,21 @@ import { greetingForHour } from "@/lib/time";
 import { withRetry } from "@/lib/db/withRetry";
 import { withFallback } from "@/lib/db/withFallback";
 import { getDailyBrief } from "@/lib/coach/dailyBrief";
-import { getHomeViewModel } from "./data";
+import { getHomeViewModel, type HomeViewModel } from "./data";
 import { CoachBriefSkeleton } from "./HomeSkeletons";
 
-export async function HeaderActions({ today }: { today: string }) {
-  const vm = await getHomeViewModel(today);
-  return (
-    <div className="flex items-center gap-2 ml-auto">
-      <QuickLogSheet
-        lastNightSleep={vm.recentSleepLogs[0] ? { hours: Number(vm.recentSleepLogs[0].hours), bedtime: vm.recentSleepLogs[0].bedtime } : null}
-        lastWeighInKg={vm.latestWeighIn ? Number(vm.latestWeighIn.kg) : null}
-        phaseId={vm.todaySession ? vm.currentPhase.id : null}
-        todayExercises={vm.todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
-      />
-      <div className="md:hidden">
-        <MoreMenuButton trainingStatus={vm.settingsRow.trainingStatus} />
-      </div>
-    </div>
-  );
-}
-
-async function CoachBriefSection({ today }: { today: string }) {
-  const vm = await getHomeViewModel(today);
+// CoachBriefSection takes the already-resolved view model as a prop instead
+// of calling getHomeViewModel itself: this component's own async work (the
+// dailyBrief fetch -- a live LLM call on the first request of the day) is
+// what makes its Suspense boundary independently slow, and that's the only
+// thing that should re-run per boundary. Re-fetching the view model here
+// too would have meant every Suspense boundary re-running the full 19-query
+// fetch against the 3-connection pool -- confirmed live (a debug counter
+// showed 3 separate invocations, one per boundary) when this instead relied
+// on React's cache() for request memoization; that turned out not to
+// dedupe reliably across sibling/nested Suspense boundaries here, so a
+// single real call site + prop-drilling replaces it as the actual guarantee.
+async function CoachBriefSection({ today, vm }: { today: string; vm: HomeViewModel }) {
   const dailyBrief = await withFallback(
     withRetry(
       () =>
@@ -79,11 +72,33 @@ async function CoachBriefSection({ today }: { today: string }) {
   return <CoachBriefCard brief={dailyBrief} bullets={vm.coachBriefBullets} followUps={vm.followUps} />;
 }
 
+// The one real call site for getHomeViewModel (data.ts) -- everything below
+// this line, including the header's action buttons, shares this single
+// fetch instead of each Suspense boundary re-triggering its own. dailyBrief
+// is the one deliberate exception: CoachBriefSection above gets vm handed
+// to it as a prop (already resolved by the time it renders) and only adds
+// its own extra, genuinely-slower fetch on top -- so it can still stream in
+// on its own schedule without ever re-running the 19-query fetch.
 export async function HomeMainContent({ today }: { today: string }) {
   const vm = await getHomeViewModel(today);
 
   return (
     <>
+      <div className="flex items-center justify-between">
+        <span className="text-title-3 font-semibold text-[var(--rtd-text)] md:hidden">Home</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <QuickLogSheet
+            lastNightSleep={vm.recentSleepLogs[0] ? { hours: Number(vm.recentSleepLogs[0].hours), bedtime: vm.recentSleepLogs[0].bedtime } : null}
+            lastWeighInKg={vm.latestWeighIn ? Number(vm.latestWeighIn.kg) : null}
+            phaseId={vm.todaySession ? vm.currentPhase.id : null}
+            todayExercises={vm.todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
+          />
+          <div className="md:hidden">
+            <MoreMenuButton trainingStatus={vm.settingsRow.trainingStatus} />
+          </div>
+        </div>
+      </div>
+
       <AlertCardList alerts={vm.alerts} />
 
       <HomeHeroBand
@@ -145,7 +160,7 @@ export async function HomeMainContent({ today }: { today: string }) {
           <HabitsCard habits={vm.habitsData.habits} dots={vm.habitStreakDots} today={today} />
           <CalendarStripCard days={vm.calendarStripDays} today={today} />
           <Suspense fallback={<CoachBriefSkeleton />}>
-            <CoachBriefSection today={today} />
+            <CoachBriefSection today={today} vm={vm} />
           </Suspense>
           <MonthCalendarCard
             today={today}
