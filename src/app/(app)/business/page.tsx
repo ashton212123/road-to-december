@@ -7,12 +7,13 @@ import { NewBusinessForm } from "@/components/business/NewBusinessForm";
 import { getBusinesses, getAllBusinessTransactions } from "@/lib/db/queries";
 import { computeProfit, formatPhp } from "@/lib/business/profit";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 
 export default async function BusinessPage() {
-  const [allBusinesses, allTransactions] = await withRetry(
-    () => Promise.all([getBusinesses(), getAllBusinessTransactions()]),
-    { label: "Business list data" }
-  );
+  const [allBusinesses, allTransactions] = await Promise.all([
+    withFallback(withRetry(() => getBusinesses(), { label: "Business: ventures" }), []),
+    withFallback(withRetry(() => getAllBusinessTransactions(), { label: "Business: transactions" }), []),
+  ]);
 
   const byBusiness = new Map<number, typeof allTransactions>();
   for (const t of allTransactions) {

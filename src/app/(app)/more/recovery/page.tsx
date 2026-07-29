@@ -8,6 +8,7 @@ import { computeReadinessSignals, type ReadinessLight } from "@/lib/rules/readin
 import { computeDailySessionLoads, computeWeeklyLoad, computeWeekOverWeekRamp } from "@/lib/analytics/load";
 import { addDaysISO, todayManilaISO, mondayOf } from "@/lib/time";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 
 const LIGHT_COLOR: Record<ReadinessLight, string> = {
   green: "var(--rtd-green)",
@@ -18,18 +19,14 @@ const LIGHT_COLOR: Record<ReadinessLight, string> = {
 export default async function RecoveryPage() {
   const today = todayManilaISO();
   const weekStart = mondayOf(today);
-  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs, swimSessions, sessionLoads] = await withRetry(
-    () =>
-      Promise.all([
-        getSleepLogs(14),
-        getSorenessLogs(10),
-        getCmjTests(30),
-        getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)),
-        getSwimSessions(60),
-        getSessionLoadsSince(addDaysISO(today, -35)),
-      ]),
-    { label: "Recovery page data" }
-  );
+  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs, swimSessions, sessionLoads] = await Promise.all([
+    withFallback(withRetry(() => getSleepLogs(14), { label: "Recovery: sleep logs" }), []),
+    withFallback(withRetry(() => getSorenessLogs(10), { label: "Recovery: soreness logs" }), []),
+    withFallback(withRetry(() => getCmjTests(30), { label: "Recovery: CMJ tests" }), []),
+    withFallback(withRetry(() => getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)), { label: "Recovery: workout logs" }), []),
+    withFallback(withRetry(() => getSwimSessions(60), { label: "Recovery: swim sessions" }), []),
+    withFallback(withRetry(() => getSessionLoadsSince(addDaysISO(today, -35)), { label: "Recovery: session loads" }), []),
+  ]);
 
   const lastSleep = sleepLogs[0] ? Number(sleepLogs[0].hours) : null;
 

@@ -7,6 +7,7 @@ import { LearnLevelRow } from "@/components/learn/LearnLevelRow";
 import { getLearnProgress } from "@/lib/db/queries";
 import { findTrack } from "@/lib/data/learn-tracks";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 
 const getCachedProgress = unstable_cache(getLearnProgress, ["learn-progress"], { tags: ["learn-data"] });
 
@@ -15,7 +16,7 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
   const track = findTrack(trackId);
   if (!track) notFound();
 
-  const progress = await withRetry(() => getCachedProgress(), { label: "Learn progress" });
+  const progress = await withFallback(withRetry(() => getCachedProgress(), { label: "Learn: progress" }), []);
   const done = new Set(progress.filter((p) => p.trackId === trackId).map((p) => p.levelKey));
   const upNextKey = track.levels.find((l) => !done.has(l.key))?.key;
 

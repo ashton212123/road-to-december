@@ -6,14 +6,16 @@ import { CoachMemoryEditor } from "@/components/more/CoachMemoryEditor";
 import { HabitEditor } from "@/components/more/HabitEditor";
 import { getSettingsRow } from "@/lib/db/queries";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 import { getAthleteModel } from "@/lib/coach/athleteModel";
 import { getAllHabitsForEditor } from "@/lib/habits/queries";
+import { FALLBACK_SETTINGS } from "@/lib/coach/context";
 
 export default async function SettingsPage() {
   const [settingsRow, athleteModel, allHabits] = await Promise.all([
-    withRetry(() => getSettingsRow(), { label: "Settings row" }),
-    getAthleteModel(),
-    withRetry(() => getAllHabitsForEditor(), { label: "Habits editor list" }),
+    withFallback(withRetry(() => getSettingsRow(), { label: "Settings: settings row" }), FALLBACK_SETTINGS),
+    withFallback(withRetry(() => getAthleteModel(), { label: "Settings: athlete model" }), null),
+    withFallback(withRetry(() => getAllHabitsForEditor(), { label: "Settings: habits editor list" }), []),
   ]);
 
   return (

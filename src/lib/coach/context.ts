@@ -51,7 +51,7 @@ export async function retrieveRelevantNotes(query: string, limit = 4) {
   return [...all].sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime()).slice(0, limit);
 }
 
-const FALLBACK_SETTINGS = {
+export const FALLBACK_SETTINGS = {
   id: "singleton",
   aseanConfirmed: null,
   waterTargetMl: 3000,

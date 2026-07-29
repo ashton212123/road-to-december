@@ -3,6 +3,7 @@ import { CoachChat } from "@/components/coach/CoachChat";
 import { getRecentCoachMessages } from "@/lib/coach/messages";
 import { getCoachAppContext } from "@/lib/coach/context";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 
 function buildQuickPrompts(ctx: Awaited<ReturnType<typeof getCoachAppContext>>): string[] {
   const prompts: string[] = [];
@@ -18,8 +19,14 @@ function buildQuickPrompts(ctx: Awaited<ReturnType<typeof getCoachAppContext>>):
 }
 
 export default async function CoachAiPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const [[initialMessages, appContext], { q }] = await Promise.all([
-    withRetry(() => Promise.all([getRecentCoachMessages(20), getCoachAppContext()]), { label: "Coach AI messages/context" }),
+  // getCoachAppContext() already wraps every one of its own queries in
+  // withFallback internally (see context.ts) -- it's already immune to the
+  // pool-starvation failure this section guards against, so it isn't
+  // re-wrapped here. getRecentCoachMessages is the one genuinely unguarded
+  // query in this page.
+  const [initialMessages, appContext, { q }] = await Promise.all([
+    withFallback(withRetry(() => getRecentCoachMessages(20), { label: "Coach AI: recent messages" }), []),
+    getCoachAppContext(),
     searchParams,
   ]);
 

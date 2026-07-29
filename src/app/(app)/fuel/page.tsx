@@ -28,6 +28,8 @@ import { computeEnergyTarget, computeAutoEnergyPhase, describePhaseTransition } 
 import { buildDayFuelPlan } from "@/lib/fuel/carbPeriodization";
 import { deriveDaySchedule } from "@/lib/fuel/scheduleFromWeek";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
+import { FALLBACK_SETTINGS } from "@/lib/coach/context";
 
 const FuelPlanView = dynamic(() => import("@/components/fuel/FuelPlanView").then((m) => m.FuelPlanView), {
   loading: () => <div className="rtd-glass" style={{ height: 220 }} />,
@@ -58,18 +60,17 @@ export default async function FuelPage({
   const viewDate = view === "history" && dateParam && DATE_RE.test(dateParam) && daysBetween(dateParam, today) >= 0 ? dateParam : today;
   const isToday = viewDate === today;
 
-  const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, recentFoodLogs, recentFoodRows, allMeets] = await withRetry(() =>
-    Promise.all([
-      getFoodLogsForDate(viewDate),
-      getWaterLogsForDate(viewDate),
-      getSettingsRow(),
-      getWeighIns(30),
-      getAllPhasesWithSessions(),
-      getFoodLogsSince(addDaysISO(today, -13)), // 14-day window: feeds computeEnergyTarget's weight-response average
-      getRecentFoodChips(addDaysISO(today, -14)),
-      getAllMeetsWithEvents(),
-    ]), { label: "Fuel page data" }
-  );
+  const [todaysFood, todaysWater, settingsRow, weighInHistory, allPhases, recentFoodLogs, recentFoodRows, allMeets] = await Promise.all([
+    withFallback(withRetry(() => getFoodLogsForDate(viewDate), { label: "Fuel: today's food" }), []),
+    withFallback(withRetry(() => getWaterLogsForDate(viewDate), { label: "Fuel: today's water" }), []),
+    withFallback(withRetry(() => getSettingsRow(), { label: "Fuel: settings row" }), FALLBACK_SETTINGS),
+    withFallback(withRetry(() => getWeighIns(30), { label: "Fuel: weigh-ins" }), []),
+    withFallback(withRetry(() => getAllPhasesWithSessions(), { label: "Fuel: phases" }), []),
+    // 14-day window: feeds computeEnergyTarget's weight-response average
+    withFallback(withRetry(() => getFoodLogsSince(addDaysISO(today, -13)), { label: "Fuel: food since" }), []),
+    withFallback(withRetry(() => getRecentFoodChips(addDaysISO(today, -14)), { label: "Fuel: recent food chips" }), []),
+    withFallback(withRetry(() => getAllMeetsWithEvents(), { label: "Fuel: meets" }), []),
+  ]);
 
   const currentPhase = getCurrentPhase(allPhases, today);
 
