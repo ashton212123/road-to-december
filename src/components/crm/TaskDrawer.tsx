@@ -260,7 +260,7 @@ export function TaskDrawer({
           <button
             type="button"
             onClick={() => onRequestDelete(task)}
-            className="text-footnote text-[var(--rtd-red)] cursor-pointer text-center py-1"
+            className="rtd-tap-target text-footnote text-[var(--rtd-red)] cursor-pointer text-center py-1"
           >
             Delete
           </button>

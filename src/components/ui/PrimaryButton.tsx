@@ -17,7 +17,7 @@ export function PrimaryButton({ className, style, ...props }: ButtonHTMLAttribut
         border: "1px solid rgba(122,184,232,.22)",
         background: "rgba(122,184,232,.10)",
         color: "var(--rtd-mos-blue)",
-        font: "500 8.5px/1 var(--rtd-font-mono)",
+        font: "500 var(--rtd-mos-fs-meta)/1 var(--rtd-font-mono)",
         letterSpacing: ".12em",
         borderRadius: "var(--rtd-radius-button)",
         padding: "5px 10px",

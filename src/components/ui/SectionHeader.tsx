@@ -26,7 +26,7 @@ export function SectionHeader({
     <div className={clsx("flex items-center gap-2.5 min-w-0 shrink-0", className)}>
       <span
         className="uppercase whitespace-nowrap"
-        style={{ font: "500 8.5px/1 var(--rtd-font-mono)", letterSpacing: ".16em", color: "var(--rtd-mos-fg-dim)" }}
+        style={{ font: "500 var(--rtd-mos-fs-section)/1 var(--rtd-font-mono)", letterSpacing: "var(--rtd-mos-ls-section)", color: "var(--rtd-mos-fg-dim)" }}
       >
         {number && (
           <>

@@ -42,7 +42,7 @@ function DayRow({ plan, isToday }: { plan: DayFuelPlan; isToday: boolean }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2.5 py-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out rounded-lg -mx-1 px-1"
+        className="rtd-tap-target flex items-center gap-2.5 py-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out rounded-lg -mx-1 px-1"
       >
         <span
           className="w-1.5 h-1.5 rounded-full shrink-0"

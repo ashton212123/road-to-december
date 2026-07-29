@@ -23,7 +23,7 @@ export function SwimSessionList({ sessions }: { sessions: Session[] }) {
         <Link
           key={s.id}
           href={`/swim/session/${s.id}`}
-          className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+          className="rtd-tap-target flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
         >
           <div className="min-w-0">
             <span className="text-footnote text-[var(--rtd-text)] rtd-mono">{s.date}</span>

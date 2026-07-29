@@ -283,7 +283,7 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
           <button
             type="button"
             onClick={addManualItem}
-            className="text-footnote text-[var(--rtd-text-secondary)] cursor-pointer hover:text-[var(--rtd-text)] transition-colors duration-150 ease-out self-start"
+            className="rtd-tap-target text-footnote text-[var(--rtd-text-secondary)] cursor-pointer hover:text-[var(--rtd-text)] transition-colors duration-150 ease-out self-start"
           >
             + Add item manually
           </button>
@@ -441,7 +441,7 @@ export function MealQuickLog({ recentFoods }: { recentFoods: RecentFood[] }) {
           <button
             type="button"
             onClick={addManualItem}
-            className="text-footnote text-[var(--rtd-text-secondary)] cursor-pointer hover:text-[var(--rtd-text)] transition-colors duration-150 ease-out self-start"
+            className="rtd-tap-target text-footnote text-[var(--rtd-text-secondary)] cursor-pointer hover:text-[var(--rtd-text)] transition-colors duration-150 ease-out self-start"
           >
             + Add item manually
           </button>

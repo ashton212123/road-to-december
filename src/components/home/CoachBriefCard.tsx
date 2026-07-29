@@ -15,7 +15,7 @@ export function CoachBriefCard({
 }) {
   return (
     <TerminalPanel variant="open" colSpan={4} rowSpan={3} className={className}>
-      <Link href="/more/coach-ai" className="flex items-center gap-2 mb-1 w-fit cursor-pointer">
+      <Link href="/more/coach-ai" className="rtd-tap-target flex items-center gap-2 mb-1 w-fit cursor-pointer">
         <span className="text-[var(--rtd-purple)]">
           <IconSparkle />
         </span>
@@ -40,7 +40,7 @@ export function CoachBriefCard({
             <Link
               key={q}
               href={`/more/coach-ai?q=${encodeURIComponent(q)}`}
-              className="text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] truncate cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+              className="rtd-tap-target text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] truncate cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
             >
               {q}
             </Link>

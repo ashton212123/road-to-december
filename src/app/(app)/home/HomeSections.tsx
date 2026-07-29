@@ -186,7 +186,7 @@ export async function HomeMainContent({ today }: { today: string }) {
           <KeyTasksCard tasks={vm.keyTasks} />
 
           <details className="lg:contents">
-            <summary className="rtd-glass lg:hidden cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-[10px] px-3.5 py-2.5 flex items-center justify-between text-subhead font-medium text-[var(--rtd-text-secondary)]">
+            <summary className="rtd-tap-target rtd-glass lg:hidden cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-[10px] px-3.5 py-2.5 flex items-center justify-between text-subhead font-medium text-[var(--rtd-text-secondary)]">
               More today
               <span aria-hidden="true" className="rtd-more-today-chevron">⌄</span>
             </summary>

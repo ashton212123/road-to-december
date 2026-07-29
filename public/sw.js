@@ -1,4 +1,13 @@
-const CACHE_VERSION = "rtd-v2";
+const CACHE_VERSION = "rtd-v3";
+// Perceived speed in standalone (phone-first pass §5): navigation was
+// network-first with no timeout, so on cellular the installed PWA showed a
+// blank screen for however long the server took. This races the network
+// against a timer and falls back to a cached copy if one exists -- the
+// network keeps running in the background either way, updating the cache
+// for next time. No cached copy means there's nothing to race with, so we
+// just keep waiting on the network rather than showing /offline while
+// still online.
+const NAVIGATION_TIMEOUT_MS = 3000;
 const RUNTIME_CACHE_MAX_ENTRIES = 60;
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
@@ -84,16 +93,27 @@ self.addEventListener("fetch", (event) => {
 
   if (isNavigationRequest(request)) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
+      (async () => {
+        const networkPromise = fetch(request).then((response) => {
           const copy = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy).then(trimRuntimeCache));
           return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          return cached || caches.match(OFFLINE_URL);
-        })
+        });
+
+        const cached = await caches.match(request);
+
+        if (!cached) {
+          try {
+            return await networkPromise;
+          } catch {
+            return caches.match(OFFLINE_URL);
+          }
+        }
+
+        const timeout = new Promise((resolve) => setTimeout(() => resolve(null), NAVIGATION_TIMEOUT_MS));
+        const winner = await Promise.race([networkPromise.catch(() => null), timeout]);
+        return winner || cached;
+      })()
     );
     return;
   }

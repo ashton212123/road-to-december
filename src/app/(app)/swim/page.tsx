@@ -162,7 +162,7 @@ async function SwimContent({ view }: { view: SwimView }) {
               title="Recent sessions"
               className="mb-2"
               statusChip={
-                <Link href="/swim/sessions" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 whitespace-nowrap">
+                <Link href="/swim/sessions" className="rtd-tap-target text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 whitespace-nowrap">
                   See all sessions →
                 </Link>
               }

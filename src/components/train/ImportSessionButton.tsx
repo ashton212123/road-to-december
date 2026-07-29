@@ -140,8 +140,8 @@ export function ImportSessionButton({
           onClick={() => setOpen(true)}
           className={
             compact
-              ? "text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
-              : "text-footnote font-medium px-3 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+              ? "rtd-tap-target text-caption px-2.5 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
+              : "rtd-tap-target text-footnote font-medium px-3 py-1.5 rounded-full bg-white/[0.06] text-[var(--rtd-text-secondary)] cursor-pointer hover:brightness-110 active:scale-[0.98] transition-transform duration-150 ease-out"
           }
         >
           Import session
@@ -175,7 +175,7 @@ export function ImportSessionButton({
                   reset();
                 }}
                 aria-label="Close"
-                className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)] cursor-pointer hover:bg-white/10 hover:text-[var(--rtd-text)]"
+                className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)] cursor-pointer hover:bg-white/10 hover:text-[var(--rtd-text)]"
               >
                 ✕
               </button>
@@ -248,7 +248,7 @@ export function ImportSessionButton({
                     setOpen(false);
                     reset();
                   }}
-                  className="text-caption text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-text-secondary)]"
+                  className="rtd-tap-target text-caption text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-text-secondary)]"
                 >
                   Close
                 </button>
@@ -284,7 +284,7 @@ export function ImportSessionButton({
                         <button
                           type="button"
                           onClick={() => setGymRows((prev) => prev.map((p, idx) => (idx === i ? { ...p, discarded: !p.discarded } : p)))}
-                          className="text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] cursor-pointer shrink-0"
+                          className="rtd-tap-target text-caption px-2 py-1 rounded-full bg-white/[0.06] text-[var(--rtd-text-tertiary)] cursor-pointer shrink-0"
                         >
                           {row.discarded ? "Discarded" : "Discard"}
                         </button>

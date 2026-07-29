@@ -37,7 +37,7 @@ export function MoreMenuButton({ trainingStatus }: { trainingStatus: TrainingSta
         onClick={() => setOpen((v) => !v)}
         aria-label="More"
         aria-expanded={open}
-        className="w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.08] text-subhead cursor-pointer hover:brightness-110 active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+        className="rtd-tap-target w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.08] text-subhead cursor-pointer hover:brightness-110 active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
       >
         👤
       </button>
@@ -52,7 +52,7 @@ export function MoreMenuButton({ trainingStatus }: { trainingStatus: TrainingSta
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-subhead text-[var(--rtd-text)] cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-[background-color,transform] duration-150 ease-out"
+              className="rtd-tap-target flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-subhead text-[var(--rtd-text)] cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-[background-color,transform] duration-150 ease-out"
             >
               <span>{item.icon}</span>
               {item.label}

@@ -64,7 +64,7 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
   return (
     <div className="flex flex-col gap-4 pt-1">
       <div className="flex items-center justify-between gap-2">
-        <Link href="/swim/sessions" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110">
+        <Link href="/swim/sessions" className="rtd-tap-target text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110">
           ← All sessions
         </Link>
         {session.course && (

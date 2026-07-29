@@ -77,7 +77,7 @@ export function RestPill({
         // Left-aligned on mobile (not centered) so it never overlaps the
         // coach FAB parked at right-4 -- max-width leaves that corridor clear.
         "fixed z-40 left-4 right-auto translate-x-0 bottom-[calc(env(safe-area-inset-bottom)+84px)] max-w-[calc(100vw-96px)] md:left-6 md:bottom-6 md:max-w-none",
-        "flex items-center gap-2.5 rounded-full px-4 py-2.5 cursor-pointer active:scale-95 transition-transform duration-150 ease-out rtd-fade-in",
+        "rtd-tap-target flex items-center gap-2.5 rounded-full px-4 py-2.5 cursor-pointer active:scale-95 transition-transform duration-150 ease-out rtd-fade-in",
         isOver && "rtd-rest-pulse"
       )}
       style={{

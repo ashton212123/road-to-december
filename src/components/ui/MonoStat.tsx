@@ -11,7 +11,7 @@ const SIZE_CLASS = {
 // its own tighter tracking. Separate keys from sm/md/lg (not a redefinition
 // of them) so every existing non-Miles-OS caller is untouched.
 const MOS_SIZE_STYLE = {
-  small: { fontSize: "15px", fontWeight: 300, letterSpacing: "0" },
+  small: { fontSize: "var(--rtd-mos-fs-metric-sm)", fontWeight: 300, letterSpacing: "0" },
   large: { fontSize: "29px", fontWeight: 200, letterSpacing: "-.02em" },
 } as const;
 

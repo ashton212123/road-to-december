@@ -87,7 +87,11 @@
   --rtd-radius-button: 4px;
   --rtd-glass-bg-mobile: #101010;
   --rtd-glass-bg-desktop: #101010;
-  --rtd-border: rgba(255, 255, 255, 0.055);
+  /* Phone-first pass (WS3 phone-first §2): the spec's border opacities
+     (.055/.04/.05) are desktop-only -- verbatim at every width they made
+     panel edges disappear on a phone. Mobile floor here, desktop override
+     in the @media (min-width:1024px) block below. */
+  --rtd-border: rgba(255, 255, 255, 0.1);
 
   --rtd-mos-bg: #080808;
   --rtd-mos-bg-nav: #0b0b0b;
@@ -95,8 +99,8 @@
   --rtd-mos-panel-2: #141414;
   --rtd-mos-panel-3: #151515;
   --rtd-mos-chip: #1e1e1d;
-  --rtd-mos-border-row: rgba(255, 255, 255, 0.04);
-  --rtd-mos-border-field: rgba(255, 255, 255, 0.05);
+  --rtd-mos-border-row: rgba(255, 255, 255, 0.07);
+  --rtd-mos-border-field: rgba(255, 255, 255, 0.08);
   --rtd-mos-fg: #e6e6e2;
   --rtd-mos-fg-strong: #f2f2ee;
   --rtd-mos-fg-2: #c8c8c4;
@@ -111,6 +115,26 @@
   --rtd-mos-red-line: #e0655a;
   --rtd-mos-amber: #d9ab6b;
   --rtd-mos-blue: #8ec5f0;
+
+  /* Phone-first pass (WS3 phone-first §1): the spec's type scale (8-8.5px
+     labels, tight .11-.16em tracking) is a desktop dashboard recipe --
+     verbatim at every width it read as too small/low-contrast on a phone.
+     Mobile floor here; desktop override (the spec's exact values,
+     unchanged) lives in the @media (min-width:1024px) block below. Only
+     section/micro/meta get a loosened mobile tracking value -- tight
+     tracking at a 10px mobile size costs more legibility than it buys
+     aesthetically; row/body/metric-sm/chip keep whatever tracking their
+     component already used, unchanged at every width. */
+  --rtd-mos-fs-section: 10px;
+  --rtd-mos-fs-micro: 9.5px;
+  --rtd-mos-fs-meta: 10px;
+  --rtd-mos-fs-row: 13px;
+  --rtd-mos-fs-body: 13px;
+  --rtd-mos-fs-metric-sm: 15px;
+  --rtd-mos-fs-chip: 9.5px;
+  --rtd-mos-ls-section: 0.1em;
+  --rtd-mos-ls-micro: 0.1em;
+  --rtd-mos-ls-meta: 0.1em;
 
   /* Status chip pattern (bg / border / text) -- HOT/WARM/COOL, spec's own
      table, distinct from the COOL text color (#7fb4e0) vs the primary-action
@@ -655,6 +679,25 @@ body {
 }
 
 @media (min-width: 1024px) {
+  /* Phone-first pass (WS3 phone-first §1-2): desktop values are the Miles OS
+     spec, verbatim -- nothing about desktop changes from before this pass. */
+  :root {
+    --rtd-mos-fs-section: 8.5px;
+    --rtd-mos-fs-micro: 8px;
+    --rtd-mos-fs-meta: 8.5px;
+    --rtd-mos-fs-row: 11px;
+    --rtd-mos-fs-body: 10.5px;
+    --rtd-mos-fs-metric-sm: 13px;
+    --rtd-mos-fs-chip: 8px;
+    --rtd-mos-ls-section: 0.16em;
+    --rtd-mos-ls-micro: 0.15em;
+    --rtd-mos-ls-meta: 0.11em;
+
+    --rtd-border: rgba(255, 255, 255, 0.055);
+    --rtd-mos-border-row: rgba(255, 255, 255, 0.04);
+    --rtd-mos-border-field: rgba(255, 255, 255, 0.05);
+  }
+
   .rtd-mos-grid {
     display: grid;
     grid-template-columns: 262px minmax(0, 1fr) 262px;

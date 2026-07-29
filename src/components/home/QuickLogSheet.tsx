@@ -15,7 +15,7 @@ function RowButton({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out text-left"
+      className="rtd-tap-target flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out text-left"
     >
       <span className="text-subhead text-[var(--rtd-text)]">{label}</span>
       <span className="text-[var(--rtd-text-tertiary)]" aria-hidden="true">
@@ -77,7 +77,7 @@ export function QuickLogSheet({
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Quick log"
-        className="w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.08] text-body cursor-pointer hover:brightness-110 active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+        className="rtd-tap-target w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.08] text-body cursor-pointer hover:brightness-110 active:scale-95 transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
       >
         +
       </button>
@@ -102,7 +102,7 @@ export function QuickLogSheet({
                 type="button"
                 onClick={close}
                 aria-label="Close"
-                className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)] cursor-pointer hover:bg-white/10 hover:text-[var(--rtd-text)]"
+                className="rtd-tap-target w-7 h-7 flex items-center justify-center rounded-full text-[var(--rtd-text-tertiary)] cursor-pointer hover:bg-white/10 hover:text-[var(--rtd-text)]"
               >
                 ✕
               </button>
@@ -112,7 +112,7 @@ export function QuickLogSheet({
               type="button"
               onClick={logWater}
               disabled={waterPending}
-              className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out text-left"
+              className="rtd-tap-target flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out text-left"
             >
               <span className="text-subhead text-[var(--rtd-text)]">Water +500ml</span>
               <span className="text-[var(--rtd-green)]" style={{ opacity: waterLogged ? 1 : 0, transition: "opacity 150ms ease-out" }}>
@@ -131,7 +131,7 @@ export function QuickLogSheet({
             <Link
               href="/fuel#quick-log-mobile"
               onClick={close}
-              className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out"
+              className="rtd-tap-target flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors duration-150 ease-out"
             >
               <span className="text-subhead text-[var(--rtd-text)]">Log meal</span>
               <span className="text-[var(--rtd-text-tertiary)]" aria-hidden="true">

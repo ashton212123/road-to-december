@@ -269,7 +269,7 @@ export function SwimLogSheet({
             <button
               type="button"
               onClick={() => setManualOpen(true)}
-              className="text-caption text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-text-secondary)] self-start"
+              className="rtd-tap-target text-caption text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-text-secondary)] self-start"
             >
               Log without AI
             </button>
@@ -296,6 +296,7 @@ export function SwimLogSheet({
                   key={z}
                   type="button"
                   onClick={() => setExpandedZone((prev) => (prev === z ? null : z))}
+                  className="rtd-tap-target"
                   style={{
                     width: `${((zoneDistanceM[z] ?? 0) / Math.max(1, computedTotalDistanceM)) * 100}%`,
                     background: ZONES[z].color,
@@ -367,7 +368,7 @@ export function SwimLogSheet({
                   type="button"
                   onClick={() => setIntervals((prev) => prev.filter((_, idx) => idx !== i))}
                   aria-label="Remove interval"
-                  className="ml-auto text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-red)] shrink-0"
+                  className="rtd-tap-target ml-auto text-[var(--rtd-text-tertiary)] cursor-pointer hover:text-[var(--rtd-red)] shrink-0"
                 >
                   ✕
                 </button>
@@ -386,7 +387,7 @@ export function SwimLogSheet({
             <div className="flex flex-col gap-1.5">
               <div className="rtd-micro-label">Also log as a time</div>
               {notable.map((n, i) => (
-                <label key={i} className="flex items-center gap-2 text-caption text-[var(--rtd-text-secondary)] cursor-pointer">
+                <label key={i} className="rtd-tap-target flex items-center gap-2 text-caption text-[var(--rtd-text-secondary)] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={n.include}

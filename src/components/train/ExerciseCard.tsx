@@ -431,7 +431,7 @@ function SetRow({ set, phaseId, weightUnit, hasLoad }: { set: LoggedSet; phaseId
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="flex-1 text-left rounded-md cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+        className="rtd-tap-target flex-1 text-left rounded-md cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-transform duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
       >
         <span className="text-[var(--rtd-text-secondary)] rtd-mono">Set {set.setNumber}</span>{" "}
         <span className="text-[var(--rtd-text)] rtd-mono">

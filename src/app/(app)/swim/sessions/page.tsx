@@ -56,7 +56,7 @@ export default async function SwimSessionsPage({ searchParams }: { searchParams:
         title="All sessions"
         className="mb-2"
         statusChip={
-          <Link href="/swim" className="text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 whitespace-nowrap">
+          <Link href="/swim" className="rtd-tap-target text-caption text-[var(--rtd-cyan)] cursor-pointer hover:brightness-110 whitespace-nowrap">
             ← Back
           </Link>
         }
@@ -100,7 +100,7 @@ export default async function SwimSessionsPage({ searchParams }: { searchParams:
                   <Link
                     key={s.id}
                     href={`/swim/session/${s.id}`}
-                    className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
+                    className="rtd-tap-target flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0 -mx-1 px-1 rounded-[6px] cursor-pointer hover:bg-white/[0.03] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
                   >
                     <span className="text-footnote text-[var(--rtd-text)] shrink-0 rtd-mono">{shortDate(s.date)}</span>
                     <span className="flex items-center gap-2 min-w-0">

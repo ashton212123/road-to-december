@@ -41,7 +41,7 @@ export function NeedsAttentionList({ items, className }: { items: AttentionItem[
           <Link
             key={item.id}
             href={item.href}
-            className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0 rounded-lg px-1.5 -mx-1.5 cursor-pointer hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
+            className="rtd-tap-target flex items-center gap-2.5 py-2 first:pt-0 last:pb-0 rounded-lg px-1.5 -mx-1.5 cursor-pointer hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2 active:scale-[0.98] transition-transform duration-150 ease-out"
           >
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: DOMAIN_META[item.domain].color }} />
             <div className="flex-1 min-w-0">

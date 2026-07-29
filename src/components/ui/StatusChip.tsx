@@ -40,7 +40,7 @@ export function StatusChip({ label, tone = "neutral", pulse = false, className }
           className
         )}
         style={{
-          font: "500 8px/1.4 var(--rtd-font-mono)",
+          font: "500 var(--rtd-mos-fs-chip)/1.4 var(--rtd-font-mono)",
           letterSpacing: ".11em",
           padding: "2px 6px",
           borderRadius: "var(--rtd-radius-chip)",

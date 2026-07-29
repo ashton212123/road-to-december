@@ -11,8 +11,8 @@ export function MicroLabel({ children, className, style }: { children: ReactNode
     <span
       className={clsx("uppercase whitespace-nowrap", className)}
       style={{
-        font: "500 8px/1 var(--rtd-font-mono)",
-        letterSpacing: ".15em",
+        font: "500 var(--rtd-mos-fs-micro)/1 var(--rtd-font-mono)",
+        letterSpacing: "var(--rtd-mos-ls-micro)",
         color: "var(--rtd-mos-fg-dimmer)",
         ...style,
       }}

@@ -27,11 +27,11 @@ export function DataRow({
       className={clsx("flex items-center justify-between gap-3 py-1.5", className)}
       style={{ borderBottom: "1px solid var(--rtd-mos-border-row)" }}
     >
-      <span className="truncate min-w-0" style={{ font: "400 11px/1.3 var(--font-sans)", color: "var(--rtd-mos-fg-2)" }}>
+      <span className="truncate min-w-0" style={{ font: "400 var(--rtd-mos-fs-row)/1.3 var(--font-sans)", color: "var(--rtd-mos-fg-2)" }}>
         {label}
       </span>
       <span className="flex items-baseline gap-1.5 shrink-0">
-        <span className="rtd-mono font-semibold" style={{ fontSize: "11px", color: "var(--rtd-mos-fg)" }}>
+        <span className="rtd-mono font-semibold" style={{ fontSize: "var(--rtd-mos-fs-row)", color: "var(--rtd-mos-fg)" }}>
           {value}
         </span>
         {sub && <span className="text-caption text-[var(--rtd-text-tertiary)]">{sub}</span>}
