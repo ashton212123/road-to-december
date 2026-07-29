@@ -17,6 +17,17 @@ const jetbrainsMono = localFont({
   weight: "100 800",
 });
 
+// Miles OS accent face: greetings, name accents, weekday words -- everything
+// else stays JetBrains Mono. Self-hosted for the same build-reliability
+// reason as the other two faces above.
+const instrumentSerif = localFont({
+  src: "./fonts/InstrumentSerif-Italic.woff2",
+  display: "swap",
+  variable: "--font-instrument-serif",
+  style: "italic",
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Road to December",
   description: "Personal athlete command center — training, fuel and rules for the road to NCAA Dec 4.",
@@ -52,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`h-full antialiased ${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
       <body className="min-h-full flex flex-col rtd-app-bg">
         <div className="rtd-wallpaper" aria-hidden="true" />
         <ServiceWorkerRegister />

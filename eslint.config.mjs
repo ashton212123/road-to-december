@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // Agent worktrees/config live under .claude/ (untracked); their .next
     // build output must never be linted as project source.
     ".claude/**",
+    // Design reference assets (Miles OS spec/kit) + a throwaway static-file
+    // server for previewing them locally -- not application source.
+    "design/**",
   ]),
 ]);
 

@@ -70,6 +70,62 @@
   --rtd-ok: var(--rtd-green);
   --rtd-warn: var(--rtd-orange);
   --rtd-danger: var(--rtd-red);
+
+  /* Miles OS design system (Personal OS merge, ports design/MILES-OS-UI-SPEC.md
+     verbatim). Three named conflicts with Phase 9's terminal pass, resolved
+     in favor of the spec per that doc: panel radius 4px->6px, panel
+     background -> flat #101010 (was a translucent glass tint, mobile vs
+     desktop), border opacity .14->.055. All other Miles OS tokens below are
+     new additions (--rtd-mos-* prefix) rather than overwrites of the
+     existing domain-color system (--rtd-green/red/orange/blue etc still
+     drive the untouched parts of the app) -- StatusChip gains HOT/WARM/COOL
+     tones alongside its existing ok/warn/danger/live/neutral set rather than
+     replacing them; see StatusChip.tsx. */
+  --rtd-radius-card: 6px;
+  --rtd-radius-inset: 5px;
+  --rtd-radius-chip: 3px;
+  --rtd-radius-button: 4px;
+  --rtd-glass-bg-mobile: #101010;
+  --rtd-glass-bg-desktop: #101010;
+  --rtd-border: rgba(255, 255, 255, 0.055);
+
+  --rtd-mos-bg: #080808;
+  --rtd-mos-bg-nav: #0b0b0b;
+  --rtd-mos-panel: #101010;
+  --rtd-mos-panel-2: #141414;
+  --rtd-mos-panel-3: #151515;
+  --rtd-mos-chip: #1e1e1d;
+  --rtd-mos-border-row: rgba(255, 255, 255, 0.04);
+  --rtd-mos-border-field: rgba(255, 255, 255, 0.05);
+  --rtd-mos-fg: #e6e6e2;
+  --rtd-mos-fg-strong: #f2f2ee;
+  --rtd-mos-fg-2: #c8c8c4;
+  --rtd-mos-fg-3: #8a8a86;
+  --rtd-mos-fg-dim: #4e4e4c;
+  --rtd-mos-fg-dimmer: #3f3f3d;
+  --rtd-mos-rule: #333331;
+  --rtd-mos-green: #4fd18b;
+  --rtd-mos-green-line: #3ee0a4;
+  --rtd-mos-green-fill: rgba(45, 212, 168, 0.28);
+  --rtd-mos-red: #ff8578;
+  --rtd-mos-red-line: #e0655a;
+  --rtd-mos-amber: #d9ab6b;
+  --rtd-mos-blue: #8ec5f0;
+
+  /* Status chip pattern (bg / border / text) -- HOT/WARM/COOL, spec's own
+     table, distinct from the COOL text color (#7fb4e0) vs the primary-action
+     blue (--rtd-mos-blue, #8ec5f0). */
+  --rtd-mos-hot-bg: rgba(255, 107, 94, 0.09);
+  --rtd-mos-hot-border: rgba(255, 107, 94, 0.26);
+  --rtd-mos-hot-text: #ff8578;
+  --rtd-mos-warm-bg: rgba(212, 160, 95, 0.09);
+  --rtd-mos-warm-border: rgba(212, 160, 95, 0.26);
+  --rtd-mos-warm-text: #d9ab6b;
+  --rtd-mos-cool-bg: rgba(110, 168, 216, 0.09);
+  --rtd-mos-cool-border: rgba(110, 168, 216, 0.26);
+  --rtd-mos-cool-text: #7fb4e0;
+
+  --rtd-font-serif: var(--font-instrument-serif), Georgia, serif;
 }
 
 @theme inline {
@@ -435,6 +491,23 @@ body {
 
 .rtd-check-pop {
   animation: rtd-check-fill 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Miles OS LiveDot -- exact spec timing (msPulse, 2.6s ease-in-out infinite,
+   opacity 1 -> .35 -> 1). Reduced motion is handled by the blanket
+   `* { animation-duration: 0.01ms }` override further down this file. */
+@keyframes rtd-mos-live-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.rtd-mos-live-dot {
+  animation: rtd-mos-live-dot-pulse 2.6s ease-in-out infinite;
 }
 
 /* Staggered entrance for card lists — each direct child fades/slides in
