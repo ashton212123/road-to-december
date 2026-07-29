@@ -1,0 +1,197 @@
+import { Suspense } from "react";
+import { AlertCardList } from "@/components/rules/AlertCardList";
+import { NeedsAttentionList } from "@/components/home/NeedsAttentionList";
+import { QuickLogSheet } from "@/components/home/QuickLogSheet";
+import { MoreMenuButton } from "@/components/home/MoreMenuButton";
+import { HomeHeroBand } from "@/components/home/HomeHeroBand";
+import { HomeDoorwayDials } from "@/components/home/HomeDoorwayDials";
+import { MonthCalendarCard } from "@/components/home/MonthCalendarCard";
+import { FuelRingCard } from "@/components/home/FuelRingCard";
+import { TodaysPlanCard } from "@/components/home/TodaysPlanCard";
+import { CoachBriefCard } from "@/components/home/CoachBriefCard";
+import { WeekMapCard } from "@/components/home/WeekMapCard";
+import { TrainingLoadCard } from "@/components/home/TrainingLoadCard";
+import { RecentPRsCard } from "@/components/home/RecentPRsCard";
+import { HabitsCard } from "@/components/home/HabitsCard";
+import { GoalsCard } from "@/components/home/GoalsCard";
+import { CalendarStripCard } from "@/components/home/CalendarStripCard";
+import { OperatorCard } from "@/components/home/OperatorCard";
+import { KeyTasksCard } from "@/components/home/KeyTasksCard";
+import { StatCard } from "@/components/ui/StatCard";
+import { seasonData } from "@/lib/data/season-data";
+import { greetingForHour } from "@/lib/time";
+import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
+import { getDailyBrief } from "@/lib/coach/dailyBrief";
+import { getHomeViewModel } from "./data";
+import { CoachBriefSkeleton } from "./HomeSkeletons";
+
+export async function HeaderActions({ today }: { today: string }) {
+  const vm = await getHomeViewModel(today);
+  return (
+    <div className="flex items-center gap-2 ml-auto">
+      <QuickLogSheet
+        lastNightSleep={vm.recentSleepLogs[0] ? { hours: Number(vm.recentSleepLogs[0].hours), bedtime: vm.recentSleepLogs[0].bedtime } : null}
+        lastWeighInKg={vm.latestWeighIn ? Number(vm.latestWeighIn.kg) : null}
+        phaseId={vm.todaySession ? vm.currentPhase.id : null}
+        todayExercises={vm.todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
+      />
+      <div className="md:hidden">
+        <MoreMenuButton trainingStatus={vm.settingsRow.trainingStatus} />
+      </div>
+    </div>
+  );
+}
+
+async function CoachBriefSection({ today }: { today: string }) {
+  const vm = await getHomeViewModel(today);
+  const dailyBrief = await withFallback(
+    withRetry(
+      () =>
+        getDailyBrief({
+          today,
+          athleteWeightKg: vm.latestWeighIn ? Number(vm.latestWeighIn.kg) : null,
+          weightTrendKg: vm.weightTrend,
+          kcalToday: vm.kcalToday,
+          kcalTargetMin: vm.energyTarget.low,
+          kcalTargetMax: vm.energyTarget.high,
+          proteinToday: vm.proteinToday,
+          proteinTargetMin: vm.proteinTarget.min,
+          consistencyPct: vm.consistency.pct,
+          todaySessionTitle: vm.todaySession?.title ?? null,
+          todaySwim: vm.weekDay.swim ?? null,
+          daysToNcaa: vm.daysToNcaa,
+          daysToAsean: vm.settingsRow.aseanConfirmed === false ? null : vm.daysToAsean,
+          trainingStatus: vm.settingsRow.trainingStatus,
+          trainingStatusSince: vm.settingsRow.trainingStatusSince,
+          phaseTag: vm.currentPhase.tag,
+          phaseName: vm.currentPhase.name,
+          loggedWorkoutToday: vm.loggedWorkoutToday,
+          loggedSwimToday: vm.loggedSwimToday,
+          recentSessionTypes: vm.recentSessionTypes,
+          activeAlertHeadlines: vm.alerts.map((a) => a.title),
+        }),
+      { label: "Home daily brief" }
+    ),
+    null
+  );
+
+  return <CoachBriefCard brief={dailyBrief} bullets={vm.coachBriefBullets} followUps={vm.followUps} />;
+}
+
+export async function HomeMainContent({ today }: { today: string }) {
+  const vm = await getHomeViewModel(today);
+
+  return (
+    <>
+      <AlertCardList alerts={vm.alerts} />
+
+      <HomeHeroBand
+        daysToNcaa={vm.daysToNcaa}
+        daysToAsean={vm.daysToAsean}
+        aseanLabel={vm.aseanLabel}
+        aseanDateLabel={vm.aseanDateLabel}
+        aseanConfirmed={vm.settingsRow.aseanConfirmed}
+        seasonPct={vm.seasonPct}
+        phaseTag={vm.currentPhase.tag}
+        phaseName={vm.currentPhase.name}
+        phaseWeek={vm.phaseWeek}
+        readinessOverall={vm.readinessOverall}
+        readinessSignals={vm.readinessSignals}
+        actionLine={vm.readinessActionLineText}
+      />
+      <HomeDoorwayDials
+        readinessOverall={vm.readinessOverall}
+        greenSignalCount={vm.readinessSignals.filter((s) => s.light === "green").length}
+        totalSignalCount={vm.readinessSignals.length}
+        kcalToday={vm.kcalToday}
+        kcalTargetMid={vm.energyTarget.kcal}
+        consistencyPct={vm.consistency.pct}
+      />
+
+      {/* Miles OS Home grid (Personal OS merge, WS3/3d-7): the spec's
+          7-panel mapping -- left rail Operator(01)/Training Load(07,
+          repurposed from Finance Pulse)/Needs Attention(08, repurposed from
+          Key Blockers); center Session(02)/Habits(03)/Calendar(04); right
+          rail Nutrition(06) -- plus the retained extras (Goals, Key Tasks,
+          Coach Brief, Month Calendar, Week Map, Recent PRs, bodyweight stat)
+          folded into whichever column has room, replacing the old 12-col
+          .rtd-home-grid entirely (WS3 section 7). Finance itself (KPI row,
+          buckets, snapshot table) stays out of scope per the task brief. */}
+      <div className="rtd-mos-grid">
+        <div className="rtd-mos-col">
+          <OperatorCard
+            role={seasonData.meta.athlete}
+            daysToDecember={vm.daysToNcaa}
+            todaysFocus={vm.todaysFocus}
+            consistencyPct={vm.consistency.pct}
+            consistencyDone={vm.consistency.done}
+            consistencyPlanned={vm.consistency.planned}
+          />
+          <TrainingLoadCard thisWeekDaily={vm.thisWeekDaily} lastWeekDaily={vm.lastWeekDaily} takeaway={vm.trainingLoadTakeaway} />
+          <NeedsAttentionList items={vm.needsAttention} />
+          <GoalsCard data={vm.goalsData} />
+        </div>
+
+        <div className="rtd-mos-col">
+          <TodaysPlanCard
+            rows={vm.planRows}
+            startHref={vm.startHref}
+            tomorrow={vm.tomorrowPreview}
+            phaseId={vm.todaySession ? vm.currentPhase.id : null}
+            todayExercises={vm.todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
+            greeting={greetingForHour(vm.hour)}
+          />
+          <HabitsCard habits={vm.habitsData.habits} dots={vm.habitStreakDots} today={today} />
+          <CalendarStripCard days={vm.calendarStripDays} today={today} />
+          <Suspense fallback={<CoachBriefSkeleton />}>
+            <CoachBriefSection today={today} />
+          </Suspense>
+          <MonthCalendarCard
+            today={today}
+            gymDates={vm.recentWorkoutLogs.map((l) => l.date)}
+            swimDates={vm.recentSwimSessions.map((s) => s.date)}
+            className="hidden md:flex"
+          />
+        </div>
+
+        <div className="rtd-mos-col">
+          <FuelRingCard
+            kcalToday={vm.kcalToday}
+            kcalTargetMid={vm.energyTarget.kcal}
+            proteinToday={vm.proteinToday}
+            proteinTargetG={vm.proteinTarget.mid}
+            carbsToday={vm.carbsToday}
+            carbsTargetG={vm.carbsFatTarget.carbsG}
+            fatToday={vm.fatToday}
+            fatTargetG={vm.carbsFatTarget.fatG}
+            waterMl={vm.waterToday}
+            waterTargetMl={vm.settingsRow.waterTargetMl}
+          />
+          <KeyTasksCard tasks={vm.keyTasks} />
+
+          <details className="lg:contents">
+            <summary className="rtd-glass lg:hidden cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-[10px] px-3.5 py-2.5 flex items-center justify-between text-subhead font-medium text-[var(--rtd-text-secondary)]">
+              More today
+              <span aria-hidden="true" className="rtd-more-today-chevron">⌄</span>
+            </summary>
+            <div className="flex flex-col gap-2.5 mt-2.5 lg:contents">
+              <WeekMapCard days={vm.weekMap.days} rows={vm.weekMap.rows} />
+              <RecentPRsCard prs={vm.recentPRs} />
+              <StatCard
+                label="Bodyweight (7d)"
+                numericValue={vm.latestWeighIn ? Number(vm.latestWeighIn.kg) : 0}
+                decimals={1}
+                suffix=" kg"
+                domainColor="var(--rtd-cyan)"
+                deltaPct={vm.weightTrendPct}
+                goodDirection="up"
+                sparklinePoints={vm.weightSeries.slice(-14).map((w) => Number(w.kg))}
+              />
+            </div>
+          </details>
+        </div>
+      </div>
+    </>
+  );
+}

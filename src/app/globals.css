@@ -634,38 +634,6 @@ body {
   }
 }
 
-/* Home's single-render grid: every module renders exactly once and is
-   reordered per breakpoint via order-N/md:order-N utility classes on the
-   children, instead of the old approach of rendering two separate DOM
-   copies (a 12-col desktop grid + a mobile stack) and hiding one with CSS.
-   Kept separate from .rtd-bento-grid (which every OTHER page still uses
-   unchanged) because this one needs a real mobile layout, not display:none. */
-.rtd-home-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-@media (min-width: 768px) {
-  .rtd-home-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 16px;
-    grid-auto-rows: minmax(96px, auto);
-  }
-}
-
-/* Home's mobile-only "More today" disclosure -- native <details>/<summary>,
-   default marker removed cross-browser (iOS Safari needs the -webkit- form
-   explicitly, list-style:none alone doesn't reach it there), chevron flips
-   on open instead. */
-.rtd-home-grid summary {
-  list-style: none;
-}
-.rtd-home-grid summary::-webkit-details-marker {
-  display: none;
-}
-
 /* Miles OS Home grid (3d rebuild): mobile-first per standing preference --
    the spec's 262px minmax(0,1fr) 262px 3-column layout only applies at
    desktop widths; a phone stacks all three columns' panels in one flow in
@@ -699,6 +667,35 @@ body {
 }
 details[open] > summary .rtd-more-today-chevron {
   transform: rotate(180deg);
+}
+
+/* Home streaming skeletons (WS3 section 6): panel background, 6px radius, a
+   pulse toward --rtd-mos-panel-2 -- a breathing opacity fade, not a shimmer
+   sweep. Reduced-motion gets the blanket global override elsewhere in this
+   file, nothing extra needed here. */
+.rtd-mos-skeleton {
+  background: var(--rtd-mos-panel);
+  border: 1px solid var(--rtd-border);
+  border-radius: var(--rtd-radius-card);
+  position: relative;
+  overflow: hidden;
+}
+.rtd-mos-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--rtd-mos-panel-2);
+  opacity: 0;
+  animation: rtd-mos-skeleton-pulse 1.6s ease-in-out infinite;
+}
+@keyframes rtd-mos-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .rtd-bento-card {
