@@ -87,7 +87,7 @@ async function AnalyticsContent({
   const today = todayManilaISO();
   const since = addDaysISO(today, -180);
 
-  const raw = await withRetry(() => getCachedAnalyticsPageData(since), { timeoutMs: 15000 });
+  const raw = await withRetry(() => getCachedAnalyticsPageData(since), { timeoutMs: 15000, label: "Analytics page data" });
   const mainLiftLogs = raw.mainLiftLogs;
   const weighIns = raw.weighIns;
   const cmjTests = raw.cmjTests;
@@ -147,7 +147,7 @@ async function AnalyticsContent({
 
   const e1rmByLiftObj = Object.fromEntries(e1rmByLift);
   const takeaways = {
-    strength: await withRetry(() => getCachedStrengthTakeaway(today, e1rmByLiftObj)),
+    strength: await withRetry(() => getCachedStrengthTakeaway(today, e1rmByLiftObj), { label: "Analytics strength takeaway" }),
     load: loadTakeaway(acwr),
     power: powerTakeaway(cmjSeries, broadJumpSeries),
     bodyweight: bodyweightTakeaway(rollingAvg),

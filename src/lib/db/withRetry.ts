@@ -5,11 +5,12 @@
 // "page takes an extra second" by bounding each attempt and retrying.
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  opts: { attempts?: number; timeoutMs?: number; backoffMs?: number } = {}
+  opts: { attempts?: number; timeoutMs?: number; backoffMs?: number; label?: string } = {}
 ): Promise<T> {
   const attempts = opts.attempts ?? 3;
   const timeoutMs = opts.timeoutMs ?? 8000;
   const backoffMs = opts.backoffMs ?? 400;
+  const label = opts.label ?? "DB call";
 
   let lastError: unknown;
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -17,7 +18,7 @@ export async function withRetry<T>(
       return await Promise.race([
         fn(),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`DB call timed out after ${timeoutMs}ms`)), timeoutMs)
+          setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs)
         ),
       ]);
     } catch (err) {

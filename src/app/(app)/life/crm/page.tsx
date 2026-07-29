@@ -8,8 +8,8 @@ export default async function CrmPage() {
   // Runs on every page load per spec §3a -- cheap (two batched upserts, see
   // mirror.ts) and keeps business/canvas-sourced tasks fresh without a
   // separate background job.
-  await withRetry(() => syncCrmMirror());
-  const data = await withRetry(() => getCrmData());
+  await withRetry(() => syncCrmMirror(), { label: "CRM mirror sync" });
+  const data = await withRetry(() => getCrmData(), { label: "CRM data" });
 
   return (
     <div className="md:max-w-4xl md:mx-auto">

@@ -18,15 +18,17 @@ const LIGHT_COLOR: Record<ReadinessLight, string> = {
 export default async function RecoveryPage() {
   const today = todayManilaISO();
   const weekStart = mondayOf(today);
-  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs, swimSessions, sessionLoads] = await withRetry(() =>
-    Promise.all([
-      getSleepLogs(14),
-      getSorenessLogs(10),
-      getCmjTests(30),
-      getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)),
-      getSwimSessions(60),
-      getSessionLoadsSince(addDaysISO(today, -35)),
-    ])
+  const [sleepLogs, sorenessLogs, cmjTests, mainLiftLogs, swimSessions, sessionLoads] = await withRetry(
+    () =>
+      Promise.all([
+        getSleepLogs(14),
+        getSorenessLogs(10),
+        getCmjTests(30),
+        getWorkoutLogsWithExerciseSince(addDaysISO(today, -35)),
+        getSwimSessions(60),
+        getSessionLoadsSince(addDaysISO(today, -35)),
+      ]),
+    { label: "Recovery page data" }
   );
 
   const lastSleep = sleepLogs[0] ? Number(sleepLogs[0].hours) : null;

@@ -15,7 +15,7 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
   const track = findTrack(trackId);
   if (!track) notFound();
 
-  const progress = await withRetry(() => getCachedProgress());
+  const progress = await withRetry(() => getCachedProgress(), { label: "Learn progress" });
   const done = new Set(progress.filter((p) => p.trackId === trackId).map((p) => p.levelKey));
   const upNextKey = track.levels.find((l) => !done.has(l.key))?.key;
 

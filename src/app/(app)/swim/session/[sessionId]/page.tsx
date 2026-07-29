@@ -29,10 +29,10 @@ export default async function SwimSessionDetailPage({ params }: { params: Promis
   const id = Number(sessionId);
   if (!Number.isFinite(id)) notFound();
 
-  const session = await withRetry(() => getSwimSessionById(id));
+  const session = await withRetry(() => getSwimSessionById(id), { label: "Swim session detail" });
   if (!session) notFound();
 
-  const context = await withRetry(() => getSwimSessionsNear(session.date, session.id));
+  const context = await withRetry(() => getSwimSessionsNear(session.date, session.id), { label: "Swim session neighbors" });
 
   const zoneDistance = (session.zoneDistanceM ?? {}) as ZoneDistance;
   const strokeDistance = session.strokeDistanceM ?? {};

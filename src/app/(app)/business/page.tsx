@@ -9,8 +9,9 @@ import { computeProfit, formatPhp } from "@/lib/business/profit";
 import { withRetry } from "@/lib/db/withRetry";
 
 export default async function BusinessPage() {
-  const [allBusinesses, allTransactions] = await withRetry(() =>
-    Promise.all([getBusinesses(), getAllBusinessTransactions()])
+  const [allBusinesses, allTransactions] = await withRetry(
+    () => Promise.all([getBusinesses(), getAllBusinessTransactions()]),
+    { label: "Business list data" }
   );
 
   const byBusiness = new Map<number, typeof allTransactions>();

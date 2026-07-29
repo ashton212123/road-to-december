@@ -11,7 +11,7 @@ import { withRetry } from "@/lib/db/withRetry";
 
 export default async function TrainPage() {
   const today = todayManilaISO();
-  const allPhases = await withRetry(() => getAllPhasesWithSessions());
+  const allPhases = await withRetry(() => getAllPhasesWithSessions(), { label: "Train phases list" });
   const currentPhase = getCurrentPhase(allPhases, today);
 
   return (

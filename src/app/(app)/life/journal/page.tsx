@@ -4,7 +4,7 @@ import { getJournalEntries } from "@/lib/journal/queries";
 import { withRetry } from "@/lib/db/withRetry";
 
 export default async function JournalPage() {
-  const entries = await withRetry(() => getJournalEntries());
+  const entries = await withRetry(() => getJournalEntries(), { label: "Journal entries" });
 
   return (
     <div className="flex flex-col gap-3 pt-1 md:max-w-2xl md:mx-auto">

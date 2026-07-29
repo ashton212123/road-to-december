@@ -75,7 +75,7 @@ const handler = createMcpHandler(
     const registerTool = server.registerTool.bind(server);
     server.registerTool = ((name: string, meta: unknown, tool: (...args: unknown[]) => Promise<unknown>) =>
       registerTool(name, meta as never, ((...args: unknown[]) =>
-        withRetry(() => tool(...args))) as never)) as typeof server.registerTool;
+        withRetry(() => tool(...args), { label: `MCP tool ${name}` })) as never)) as typeof server.registerTool;
 
     server.registerTool(
       "get_dashboard_summary",

@@ -197,7 +197,7 @@ export default async function HomePage() {
     habitsData,
     goalsData,
     keyTasks,
-  } = await withRetry(() => getCachedHomeData(today), { timeoutMs: 15000 });
+  } = await withRetry(() => getCachedHomeData(today), { timeoutMs: 15000, label: "Home dashboard data" });
 
   const habitStreakDots = buildHabitStreakDots(habitsData.dailyCompletion, habitsData.habits.length, today);
 
@@ -355,7 +355,7 @@ export default async function HomePage() {
         loggedSwimToday,
         recentSessionTypes,
         activeAlertHeadlines: alerts.map((a) => a.title),
-      })
+      }), { label: "Home daily brief" }
     ),
     null
   );

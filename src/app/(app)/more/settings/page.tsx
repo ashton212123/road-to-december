@@ -11,9 +11,9 @@ import { getAllHabitsForEditor } from "@/lib/habits/queries";
 
 export default async function SettingsPage() {
   const [settingsRow, athleteModel, allHabits] = await Promise.all([
-    withRetry(() => getSettingsRow()),
+    withRetry(() => getSettingsRow(), { label: "Settings row" }),
     getAthleteModel(),
-    withRetry(() => getAllHabitsForEditor()),
+    withRetry(() => getAllHabitsForEditor(), { label: "Habits editor list" }),
   ]);
 
   return (

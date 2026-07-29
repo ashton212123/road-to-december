@@ -28,7 +28,7 @@ export default async function SwimSessionsPage({ searchParams }: { searchParams:
 
   const today = todayManilaISO();
   const since = addDaysISO(today, -7 * WEEKS_CAP);
-  const rows = await withRetry(() => getSwimSessionsSince(since));
+  const rows = await withRetry(() => getSwimSessionsSince(since), { label: "Swim sessions list" });
 
   // sessionType is already the server-computed classification from save
   // time; older rows that predate it fall back to a live recompute so

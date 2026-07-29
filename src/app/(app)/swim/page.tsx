@@ -82,7 +82,7 @@ export default async function SwimPage({ searchParams }: { searchParams: Promise
 
 async function SwimContent({ view }: { view: SwimView }) {
   const today = todayManilaISO();
-  const raw = await withRetry(() => getCachedData(addDaysISO(today, -180)), { timeoutMs: 15000 });
+  const raw = await withRetry(() => getCachedData(addDaysISO(today, -180)), { timeoutMs: 15000, label: "Swim page data" });
   const vm = buildSwimViewModel(raw, today);
   const monthStartISO = `${today.slice(0, 7)}-01`;
 

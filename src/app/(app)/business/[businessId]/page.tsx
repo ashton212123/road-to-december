@@ -15,15 +15,17 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
   const businessId = Number(businessIdParam);
   if (!Number.isInteger(businessId)) notFound();
 
-  const business = await withRetry(() => getBusinessById(businessId));
+  const business = await withRetry(() => getBusinessById(businessId), { label: "Business detail" });
   if (!business) notFound();
 
-  const [transactions, tasks, notes] = await withRetry(() =>
-    Promise.all([
-      getBusinessTransactions(businessId),
-      getBusinessTasks(businessId),
-      getBusinessNotes(businessId),
-    ])
+  const [transactions, tasks, notes] = await withRetry(
+    () =>
+      Promise.all([
+        getBusinessTransactions(businessId),
+        getBusinessTasks(businessId),
+        getBusinessNotes(businessId),
+      ]),
+    { label: "Business transactions/tasks/notes" }
   );
 
   const profit = computeProfit(transactions);

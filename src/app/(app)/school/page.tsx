@@ -7,7 +7,7 @@ import { getCanvasSummary } from "@/lib/canvas/sync";
 import { withRetry } from "@/lib/db/withRetry";
 
 export default async function SchoolPage() {
-  const { configured, courses, assignments, syncedAt, error } = await withRetry(() => getCanvasSummary());
+  const { configured, courses, assignments, syncedAt, error } = await withRetry(() => getCanvasSummary(), { label: "Canvas summary" });
 
   if (!configured) {
     return (

@@ -19,7 +19,7 @@ function buildQuickPrompts(ctx: Awaited<ReturnType<typeof getCoachAppContext>>):
 
 export default async function CoachAiPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const [[initialMessages, appContext], { q }] = await Promise.all([
-    withRetry(() => Promise.all([getRecentCoachMessages(20), getCoachAppContext()])),
+    withRetry(() => Promise.all([getRecentCoachMessages(20), getCoachAppContext()]), { label: "Coach AI messages/context" }),
     searchParams,
   ]);
 

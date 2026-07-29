@@ -39,15 +39,16 @@ export default async function PhaseSessionPage({
   const { phaseId } = await params;
   const { day } = await searchParams;
 
-  const phase = await withRetry(() => getPhaseById(phaseId));
+  const phase = await withRetry(() => getPhaseById(phaseId), { label: "Train phase detail" });
   if (!phase) notFound();
 
   const today = todayManilaISO();
   const phaseWeek = computePhaseWeek(phase, today);
 
   if (phase.isRaceBlock) {
-    const [settingsRow, allMeets, swimSessions] = await withRetry(() =>
-      Promise.all([getSettingsRow(), getAllMeetsWithEvents(), getSwimSessions(60)])
+    const [settingsRow, allMeets, swimSessions] = await withRetry(
+      () => Promise.all([getSettingsRow(), getAllMeetsWithEvents(), getSwimSessions(60)]),
+      { label: "Train race-block context" }
     );
     const condition = settingsRow.aseanConfirmed === true ? "asean_confirmed" : settingsRow.aseanConfirmed === false ? "asean_cancelled" : null;
     const blocks = (phase.blocks ?? []).filter(
@@ -97,14 +98,16 @@ export default async function PhaseSessionPage({
   // Three queries total for the whole session, not two per exercise, plus
   // one more for the week-dots widget and one for the unit preference --
   // still one batched round trip.
-  const [{ todaysByExercise, lastSessionByExercise }, weekLogs, settingsRow] = await withRetry(() =>
-    Promise.all([
-      session
-        ? getSessionWorkoutData(session.exercises.map((e) => e.id), today)
-        : Promise.resolve({ todaysByExercise: new Map<number, WorkoutLogRow[]>(), lastSessionByExercise: new Map<number, WorkoutLogRow[]>() }),
-      getWorkoutLogsSince(weekStart),
-      getSettingsRow(),
-    ])
+  const [{ todaysByExercise, lastSessionByExercise }, weekLogs, settingsRow] = await withRetry(
+    () =>
+      Promise.all([
+        session
+          ? getSessionWorkoutData(session.exercises.map((e) => e.id), today)
+          : Promise.resolve({ todaysByExercise: new Map<number, WorkoutLogRow[]>(), lastSessionByExercise: new Map<number, WorkoutLogRow[]>() }),
+        getWorkoutLogsSince(weekStart),
+        getSettingsRow(),
+      ]),
+    { label: "Train session workout data" }
   );
   const weightUnit = settingsRow.weightUnit as "kg" | "lb";
   const loggedDatesThisWeek = new Set(weekLogs.map((l) => l.date));

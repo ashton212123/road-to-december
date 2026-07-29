@@ -8,7 +8,7 @@ import { withRetry } from "@/lib/db/withRetry";
 const getCachedProgress = unstable_cache(getLearnProgress, ["learn-progress"], { tags: ["learn-data"] });
 
 export default async function LearnPage() {
-  const progress = await withRetry(() => getCachedProgress());
+  const progress = await withRetry(() => getCachedProgress(), { label: "Learn progress" });
   const doneByTrack = new Map<string, Set<string>>();
   for (const row of progress) {
     if (!doneByTrack.has(row.trackId)) doneByTrack.set(row.trackId, new Set());

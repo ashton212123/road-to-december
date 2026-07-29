@@ -68,7 +68,7 @@ export default async function FuelPage({
       getFoodLogsSince(addDaysISO(today, -13)), // 14-day window: feeds computeEnergyTarget's weight-response average
       getRecentFoodChips(addDaysISO(today, -14)),
       getAllMeetsWithEvents(),
-    ])
+    ]), { label: "Fuel page data" }
   );
 
   const currentPhase = getCurrentPhase(allPhases, today);
