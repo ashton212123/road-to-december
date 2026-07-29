@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Button } from "@/components/ui/Button";
@@ -106,6 +106,21 @@ export function ExerciseCard({
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
 
+  // One-shot pop the instant this card crosses into complete -- never on
+  // mount (the ref starts at the current value, so an already-done exercise
+  // never sees a false->true transition) and never on uncomplete/undo.
+  const wasCompletedRef = useRef(completed);
+  const [justCompleted, setJustCompleted] = useState(false);
+  useEffect(() => {
+    if (!wasCompletedRef.current && completed) {
+      setJustCompleted(true);
+      const t = setTimeout(() => setJustCompleted(false), 300);
+      wasCompletedRef.current = completed;
+      return () => clearTimeout(t);
+    }
+    wasCompletedRef.current = completed;
+  }, [completed]);
+
   const transfer = classifyTransfer(exercise.name, exercise.movementPattern, exercise.isExplosive);
 
   const isActiveRestHere = activeRest?.exerciseId === exercise.id;
@@ -184,7 +199,11 @@ export function ExerciseCard({
             transition: "background-color 150ms ease-out, transform 150ms ease-out",
           }}
         >
-          {completed && <IconCheck size={15} />}
+          {completed && (
+            <span className={justCompleted ? "rtd-check-pop" : undefined}>
+              <IconCheck size={15} />
+            </span>
+          )}
         </button>
 
         <button
@@ -229,6 +248,18 @@ export function ExerciseCard({
       {completed && !expanded && (
         <div className="text-footnote text-[var(--rtd-green)]">
           {todaysSets.length > 0 ? `${todaysSets.length} set${todaysSets.length === 1 ? "" : "s"} logged` : "Done"} — tap to edit details
+        </div>
+      )}
+
+      {/* Partial progress must never read as a plain unchecked box -- an
+          in-progress exercise shows exactly how many of the prescribed sets
+          are done so it's obvious why the checkbox isn't filled yet. */}
+      {!completed && !expanded && targetSets !== null && todaysSets.length > 0 && (
+        <div className="text-footnote text-[var(--rtd-text-secondary)]">
+          <span className="rtd-mono">
+            {todaysSets.length}/{targetSets}
+          </span>{" "}
+          sets — tap to continue
         </div>
       )}
 

@@ -34,7 +34,16 @@ export function WorkoutSession({
   exercises: SessionExerciseEntry[];
   weightUnit: "kg" | "lb";
 }) {
-  const initialCompleted = new Map(exercises.map((e) => [e.exercise.id, e.todaysSets.length > 0]));
+  // An exercise is complete once every prescribed set is logged, not after
+  // just one -- targetSets is null for a handful of legacy/unprescribed
+  // exercises, where the old ">0 sets logged" behavior is the only sane
+  // fallback (there's no target to compare against).
+  const initialCompleted = new Map(
+    exercises.map((e) => [
+      e.exercise.id,
+      e.exercise.targetSets != null ? e.todaysSets.length >= e.exercise.targetSets : e.todaysSets.length > 0,
+    ])
+  );
   const [optimisticCompleted, setOptimisticCompleted] = useOptimistic(
     initialCompleted,
     (state, update: { id: number; value: boolean }) => {

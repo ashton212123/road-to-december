@@ -414,6 +414,29 @@ body {
   }
 }
 
+/* Exercise checkbox: one-shot fill+pop the instant an exercise crosses into
+   complete. WorkoutSession only applies this class on the false->true
+   transition (never on mount, never on uncomplete), so no JS gating is
+   needed here beyond the blanket prefers-reduced-motion override below. */
+@keyframes rtd-check-fill {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.rtd-check-pop {
+  animation: rtd-check-fill 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Staggered entrance for card lists — each direct child fades/slides in
    30ms after the previous one. Items past the 12th share the last delay. */
 .rtd-stagger > * {
