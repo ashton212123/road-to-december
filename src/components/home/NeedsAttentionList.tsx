@@ -26,7 +26,7 @@ export function NeedsAttentionList({ items, className }: { items: AttentionItem[
   const domainsPresent = [...new Set(sorted.map((i) => i.domain))];
 
   return (
-    <TerminalPanel variant="open" label="09 // ATTENTION" className={className}>
+    <TerminalPanel variant="open" label="NEEDS ATTENTION" number="08" className={className}>
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {domainsPresent.map((d) => (
           <div key={d} className="flex items-center gap-1.5 text-caption text-[var(--rtd-text-secondary)]">

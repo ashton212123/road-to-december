@@ -38,6 +38,14 @@ export function manilaHourNow(): number {
   return hour ? Number(hour) : new Date().getHours();
 }
 
+/** Miles OS Session panel greeting -- "Good morning/afternoon/evening". */
+export function greetingForHour(hour: number): string {
+  if (hour < 5) return "Good evening";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export function addDaysISO(isoDate: string, days: number): string {
   const d = new Date(`${isoDate}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);

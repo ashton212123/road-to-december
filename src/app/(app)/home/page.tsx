@@ -19,7 +19,7 @@ import { OperatorCard } from "@/components/home/OperatorCard";
 import { KeyTasksCard } from "@/components/home/KeyTasksCard";
 import { StatCard } from "@/components/ui/StatCard";
 import { seasonData } from "@/lib/data/season-data";
-import { todayManilaISO, todayDayKey, dayKeyForDate, daysBetween, addDaysISO, manilaHourNow, mondayOf } from "@/lib/time";
+import { todayManilaISO, todayDayKey, dayKeyForDate, daysBetween, addDaysISO, manilaHourNow, mondayOf, greetingForHour } from "@/lib/time";
 import {
   getAllPhasesWithSessionsUncached,
   getCurrentPhase,
@@ -542,82 +542,88 @@ export default async function HomePage() {
 
       <AlertCardList alerts={alerts} />
 
-      {/* Phase 8 (§8b): Home is the 9 numbered operator sections, in this
-          exact order on mobile (single column) and flowing 3-per-row on
-          desktop (each section colSpan={4} of the 12-col grid, Operator
-          alone spanning all 12) -- no per-section order-N classes needed
-          since JSX order already matches both breakpoints' required order.
-          The pre-Phase-8 dashboard modules that aren't part of the 9
-          (readiness header, doorway dials, AI daily brief, week map, recent
-          PRs, month calendar) are kept, not deleted -- placed around the 9
-          rather than folded into them, per an explicit product decision
-          logged in PERSONAL_OS_LOG.md rather than silently cut to match the
-          spec table literally. */}
-      <div className="rtd-home-grid">
-        <OperatorCard
-          role={seasonData.meta.athlete}
-          daysToDecember={daysToNcaa}
-          todaysFocus={todaysFocus}
-          consistencyPct={consistency.pct}
-          consistencyDone={consistency.done}
-          consistencyPlanned={consistency.planned}
-          className="col-span-full"
-        />
-        <HomeHeroBand
-          daysToNcaa={daysToNcaa}
-          daysToAsean={daysToAsean}
-          aseanLabel={aseanLabel}
-          aseanDateLabel={aseanDateLabel}
-          aseanConfirmed={settingsRow.aseanConfirmed}
-          seasonPct={seasonPct}
-          phaseTag={currentPhase.tag}
-          phaseName={currentPhase.name}
-          phaseWeek={phaseWeek}
-          readinessOverall={readinessOverall}
-          readinessSignals={readinessSignals}
-          actionLine={readinessActionLineText}
-          className="col-span-full"
-        />
-        <HomeDoorwayDials
-          readinessOverall={readinessOverall}
-          greenSignalCount={readinessSignals.filter((s) => s.light === "green").length}
-          totalSignalCount={readinessSignals.length}
-          kcalToday={kcalToday}
-          kcalTargetMid={energyTarget.kcal}
-          consistencyPct={consistency.pct}
-          className="col-span-full"
-        />
+      <HomeHeroBand
+        daysToNcaa={daysToNcaa}
+        daysToAsean={daysToAsean}
+        aseanLabel={aseanLabel}
+        aseanDateLabel={aseanDateLabel}
+        aseanConfirmed={settingsRow.aseanConfirmed}
+        seasonPct={seasonPct}
+        phaseTag={currentPhase.tag}
+        phaseName={currentPhase.name}
+        phaseWeek={phaseWeek}
+        readinessOverall={readinessOverall}
+        readinessSignals={readinessSignals}
+        actionLine={readinessActionLineText}
+      />
+      <HomeDoorwayDials
+        readinessOverall={readinessOverall}
+        greenSignalCount={readinessSignals.filter((s) => s.light === "green").length}
+        totalSignalCount={readinessSignals.length}
+        kcalToday={kcalToday}
+        kcalTargetMid={energyTarget.kcal}
+        consistencyPct={consistency.pct}
+      />
 
-        <TodaysPlanCard
-          rows={planRows}
-          startHref={startHref}
-          tomorrow={tomorrowPreview}
-          phaseId={todaySession ? currentPhase.id : null}
-          todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
-        />
-        <HabitsCard habits={habitsData.habits} dots={habitStreakDots} today={today} />
-        <CalendarStripCard days={calendarStripDays} today={today} />
+      {/* Miles OS Home grid (Personal OS merge, WS3/3d): the spec's 7-panel
+          mapping -- left rail Operator(01)/Training Load(07, repurposed
+          from Finance Pulse)/Needs Attention(08, repurposed from Key
+          Blockers); center Session(02)/Habits(03)/Calendar(04); right rail
+          Nutrition(06). Finance itself (KPI row, buckets, snapshot table)
+          is out of scope for this project per the task brief. */}
+      <div className="rtd-mos-grid">
+        <div className="rtd-mos-col">
+          <OperatorCard
+            role={seasonData.meta.athlete}
+            daysToDecember={daysToNcaa}
+            todaysFocus={todaysFocus}
+            consistencyPct={consistency.pct}
+            consistencyDone={consistency.done}
+            consistencyPlanned={consistency.planned}
+          />
+          <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
+          <NeedsAttentionList items={needsAttention} />
+        </div>
+
+        <div className="rtd-mos-col">
+          <TodaysPlanCard
+            rows={planRows}
+            startHref={startHref}
+            tomorrow={tomorrowPreview}
+            phaseId={todaySession ? currentPhase.id : null}
+            todayExercises={todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
+            greeting={greetingForHour(hour)}
+          />
+          <HabitsCard habits={habitsData.habits} dots={habitStreakDots} today={today} />
+          <CalendarStripCard days={calendarStripDays} today={today} />
+        </div>
+
+        <div className="rtd-mos-col">
+          <FuelRingCard
+            kcalToday={kcalToday}
+            kcalTargetMid={energyTarget.kcal}
+            proteinToday={proteinToday}
+            proteinTargetG={proteinTarget.mid}
+            carbsToday={carbsToday}
+            carbsTargetG={carbsFatTarget.carbsG}
+            fatToday={fatToday}
+            fatTargetG={carbsFatTarget.fatG}
+            waterMl={waterToday}
+            waterTargetMl={settingsRow.waterTargetMl}
+          />
+        </div>
+      </div>
+
+      {/* Retained extras (not part of the Miles OS 7-panel Home spec):
+          goals, key tasks, AI daily brief, month calendar, week map, recent
+          PRs, and the bodyweight stat tile. Kept, not deleted -- same
+          product decision Phase 8 made for the equivalent pre-Phase-8
+          modules, logged in PERSONAL_OS_LOG.md. Still the old 12-col grid,
+          now living below the new Miles OS grid instead of interleaved
+          with it. Collapsed on mobile behind a disclosure, as before. */}
+      <div className="rtd-home-grid">
         <GoalsCard data={goalsData} />
         <KeyTasksCard tasks={keyTasks} />
-        <TrainingLoadCard thisWeekDaily={thisWeekDaily} lastWeekDaily={lastWeekDaily} takeaway={trainingLoadTakeaway} />
-        <FuelRingCard
-          kcalToday={kcalToday}
-          kcalTargetMid={energyTarget.kcal}
-          proteinToday={proteinToday}
-          proteinTargetG={proteinTarget.mid}
-          carbsToday={carbsToday}
-          carbsTargetG={carbsFatTarget.carbsG}
-          fatToday={fatToday}
-          fatTargetG={carbsFatTarget.fatG}
-          waterMl={waterToday}
-          waterTargetMl={settingsRow.waterTargetMl}
-        />
-        <NeedsAttentionList items={needsAttention} className="col-span-4 row-span-2 h-full" />
-
-        {/* Retained extras (not part of the 9 spec sections): AI daily
-            brief, month calendar, week map, recent PRs, and the two stat
-            tiles displaced from the old fuel cluster. Collapsed on mobile
-            behind a disclosure, same as before Phase 8. */}
         <CoachBriefCard brief={dailyBrief} bullets={coachBriefBullets} followUps={followUps} className="col-span-full md:col-span-8" />
         <MonthCalendarCard
           today={today}

@@ -29,6 +29,7 @@ export function TerminalPanel({
   className,
   style,
   label,
+  number,
   statusChip,
   href,
   colSpan,
@@ -53,6 +54,10 @@ export function TerminalPanel({
   className?: string;
   style?: CSSProperties;
   label?: string;
+  /** Miles OS numbered-panel prefix (e.g. "01") -- rendered via
+   * SectionHeader's own `number` prop so the `//` glyph gets its dimmer
+   * spec color. Only meaningful when `label` is also set. */
+  number?: string;
   statusChip?: ReactNode;
   href?: string;
   colSpan?: number;
@@ -104,7 +109,7 @@ export function TerminalPanel({
       onKeyDown={onKeyDown}
       aria-label={ariaLabel}
     >
-      {label && <SectionHeader title={label} statusChip={statusChip} />}
+      {label && <SectionHeader title={label} number={number} statusChip={statusChip} />}
       <div className={clsx("flex-1 min-h-0 flex flex-col", GAP[gap])}>{children}</div>
     </div>
   );

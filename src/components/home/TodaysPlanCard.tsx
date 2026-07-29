@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { IconCheck } from "@/components/ui/icons";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
+import { SerifAccent } from "@/components/ui/SerifAccent";
 
 type PlanRow = {
   key: string;
@@ -32,6 +33,7 @@ export function TodaysPlanCard({
   tomorrow,
   phaseId,
   todayExercises,
+  greeting,
   className,
 }: {
   rows: PlanRow[];
@@ -39,6 +41,8 @@ export function TodaysPlanCard({
   tomorrow: TomorrowPreview;
   phaseId: string | null;
   todayExercises: { id: number; name: string }[];
+  /** "Good afternoon" -- Miles OS Session panel's serif greeting line. */
+  greeting?: string;
   className?: string;
 }) {
   return (
@@ -47,6 +51,11 @@ export function TodaysPlanCard({
         <span className="rtd-micro-label truncate">02 // SESSION</span>
         <ImportSessionButton phaseId={phaseId} todayExercises={todayExercises} compact />
       </div>
+      {greeting && (
+        <SerifAccent size={22} className="mb-1 shrink-0">
+          {greeting}, Ashton.
+        </SerifAccent>
+      )}
       <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto">
         {rows.length === 0 ? (
           <div className="flex-1 flex flex-col gap-3">

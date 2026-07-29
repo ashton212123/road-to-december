@@ -4,7 +4,11 @@ import { TerminalPanel } from "@/components/ui/TerminalPanel";
  * "Days to December" is daysToNcaa (NCAA Philippines lands on the season's
  * own December end date), "streak" reuses the existing rolling-consistency
  * number from src/lib/analytics/streak.ts -- both already computed once by
- * Home, passed in rather than recomputed here. */
+ * Home, passed in rather than recomputed here.
+ *
+ * Miles OS moves this from a full-width hero bar into the grid's narrow
+ * 262px left column (Home rebuild) -- always stacked vertically now (no
+ * more md:flex-row), since that layout only made sense at full width. */
 export function OperatorCard({
   role,
   daysToDecember,
@@ -23,13 +27,13 @@ export function OperatorCard({
   className?: string;
 }) {
   return (
-    <TerminalPanel label="01 // OPERATOR" colSpan={12} className={className}>
-      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-8">
+    <TerminalPanel label="OPERATOR" number="01" className={className}>
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col">
           <span className="text-title-2 font-extrabold tracking-tight text-[var(--rtd-text)]">Ashton</span>
           <span className="text-caption text-[var(--rtd-text-tertiary)]">{role}</span>
         </div>
-        <div className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex flex-col gap-2">
           <div className="flex flex-col">
             <span className="text-title-3 font-bold rtd-nums rtd-mono text-[var(--rtd-text)]">{daysToDecember}d</span>
             <span className="text-caption text-[var(--rtd-text-tertiary)]">to December</span>

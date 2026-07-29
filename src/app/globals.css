@@ -665,6 +665,34 @@ body {
 .rtd-home-grid summary::-webkit-details-marker {
   display: none;
 }
+
+/* Miles OS Home grid (3d rebuild): mobile-first per standing preference --
+   the spec's 262px minmax(0,1fr) 262px 3-column layout only applies at
+   desktop widths; a phone stacks all three columns' panels in one flow in
+   left->center->right order. Kept separate from .rtd-home-grid (the
+   pre-Miles-OS 12-col system every other still-unconverted section of Home
+   uses) since column semantics (fixed side rails, not span-N cells)
+   are fundamentally different. */
+.rtd-mos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rtd-mos-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .rtd-mos-grid {
+    display: grid;
+    grid-template-columns: 262px minmax(0, 1fr) 262px;
+    align-items: start;
+  }
+}
 .rtd-more-today-chevron {
   display: inline-block;
   transition: transform 200ms ease-out;

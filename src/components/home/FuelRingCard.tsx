@@ -52,7 +52,7 @@ export function FuelRingCard({
   const waterPct = waterTargetMl > 0 ? Math.min(100, (waterMl / waterTargetMl) * 100) : 0;
 
   return (
-    <TerminalPanel href="/fuel" label="08 // FUEL" colSpan={4} rowSpan={2} className={className}>
+    <TerminalPanel href="/fuel" label="NUTRITION" number="06" colSpan={4} rowSpan={2} className={className}>
       <div className="flex items-center gap-4 flex-1 min-h-0">
         <ProgressRing
           pct={kcalPct}
