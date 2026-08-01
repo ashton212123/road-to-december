@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { logSorenessAction } from "@/app/(app)/more/actions";
 
@@ -24,7 +24,7 @@ export function SorenessLogger() {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel className="gap-3">
       <div className="text-body font-semibold">Soreness</div>
       <div className="flex gap-2 justify-between">
         {RATINGS.map((r) => (
@@ -34,7 +34,7 @@ export function SorenessLogger() {
             className="rtd-tap-target flex-1 py-2 rounded-lg text-subhead font-semibold cursor-pointer transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
             style={{
               background: rating === r ? "var(--rtd-orange)" : "rgba(255,255,255,0.06)",
-              color: rating === r ? "#fff" : "var(--rtd-text-secondary)",
+              color: rating === r ? "var(--rtd-text)" : "var(--rtd-text-secondary)",
             }}
           >
             {r}
@@ -50,6 +50,6 @@ export function SorenessLogger() {
       <Button variant="secondary" onClick={submit} disabled={pending || !rating || !area}>
         {done ? "Logged ✓" : "Log soreness"}
       </Button>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { logWeighInAction } from "@/app/(app)/fuel/actions";
 
@@ -26,7 +26,7 @@ export function WeighInLogger({ lastKg }: { lastKg: number | null }) {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel className="gap-3">
       <div className="text-body font-semibold">Weigh-in</div>
       <div className="flex items-center gap-2">
         <input
@@ -41,6 +41,6 @@ export function WeighInLogger({ lastKg }: { lastKg: number | null }) {
       <Button variant="secondary" onClick={submit} disabled={pending || (!kg && lastKg === null)}>
         {done ? "Logged ✓" : "Log weigh-in"}
       </Button>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

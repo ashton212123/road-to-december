@@ -1,5 +1,5 @@
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { SleepLogger } from "@/components/more/SleepLogger";
 import { SorenessLogger } from "@/components/more/SorenessLogger";
 import { CmjQuickLog } from "@/components/more/CmjQuickLog";
@@ -77,9 +77,9 @@ export default async function RecoveryPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
-      <SectionLabel>Recovery</SectionLabel>
+      <SectionHeader title="Recovery" className="mb-2" />
 
-      <GlassCard className="flex flex-col gap-3">
+      <TerminalPanel className="gap-3">
         <div className="flex items-center gap-3">
           <span className="w-4 h-4 rounded-full shrink-0" style={{ background: LIGHT_COLOR[overall] }} />
           <div className="text-body font-semibold">Readiness — transparent inputs, no invented score</div>
@@ -95,7 +95,7 @@ export default async function RecoveryPage() {
             </div>
           ))}
         </div>
-      </GlassCard>
+      </TerminalPanel>
 
       <CmjQuickLog />
       <SleepLogger lastNight={sleepLogs[0] ? { hours: Number(sleepLogs[0].hours), bedtime: sleepLogs[0].bedtime } : null} />
@@ -103,8 +103,8 @@ export default async function RecoveryPage() {
 
       {sorenessLogs.length > 0 && (
         <div>
-          <SectionLabel>Recent soreness</SectionLabel>
-          <GlassCard className="flex flex-col gap-1.5">
+          <SectionHeader title="Recent soreness" className="mb-2" />
+          <TerminalPanel className="gap-1.5">
             {sorenessLogs.map((s) => (
               <div key={s.id} className="flex items-center justify-between text-footnote">
                 <span className="text-[var(--rtd-text-secondary)]">{s.area}</span>
@@ -113,7 +113,7 @@ export default async function RecoveryPage() {
                 </span>
               </div>
             ))}
-          </GlassCard>
+          </TerminalPanel>
         </div>
       )}
     </div>

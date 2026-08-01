@@ -1,5 +1,5 @@
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { SettingsForm } from "@/components/more/SettingsForm";
 import { TrainingStatusControl } from "@/components/more/TrainingStatusControl";
 import { CoachMemoryEditor } from "@/components/more/CoachMemoryEditor";
@@ -20,28 +20,28 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
-      <SectionLabel>Settings</SectionLabel>
-      <GlassCard>
+      <SectionHeader title="Settings" className="mb-2" />
+      <TerminalPanel>
         <TrainingStatusControl current={settingsRow.trainingStatus} />
-      </GlassCard>
+      </TerminalPanel>
       <SettingsForm
         initialAsean={settingsRow.aseanConfirmed}
         initialWaterTargetMl={settingsRow.waterTargetMl}
         initialWeightUnit={settingsRow.weightUnit as "kg" | "lb"}
       />
 
-      <SectionLabel>Habits</SectionLabel>
-      <GlassCard>
+      <SectionHeader title="Habits" className="mb-2" />
+      <TerminalPanel>
         <HabitEditor habits={allHabits} />
-      </GlassCard>
+      </TerminalPanel>
 
-      <SectionLabel>Coach memory</SectionLabel>
-      <GlassCard>
+      <SectionHeader title="Coach memory" className="mb-2" />
+      <TerminalPanel>
         <CoachMemoryEditor initialModel={athleteModel} />
-      </GlassCard>
+      </TerminalPanel>
 
-      <SectionLabel>Connect Claude via MCP</SectionLabel>
-      <GlassCard className="flex flex-col gap-3">
+      <SectionHeader title="Connect Claude via MCP" className="mb-2" />
+      <TerminalPanel className="gap-3">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[var(--rtd-green)]" />
           <span className="text-body font-semibold">MCP server live at /api/mcp</span>
@@ -67,7 +67,7 @@ export default async function SettingsPage() {
         <p className="text-footnote text-[var(--rtd-text-tertiary)]">
           Full setup steps, including how to generate the bearer token, are in DEPLOY.md.
         </p>
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }

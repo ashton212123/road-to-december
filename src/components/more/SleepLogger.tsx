@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { logSleepAction } from "@/app/(app)/more/actions";
 import { todayDayKey } from "@/lib/time";
@@ -23,7 +23,7 @@ export function SleepLogger({ lastNight = null }: { lastNight?: { hours: number;
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel className="gap-3">
       <div className="flex items-center justify-between gap-2">
         <div className="text-body font-semibold">Sleep</div>
         {lastNight && (
@@ -67,6 +67,6 @@ export function SleepLogger({ lastNight = null }: { lastNight?: { hours: number;
       <Button variant="secondary" onClick={submit} disabled={pending}>
         {done ? "Logged ✓" : "Log last night"}
       </Button>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { updateSettingsAction } from "@/app/(app)/more/actions";
@@ -39,7 +39,7 @@ export function SettingsForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <GlassCard className="flex flex-col gap-3">
+      <TerminalPanel className="gap-3">
         <div>
           <div className="text-body font-semibold">ASEAN School Games status</div>
           <div className="text-subhead text-[var(--rtd-text-secondary)] mt-0.5">
@@ -56,9 +56,9 @@ export function SettingsForm({
             { value: "cancelled", label: "Cancelled" },
           ]}
         />
-      </GlassCard>
+      </TerminalPanel>
 
-      <GlassCard className="flex flex-col gap-3">
+      <TerminalPanel className="gap-3">
         <div className="text-body font-semibold">Daily water target</div>
         <div className="flex items-center gap-2">
           <input
@@ -69,9 +69,9 @@ export function SettingsForm({
           />
           <span className="text-footnote text-[var(--rtd-text-secondary)]">ml</span>
         </div>
-      </GlassCard>
+      </TerminalPanel>
 
-      <GlassCard className="flex flex-col gap-3">
+      <TerminalPanel className="gap-3">
         <div className="text-body font-semibold">Weight unit</div>
         <SegmentedControl
           value={weightUnit}
@@ -82,13 +82,13 @@ export function SettingsForm({
           ]}
         />
         <p className="text-caption text-[var(--rtd-text-tertiary)]">Applies to gym logging + history display. Stored in kg.</p>
-      </GlassCard>
+      </TerminalPanel>
 
       <Button onClick={save} disabled={pending} className="md:w-auto md:self-end md:px-8">
         {saved ? "Saved ✓" : "Save settings"}
       </Button>
 
-      <GlassCard className="flex flex-col gap-2">
+      <TerminalPanel className="gap-2">
         <div className="text-body font-semibold">Export your data</div>
         <div className="text-subhead text-[var(--rtd-text-secondary)]">
           A full JSON dump of everything logged in this app. You must never be locked in.
@@ -98,7 +98,7 @@ export function SettingsForm({
             Download full export (.json)
           </Button>
         </a>
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }
