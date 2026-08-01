@@ -285,12 +285,15 @@ body {
    boxed"). An open section is content sitting directly on the wallpaper,
    no background/border/shadow of its own, separated from the section
    before it by one hairline instead of a card edge (not above the first
-   section, so a lone one stays clean). SectionLabel remains the header.
-   Card chrome stays reserved for genuinely interactive surfaces (loggers,
-   the import hero, quick-log) -- see each page's own comments for which
-   surfaces kept it. BentoCard's variant="open" reuses this look while
-   keeping the desktop bento grid's column LAYOUT (just dropping the glass
-   chrome per cell). */
+   section, so a lone one stays clean). Card chrome stays reserved for
+   genuinely interactive surfaces (loggers, the import hero, quick-log) --
+   see each page's own comments for which surfaces kept it.
+   WS3d §9: GlassCard/BentoCard (whose variant="open" used to apply this
+   class) are gone, replaced by TerminalPanel -- but TerminalPanel's own
+   "open" variant gets the no-chrome look by simply omitting .rtd-glass,
+   not by applying this class. This class is still live on its own: fuel,
+   analytics, and other pages apply it directly as a raw className,
+   independent of any card component -- do not delete it as dead. */
 .rtd-open-section {
   padding: 20px 0;
 }

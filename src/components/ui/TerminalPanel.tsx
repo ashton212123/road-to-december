@@ -6,24 +6,27 @@ import { SectionHeader } from "./SectionHeader";
 const PADDING = { sm: "p-3", md: "p-3.5 md:p-5" } as const;
 const GAP = { none: "gap-0", sm: "gap-1.5", md: "gap-2" } as const;
 
-/** Phase 9 (§9a) replacement for BentoCard/GlassCard: same shell contract
- * (colSpan/rowSpan/href/variant), terminal panel material instead of iOS
- * glass. `label`/`statusChip` are a convenience that renders a SectionHeader
- * for the common case -- callers with a custom header row (e.g. one that
- * also needs an inline action button) can render their own SectionHeader as
- * the first child instead and omit `label`.
+/** Phase 9 (§9a) rebuild of the old BentoCard/GlassCard shell contract
+ * (colSpan/rowSpan/href/variant) onto terminal panel material instead of
+ * iOS glass. BentoCard/GlassCard themselves were deleted (WS3d §9) once
+ * every consumer across the app had converted to this component -- this
+ * is now the sole live implementation of that shell.
+ *
+ * `label`/`statusChip` are a convenience that renders a SectionHeader for
+ * the common case -- callers with a custom header row (e.g. one that also
+ * needs an inline action button) can render their own SectionHeader as the
+ * first child instead and omit `label`.
  *
  * `fill`/`padding`/`gap` exist for non-grid callers (a repeating list row
  * like CRM's TaskCard, not a bento grid cell) that need the same panel
  * material without the grid-cell-filling `h-full` or the roomier grid
  * padding. `interactive` adds the hover-affordance class used by "open"
- * rows that only want a background on hover/press (mirrors GlassCard's own
- * `interactive` prop) -- independent of `variant` since a hover-only row
- * (variant="open" + interactive) is a real, distinct look from either a
- * permanent box (variant="panel") or fully inert content (variant="open"
- * alone). The onClick/drag/keyboard props are plain passthrough so a caller
- * can make the whole panel a click/drag target without dropping to raw
- * markup. */
+ * rows that only want a background on hover/press -- independent of
+ * `variant` since a hover-only row (variant="open" + interactive) is a
+ * real, distinct look from either a permanent box (variant="panel") or
+ * fully inert content (variant="open" alone). The onClick/drag/keyboard
+ * props are plain passthrough so a caller can make the whole panel a
+ * click/drag target without dropping to raw markup. */
 export function TerminalPanel({
   children,
   className,
