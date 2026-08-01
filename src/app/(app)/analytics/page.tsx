@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AnalyticsView } from "@/components/analytics/AnalyticsView";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import { todayManilaISO, addDaysISO } from "@/lib/time";
@@ -60,7 +60,7 @@ export default function AnalyticsPage({
 }) {
   return (
     <div className="flex flex-col gap-4 pt-1">
-      <SectionLabel>Analytics</SectionLabel>
+      <SectionHeader title="Analytics" className="mb-2" />
       <Suspense fallback={<AnalyticsSkeleton />}>
         <AnalyticsContent searchParams={searchParams} />
       </Suspense>

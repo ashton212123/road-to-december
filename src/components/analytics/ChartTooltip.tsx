@@ -21,18 +21,19 @@ export function GlassTooltip({
   return (
     <div
       style={{
-        background: "rgba(0,0,0,0.6)",
+        background: "var(--rtd-mos-panel-2)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-        border: "0.5px solid rgba(255,255,255,0.1)",
-        borderRadius: 8,
+        border: "0.5px solid var(--rtd-border)",
+        borderRadius: "var(--rtd-radius-card)",
         padding: "6px 10px",
-        fontSize: 12,
+        fontFamily: "var(--rtd-font-mono)",
+        fontSize: "var(--rtd-mos-fs-chip)",
       }}
     >
-      {label && <div style={{ color: "rgba(235,235,245,0.45)", marginBottom: payload.length > 0 ? 2 : 0 }}>{label}</div>}
+      {label && <div style={{ color: "var(--rtd-mos-fg-3)", marginBottom: payload.length > 0 ? 2 : 0 }}>{label}</div>}
       {payload.map((p, i) => (
-        <div key={i} style={{ color: p.color ?? color ?? "#F5F5F7" }}>
+        <div key={i} style={{ color: p.color ?? color ?? "var(--rtd-mos-fg-strong)" }}>
           {p.name ? `${p.name}: ` : ""}
           {valueFormatter ? valueFormatter(p.value) : p.value}
         </div>

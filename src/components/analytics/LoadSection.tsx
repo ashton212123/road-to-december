@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Button } from "@/components/ui/Button";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
 import { GlassTooltip, PatternLegend } from "./ChartTooltip";
@@ -28,13 +28,13 @@ const TABS = [
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-/** No-data placeholder that doesn't carry its own glass surface -- it's
- * always used inside a GlassCard already, and rtd-glass nested in rtd-glass
- * is a double-hairline (see Fix 5). */
+/** No-data placeholder that doesn't carry its own panel surface -- it's
+ * always used inside a TerminalPanel already, and a nested panel border
+ * would double up the hairline (see Fix 5). */
 function ChartEmpty({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col justify-end gap-1 pb-0.5" style={{ height: 180 }}>
-      <div className="w-full border-t border-dashed" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+      <div className="w-full border-t border-dashed" style={{ borderColor: "var(--rtd-hairline)" }} />
       <span className="text-caption text-[var(--rtd-text-tertiary)]">{children}</span>
     </div>
   );
@@ -71,8 +71,8 @@ export function LoadSection({
   return (
     <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
       <div>
-        <SectionLabel>Daily session load (RPE × time-on-task)</SectionLabel>
-        <GlassCard variant="open">
+        <SectionHeader title="Daily session load (RPE × time-on-task)" className="mb-2" />
+        <TerminalPanel variant="open">
           {dailyLoads.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6">
               <ChartEmpty>No sessions logged yet</ChartEmpty>
@@ -97,12 +97,12 @@ export function LoadSection({
               </BarChart>
             </ResponsiveContainer>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>Acute (7d) : Chronic (28d) ratio</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-2">
+        <SectionHeader title="Acute (7d) : Chronic (28d) ratio" className="mb-2" />
+        <TerminalPanel variant="open" className="gap-2">
           {acwr.length === 0 ? (
             <ChartEmpty>ACWR needs at least a week of logged sessions</ChartEmpty>
           ) : (
@@ -119,12 +119,12 @@ export function LoadSection({
           <div className="text-caption text-[var(--rtd-text-tertiary)] pt-1 border-t border-[var(--rtd-hairline)]">
             Acute-to-chronic ratios are widely used but have known statistical problems and no demonstrated causal link to injury [strong critique — Impellizzeri 2020] — shown here as a description of training load, not a risk score.
           </div>
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div className="md:col-span-2">
         <div className="flex items-center justify-between mb-1">
-          <SectionLabel>Weekly load breakdown</SectionLabel>
+          <SectionHeader title="Weekly load breakdown" />
           <div className="flex items-center gap-4">
             {TABS.map((t) => (
               <button
@@ -132,7 +132,7 @@ export function LoadSection({
                 type="button"
                 onClick={() => setTab(t.key)}
                 className="relative text-footnote font-medium pb-2 cursor-pointer transition-colors duration-150 ease-out"
-                style={{ color: tab === t.key ? "#fff" : "var(--rtd-text-tertiary)" }}
+                style={{ color: tab === t.key ? "var(--rtd-text)" : "var(--rtd-text-tertiary)" }}
               >
                 {t.label}
                 <span
@@ -146,7 +146,7 @@ export function LoadSection({
             ))}
           </div>
         </div>
-        <GlassCard variant="open" className="flex flex-col gap-2">
+        <TerminalPanel variant="open" className="gap-2">
           {tabData.length === 0 ? (
             <ChartEmpty>
               {tab === "sessions" ? "No sessions logged yet" : tab === "tonnage" ? "No tonnage yet" : "No hard sets logged yet"}
@@ -178,7 +178,7 @@ export function LoadSection({
               </ResponsiveContainer>
             </>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
     </div>
   );

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AlertCard } from "@/components/ui/AlertCard";
 import { Button } from "@/components/ui/Button";
 import { chartTheme } from "./chart-theme";
@@ -36,8 +36,8 @@ export function PowerSection({
       )}
 
       <div>
-        <SectionLabel>CMJ — weekly monitor (best of 3)</SectionLabel>
-        <GlassCard variant="open">
+        <SectionHeader title="CMJ — weekly monitor (best of 3)" className="mb-2" />
+        <TerminalPanel variant="open">
           {cmjSeries.length === 0 ? (
             <EmptyState
               title="No CMJ tests logged"
@@ -59,12 +59,12 @@ export function PowerSection({
               </LineChart>
             </ResponsiveContainer>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>Broad jump progression{broadJumpPb ? ` — PB ${broadJumpPb}cm` : ""}</SectionLabel>
-        <GlassCard variant="open">
+        <SectionHeader title={`Broad jump progression${broadJumpPb ? ` — PB ${broadJumpPb}cm` : ""}`} className="mb-2" />
+        <TerminalPanel variant="open">
           {broadJumpSeries.length === 0 ? (
             <EmptyState title="No broad jump tests logged" body="Baseline in week 1, then chase PBs through P5." />
           ) : (
@@ -78,7 +78,7 @@ export function PowerSection({
               </LineChart>
             </ResponsiveContainer>
           )}
-        </GlassCard>
+        </TerminalPanel>
       </div>
     </div>
   );

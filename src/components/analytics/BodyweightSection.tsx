@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ResponsiveContainer, ComposedChart, Line, Scatter, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { Button } from "@/components/ui/Button";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
@@ -30,8 +30,8 @@ export function BodyweightSection({
   if (weightSeries.length === 0) {
     return (
       <div>
-        <SectionLabel>Bodyweight</SectionLabel>
-        <GlassCard className="flex flex-col items-center text-center gap-2 py-8 px-6">
+        <SectionHeader title="Bodyweight" className="mb-2" />
+        <TerminalPanel className="items-center text-center gap-2 py-8 px-6">
           <div className="text-body font-semibold text-[var(--rtd-text)]">No weigh-ins logged</div>
           <div className="text-subhead text-[var(--rtd-text-tertiary)] max-w-[26ch]">
             Weigh in every Monday morning, same conditions — log it via Coach AI.
@@ -39,7 +39,7 @@ export function BodyweightSection({
           <Link href="/more/coach-ai" className="mt-1">
             <Button variant="secondary">Open Coach AI</Button>
           </Link>
-        </GlassCard>
+        </TerminalPanel>
       </div>
     );
   }
@@ -75,8 +75,8 @@ export function BodyweightSection({
       </div>
 
       <div>
-        <SectionLabel>Bodyweight vs target band (65–66 kg by taper)</SectionLabel>
-        <GlassCard variant="open">
+        <SectionHeader title="Bodyweight vs target band (65–66 kg by taper)" className="mb-2" />
+        <TerminalPanel variant="open">
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid {...gridDotted} />
@@ -85,21 +85,21 @@ export function BodyweightSection({
               <Tooltip content={<GlassTooltip color="var(--rtd-blue)" valueFormatter={(v) => `${v.toFixed(1)}kg`} />} cursor={false} />
               <Line type="monotone" dataKey="bandHigh" stroke="var(--rtd-green)" strokeDasharray="3 3" strokeWidth={1.5} dot={false} />
               <Line type="monotone" dataKey="bandLow" stroke="var(--rtd-green)" strokeDasharray="3 3" strokeWidth={1.5} dot={false} strokeOpacity={0.5} />
-              <Scatter dataKey="kg" fill="rgba(235,235,245,0.5)" />
+              <Scatter dataKey="kg" fill="var(--rtd-mos-fg-3)" />
               <Line type="monotone" dataKey="avg7" stroke="var(--rtd-blue)" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
           <div className="flex items-center gap-4 mt-2 text-caption text-[var(--rtd-text-tertiary)]">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[rgba(235,235,245,0.5)]" /> Raw weigh-ins</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--rtd-mos-fg-3)]" /> Raw weigh-ins</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--rtd-blue)]" /> 7-day avg</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--rtd-green)]" /> Target band</span>
           </div>
-        </GlassCard>
+        </TerminalPanel>
       </div>
 
       <div>
-        <SectionLabel>7-day avg, this {periodWord} vs last</SectionLabel>
-        <GlassCard variant="open" className="flex flex-col gap-2">
+        <SectionHeader title={`7-day avg, this ${periodWord} vs last`} className="mb-2" />
+        <TerminalPanel variant="open" className="gap-2">
           <ComparisonLegend
             currentLabel={`This ${periodWord}`}
             previousLabel={`Last ${periodWord}`}
@@ -107,7 +107,7 @@ export function BodyweightSection({
             previousAvailable={cmp.hasPrevious}
           />
           <ComparisonLine current={cmp.current} previous={cmp.previous} color="var(--rtd-cyan)" height={100} labels={labels} />
-        </GlassCard>
+        </TerminalPanel>
       </div>
     </div>
   );

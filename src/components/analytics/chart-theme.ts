@@ -1,19 +1,25 @@
+// WS3d §2: hairline mono chart language -- axes/grid/tooltips restyled onto
+// the existing Miles OS tokens (--rtd-mos-* panel/fg scale, --rtd-border/
+// --rtd-mos-border-row for hairlines) rather than the hardcoded hex/rgba
+// values this file used before. Recharts still renders its own chart types
+// unchanged (spec: "charts keep recharts"), only their color/font inputs
+// route through tokens now.
 export const chartTheme = {
-  grid: { stroke: "rgba(255,255,255,0.06)", vertical: false },
+  grid: { stroke: "var(--rtd-mos-border-row)", vertical: false },
   axis: {
-    tick: { fill: "rgba(235,235,245,0.45)", fontSize: 11 },
-    stroke: "rgba(255,255,255,0.08)",
+    tick: { fill: "var(--rtd-mos-fg-3)", fontSize: 11, fontFamily: "var(--rtd-font-mono)" },
+    stroke: "var(--rtd-border)",
   },
   tooltip: {
     contentStyle: {
-      background: "#1c1c1e",
-      border: "0.5px solid rgba(255,255,255,0.1)",
+      background: "var(--rtd-mos-panel-2)",
+      border: "0.5px solid var(--rtd-border)",
       borderRadius: "var(--rtd-radius-card)",
       fontSize: 11,
       fontFamily: "var(--rtd-font-mono)",
-      color: "#F5F5F7",
+      color: "var(--rtd-mos-fg-strong)",
     },
-    labelStyle: { color: "rgba(235,235,245,0.6)", fontFamily: "var(--rtd-font-mono)" },
+    labelStyle: { color: "var(--rtd-mos-fg-2)", fontFamily: "var(--rtd-font-mono)" },
     itemStyle: { fontFamily: "var(--rtd-font-mono)" },
   },
 };
@@ -21,9 +27,9 @@ export const chartTheme = {
 /** V3.1R chart language -- dotted gridlines, no axis/tick lines, capsule
  * bars. Used by the retrofitted detail charts (e1RM, ACWR, bodyweight,
  * sleep) instead of the older solid-tooltip `chartTheme` above. */
-export const gridDotted = { stroke: "rgba(255,255,255,0.06)", strokeDasharray: "2 6", vertical: false };
+export const gridDotted = { stroke: "var(--rtd-mos-border-row)", strokeDasharray: "2 6", vertical: false };
 export const axisClean = {
-  tick: { fill: "rgba(235,235,245,0.45)", fontSize: 11 },
+  tick: { fill: "var(--rtd-mos-fg-3)", fontSize: 11, fontFamily: "var(--rtd-font-mono)" },
   axisLine: false,
   tickLine: false,
 };
@@ -32,11 +38,11 @@ export const axisClean = {
  * with the matching `background` fill below for the full-height track. */
 export const CAPSULE_BAR_SIZE = 14;
 export const CAPSULE_BAR_RADIUS: [number, number, number, number] = [7, 7, 7, 7];
-export const barTrack = { fill: "rgba(255,255,255,0.04)", radius: CAPSULE_BAR_RADIUS[0] };
+export const barTrack = { fill: "var(--rtd-mos-border-field)", radius: CAPSULE_BAR_RADIUS[0] };
 
 export const PATTERN_COLORS = {
-  squat: "#0A84FF",
-  hinge: "#30D158",
-  press: "#FF9F0A",
-  pull: "#BF5AF2",
+  squat: "var(--rtd-blue)",
+  hinge: "var(--rtd-green)",
+  press: "var(--rtd-orange)",
+  pull: "var(--rtd-purple)",
 };

@@ -1,4 +1,4 @@
-import { BentoCard } from "@/components/ui/BentoCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { IconTile } from "@/components/ui/IconTile";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { DeltaChip } from "@/components/ui/DeltaChip";
@@ -17,7 +17,7 @@ function formatValue(v: number | null, unit: string, decimals: number): string {
 export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[]; period: Period; offset: number }) {
   const windowDays = period === "week" ? 7 : 28;
   return (
-    <BentoCard variant="open" label={`Improvement matrix · last ${windowDays} days vs previous`} colSpan={12}>
+    <TerminalPanel variant="open" label={`Improvement matrix · last ${windowDays} days vs previous`} colSpan={12}>
       <div className="flex flex-col rtd-divide-y">
         {rows.map((row) => (
           <a
@@ -59,6 +59,6 @@ export function ImprovementMatrix({ rows, period, offset }: { rows: MatrixRow[];
           </a>
         ))}
       </div>
-    </BentoCard>
+    </TerminalPanel>
   );
 }

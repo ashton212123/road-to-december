@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Button } from "@/components/ui/Button";
 import { ComparisonLine, ComparisonLegend } from "@/components/ui/ComparisonLine";
 import { currentVsPreviousDaily, periodDayLabels } from "@/lib/analytics/periodCompare";
@@ -47,8 +47,8 @@ export function StrengthSection({
           const labels = periodDayLabels(period, current.length);
           return (
             <div key={lift}>
-              <SectionLabel>{lift} · e1RM</SectionLabel>
-              <GlassCard variant="open" className="flex flex-col gap-2">
+              <SectionHeader title={`${lift} · e1RM`} className="mb-2" />
+              <TerminalPanel variant="open" className="gap-2">
                 <ComparisonLegend
                   currentLabel={`This ${periodWord}`}
                   previousLabel={`Last ${periodWord}`}
@@ -61,7 +61,7 @@ export function StrengthSection({
                     Goal <span style={{ color: "var(--rtd-green)" }}>{target.goalKg}kg</span>
                   </div>
                 )}
-              </GlassCard>
+              </TerminalPanel>
             </div>
           );
         })
