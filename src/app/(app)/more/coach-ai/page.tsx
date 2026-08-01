@@ -1,4 +1,4 @@
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CoachChat } from "@/components/coach/CoachChat";
 import { getRecentCoachMessages } from "@/lib/coach/messages";
 import { getCoachAppContext } from "@/lib/coach/context";
@@ -32,7 +32,7 @@ export default async function CoachAiPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="flex flex-col gap-3 pt-1 h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-6rem)] md:max-w-2xl md:mx-auto">
-      <SectionLabel>Coach</SectionLabel>
+      <SectionHeader title="Coach" className="mb-2" />
       <CoachChat
         initialMessages={initialMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))}
         quickPrompts={buildQuickPrompts(appContext)}
