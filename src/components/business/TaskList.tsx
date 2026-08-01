@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { IconCheck } from "@/components/ui/icons";
 import { addTaskAction, toggleTaskAction, deleteTaskAction } from "@/app/(app)/business/actions";
@@ -21,7 +21,7 @@ export function TaskList({ businessId, tasks }: { businessId: number; tasks: Tas
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2 rtd-stagger">
+    <TerminalPanel className="rtd-stagger">
       {tasks.length === 0 && <div className="text-footnote text-[var(--rtd-text-tertiary)]">No tasks yet.</div>}
       {tasks.map((task) => (
         <div key={task.id} className="flex items-center gap-2.5">
@@ -35,7 +35,7 @@ export function TaskList({ businessId, tasks }: { businessId: number; tasks: Tas
             style={{
               background: task.done ? "var(--rtd-green)" : "rgba(255,255,255,0.08)",
               border: task.done ? "none" : "1.5px solid rgba(255,255,255,0.25)",
-              color: "#fff",
+              color: "var(--rtd-text)",
             }}
           >
             {task.done && <IconCheck size={13} />}
@@ -72,6 +72,6 @@ export function TaskList({ businessId, tasks }: { businessId: number; tasks: Tas
           Add
         </Button>
       </div>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

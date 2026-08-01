@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { addNoteAction, deleteNoteAction } from "@/app/(app)/business/actions";
 
@@ -20,7 +20,7 @@ export function NoteList({ businessId, notes }: { businessId: number; notes: Not
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2 rtd-stagger">
+    <TerminalPanel className="rtd-stagger">
       {notes.length === 0 && <div className="text-footnote text-[var(--rtd-text-tertiary)]">No notes yet.</div>}
       {notes.map((note) => (
         <div key={note.id} className="flex items-start justify-between gap-2 bg-white/[0.04] rounded-lg px-3 py-2">
@@ -53,6 +53,6 @@ export function NoteList({ businessId, notes }: { businessId: number; notes: Not
           Add
         </Button>
       </div>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

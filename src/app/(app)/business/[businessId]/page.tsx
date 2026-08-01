@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { TransactionLogger } from "@/components/business/TransactionLogger";
 import { TransactionList } from "@/components/business/TransactionList";
 import { TaskList } from "@/components/business/TaskList";
@@ -32,23 +32,23 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
-      <SectionLabel>{business.name}</SectionLabel>
+      <SectionHeader title={business.name} className="mb-2" />
       {business.description && <p className="text-footnote text-[var(--rtd-text-tertiary)] -mt-2">{business.description}</p>}
 
-      <GlassCard className="flex flex-col gap-1">
+      <TerminalPanel className="gap-1">
         <div className="text-footnote text-[var(--rtd-text-tertiary)]">Profit</div>
-        <div className="text-large-title" style={{ color: profit.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}>
+        <div className="text-large-title rtd-nums rtd-mono" style={{ color: profit.profit >= 0 ? "var(--rtd-green)" : "var(--rtd-red)" }}>
           {formatPhp(profit.profit)}
         </div>
-        <div className="text-footnote text-[var(--rtd-text-secondary)]">
+        <div className="text-footnote text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">
           {formatPhp(profit.income)} in · {formatPhp(profit.expense)} out
         </div>
-      </GlassCard>
+      </TerminalPanel>
 
       <TransactionLogger businessId={businessId} />
 
       <div>
-        <SectionLabel>Transactions</SectionLabel>
+        <SectionHeader title="Transactions" className="mb-2" />
         <TransactionList
           businessId={businessId}
           transactions={transactions.map((t) => ({ id: t.id, type: t.type, amountPhp: t.amountPhp, description: t.description, date: t.date }))}
@@ -56,17 +56,17 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
       </div>
 
       <div>
-        <SectionLabel>Tasks</SectionLabel>
+        <SectionHeader title="Tasks" className="mb-2" />
         <TaskList businessId={businessId} tasks={tasks} />
       </div>
 
       <div>
-        <SectionLabel>Notes</SectionLabel>
+        <SectionHeader title="Notes" className="mb-2" />
         <NoteList businessId={businessId} notes={notes} />
       </div>
 
       <div>
-        <SectionLabel>Manage</SectionLabel>
+        <SectionHeader title="Manage" className="mb-2" />
         <BusinessSettings businessId={businessId} archived={business.archived} />
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { createBusinessAction } from "@/app/(app)/business/actions";
 
@@ -33,7 +33,7 @@ export function NewBusinessForm() {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2">
+    <TerminalPanel>
       <input
         autoFocus
         placeholder="Venture name"
@@ -55,6 +55,6 @@ export function NewBusinessForm() {
           Cancel
         </Button>
       </div>
-    </GlassCard>
+    </TerminalPanel>
   );
 }

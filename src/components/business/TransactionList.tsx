@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { deleteTransactionAction } from "@/app/(app)/business/actions";
 import { formatPhp } from "@/lib/business/profit";
@@ -16,7 +16,7 @@ export function TransactionList({ businessId, transactions }: { businessId: numb
   }
 
   return (
-    <GlassCard className="flex flex-col gap-2 rtd-stagger">
+    <TerminalPanel className="rtd-stagger">
       {transactions.map((t) => (
         <div key={t.id} className="flex items-center justify-between text-footnote">
           <div className="min-w-0">
@@ -25,7 +25,7 @@ export function TransactionList({ businessId, transactions }: { businessId: numb
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span
-              className="font-semibold"
+              className="font-semibold rtd-nums rtd-mono"
               style={{ color: t.type === "income" ? "var(--rtd-green)" : "var(--rtd-red)" }}
             >
               {t.type === "income" ? "+" : "−"}
@@ -43,6 +43,6 @@ export function TransactionList({ businessId, transactions }: { businessId: numb
           </div>
         </div>
       ))}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { setBusinessArchivedAction, deleteBusinessAction } from "@/app/(app)/business/actions";
 
@@ -12,7 +12,7 @@ export function BusinessSettings({ businessId, archived }: { businessId: number;
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
-    <GlassCard className="flex flex-col gap-2">
+    <TerminalPanel>
       <Button
         variant="secondary"
         disabled={pending}
@@ -45,6 +45,6 @@ export function BusinessSettings({ businessId, archived }: { businessId: number;
           Delete venture (permanent)
         </Button>
       )}
-    </GlassCard>
+    </TerminalPanel>
   );
 }

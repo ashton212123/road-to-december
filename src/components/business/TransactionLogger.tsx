@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { logTransactionAction } from "@/app/(app)/business/actions";
@@ -23,7 +23,7 @@ export function TransactionLogger({ businessId }: { businessId: number }) {
   }
 
   return (
-    <GlassCard className="flex flex-col gap-3">
+    <TerminalPanel className="gap-3">
       <SegmentedControl
         value={type}
         onChange={setType}
@@ -54,6 +54,6 @@ export function TransactionLogger({ businessId }: { businessId: number }) {
       >
         Log {type}
       </Button>
-    </GlassCard>
+    </TerminalPanel>
   );
 }
