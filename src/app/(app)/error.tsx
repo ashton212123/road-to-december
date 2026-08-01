@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 
 const RETRY_KEY = "rtd-err-retry";
@@ -41,17 +41,17 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
   if (phase === "reconnecting") {
     return (
       <div className="flex-1 flex items-center justify-center p-6 min-h-[60dvh]">
-        <GlassCard className="max-w-sm text-center flex flex-col items-center gap-3">
+        <TerminalPanel className="max-w-sm text-center items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-[var(--rtd-text-tertiary)] border-t-transparent animate-spin" />
           <p className="text-subhead text-[var(--rtd-text-secondary)]">Reconnecting…</p>
-        </GlassCard>
+        </TerminalPanel>
       </div>
     );
   }
 
   return (
     <div className="flex-1 flex items-center justify-center p-6 min-h-[60dvh]">
-      <GlassCard className="max-w-sm text-center flex flex-col items-center gap-3">
+      <TerminalPanel className="max-w-sm text-center items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-[var(--rtd-red)]/15 flex items-center justify-center text-2xl">
           ⚠️
         </div>
@@ -64,7 +64,7 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
         <Button onClick={reset} className="mt-1">
           Try again
         </Button>
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }

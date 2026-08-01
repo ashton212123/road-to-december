@@ -1,9 +1,9 @@
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 
 export default function OfflinePage() {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
-      <GlassCard className="max-w-sm text-center flex flex-col items-center gap-3">
+      <TerminalPanel className="max-w-sm text-center items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-2xl">
           📡
         </div>
@@ -12,7 +12,7 @@ export default function OfflinePage() {
           Road to December works offline for pages you&apos;ve already opened. Reconnect to sync new
           logs, or keep browsing what&apos;s cached.
         </p>
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "./actions";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { Button } from "@/components/ui/Button";
 
 const initialState: LoginState = { error: null };
@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex-1 flex items-center justify-center p-6 rtd-app-bg min-h-dvh">
-      <GlassCard className="w-full max-w-sm flex flex-col gap-5 rtd-fade-in">
+      <TerminalPanel className="w-full max-w-sm gap-5 rtd-fade-in">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="w-14 h-14 rounded-[8px] bg-[var(--rtd-blue)]/15 flex items-center justify-center text-2xl">
             🏊
@@ -42,7 +42,7 @@ export default function LoginPage() {
             {pending ? "Checking…" : "Enter"}
           </Button>
         </form>
-      </GlassCard>
+      </TerminalPanel>
     </div>
   );
 }
