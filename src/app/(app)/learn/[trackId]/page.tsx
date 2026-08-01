@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { BentoCard } from "@/components/ui/BentoCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { LearnLevelRow } from "@/components/learn/LearnLevelRow";
 import { getLearnProgress } from "@/lib/db/queries";
 import { findTrack } from "@/lib/data/learn-tracks";
@@ -31,12 +31,14 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
           ‹ Learn
         </Link>
       </div>
-      <SectionLabel right={<span className="text-caption text-[var(--rtd-text-tertiary)] rtd-nums">{done.size}/{track.levels.length}</span>}>
-        {track.title}
-      </SectionLabel>
+      <SectionHeader
+        title={track.title}
+        statusChip={<span className="rtd-mono text-[11px] md:text-xs text-[var(--rtd-text-tertiary)]">{done.size}/{track.levels.length}</span>}
+        className="mb-2"
+      />
       <p className="text-footnote text-[var(--rtd-text-secondary)] leading-snug -mt-2">{track.blurb}</p>
 
-      <BentoCard>
+      <TerminalPanel>
         <div className="flex flex-col rtd-divide-y">
           {track.levels.map((level) => (
             <LearnLevelRow
@@ -50,7 +52,7 @@ export default async function LearnTrackPage({ params }: { params: Promise<{ tra
             />
           ))}
         </div>
-      </BentoCard>
+      </TerminalPanel>
 
       <a
         href={track.sourceUrl}
