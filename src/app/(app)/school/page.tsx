@@ -1,5 +1,5 @@
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AssignmentRow } from "@/components/school/AssignmentRow";
 import { CanvasRefreshButton } from "@/components/school/CanvasRefreshButton";
@@ -12,7 +12,7 @@ export default async function SchoolPage() {
   if (!configured) {
     return (
       <div className="flex flex-col gap-4 pt-1 md:max-w-2xl md:mx-auto">
-        <SectionLabel>School</SectionLabel>
+        <SectionHeader title="School" className="mb-2" />
         <EmptyState
           icon="🎓"
           title="Canvas isn't connected yet"
@@ -27,13 +27,13 @@ export default async function SchoolPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-1 md:max-w-4xl md:mx-auto">
-      <SectionLabel>School</SectionLabel>
+      <SectionHeader title="School" className="mb-2" />
 
       {error && (
-        <GlassCard className="border border-[var(--rtd-red)]/30">
+        <TerminalPanel className="border border-[var(--rtd-red)]/30">
           <div className="text-body font-semibold text-[var(--rtd-red)] mb-1">Canvas sync issue</div>
           <div className="text-subhead text-[var(--rtd-text-secondary)]">{error}</div>
-        </GlassCard>
+        </TerminalPanel>
       )}
 
       <CanvasRefreshButton syncedAt={syncedAt} />
@@ -43,38 +43,38 @@ export default async function SchoolPage() {
       ) : (
         <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4 md:items-start">
           <div>
-            <SectionLabel>Courses</SectionLabel>
-            <GlassCard className="flex flex-col gap-2">
+            <SectionHeader title="Courses" className="mb-2" />
+            <TerminalPanel className="gap-2">
               {courses.map((c) => (
                 <div key={c.id} className="flex items-center justify-between text-body">
                   <span className="text-[var(--rtd-text)]">{c.name}</span>
                   <span className="text-[var(--rtd-text-secondary)]">{c.currentGrade ?? "—"}</span>
                 </div>
               ))}
-            </GlassCard>
+            </TerminalPanel>
           </div>
 
           <div>
-            <SectionLabel>Assignments due</SectionLabel>
+            <SectionHeader title="Assignments due" className="mb-2" />
             {unsubmitted.length === 0 ? (
               <EmptyState title="Nothing outstanding" body="Every assignment is submitted or has no due date yet." />
             ) : (
-              <GlassCard className="flex flex-col rtd-divide-y rtd-stagger">
+              <TerminalPanel className="rtd-divide-y rtd-stagger">
                 {unsubmitted.map((a) => (
                   <AssignmentRow key={a.id} assignment={a} />
                 ))}
-              </GlassCard>
+              </TerminalPanel>
             )}
           </div>
 
           {submitted.length > 0 && (
             <div className="md:col-span-2">
-              <SectionLabel>Submitted</SectionLabel>
-              <GlassCard className="flex flex-col rtd-divide-y rtd-stagger">
+              <SectionHeader title="Submitted" className="mb-2" />
+              <TerminalPanel className="rtd-divide-y rtd-stagger">
                 {submitted.map((a) => (
                   <AssignmentRow key={a.id} assignment={a} />
                 ))}
-              </GlassCard>
+              </TerminalPanel>
             </div>
           )}
         </div>
