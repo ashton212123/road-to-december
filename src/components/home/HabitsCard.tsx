@@ -30,7 +30,6 @@ export function HabitsCard({
   today: string;
   className?: string;
 }) {
-  console.log(`[DEBUG-1B] HabitsCard received ${habits.length} habits`, JSON.stringify(habits[0] ?? null));
   const [localHabits, setLocalHabits] = useState<HabitWithTodayLog[]>(habits);
   // Guards the effect below against a fresh server re-render (after
   // revalidatePath/updateTag fires post-tap) clobbering a tap whose write

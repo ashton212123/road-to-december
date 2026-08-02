@@ -56,12 +56,7 @@ export async function getHomeHabitsData(today: string, windowStartISO: string): 
       ) d) as "dailyCompletion"
   `);
 
-  const result = rows[0] as unknown as HomeHabitsData;
-  console.log(
-    `[DEBUG-1A] getHomeHabitsData: ${result?.habits?.length ?? "undefined"} habits`,
-    JSON.stringify(result?.habits?.[0] ?? null)
-  );
-  return result;
+  return rows[0] as unknown as HomeHabitsData;
 }
 
 /** Settings' habit editor needs every habit, active or archived -- unlike
