@@ -88,6 +88,7 @@ const getCachedHomeData = unstable_cache(
 
     const [
       allPhases,
+      habitsData,
       latestWeighIn,
       weighInHistory,
       todaysFood,
@@ -103,11 +104,16 @@ const getCachedHomeData = unstable_cache(
       sorenessLogs,
       sessionLoads,
       allMeets,
-      habitsData,
       goalsData,
       keyTasks,
     ] = await Promise.all([
       withFallback(getAllPhasesWithSessionsUncached(), []),
+      // Submitted 2nd (was 17th of 19): at its old position this query's own
+      // withFallback race had almost always already elapsed by the time it
+      // reached the front of the 3-connection queue, so it lost to its own
+      // fallback on essentially every real request -- not intermittent
+      // contention, a deterministic queue-position starvation (WS6 §2 Task 1).
+      withFallback(getHomeHabitsData(today, addDaysISO(today, -29)), { habits: [], dailyCompletion: [] }),
       withFallback(getLatestWeighIn(), null),
       withFallback(getWeighIns(21), []),
       withFallback(getFoodLogsForDate(today), []),
@@ -123,7 +129,6 @@ const getCachedHomeData = unstable_cache(
       withFallback(getSorenessLogs(1), []),
       withFallback(getSessionLoadsSince(addDaysISO(today, -150)), []),
       withFallback(getAllMeetsWithEvents(), []),
-      withFallback(getHomeHabitsData(today, addDaysISO(today, -29)), { habits: [], dailyCompletion: [] }),
       withFallback(getHomeGoalsData(), { week: [], month: [] }),
       withFallback(getHomeKeyTasks(), []),
     ]);
