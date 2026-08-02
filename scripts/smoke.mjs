@@ -39,6 +39,8 @@ const CHECKS = [
   ["/more", null],
   ["/more/recovery", null],
   ["/more/settings", "Training status"],
+  ["/more/coach-ai", "How's my nutrition looking today?"],
+  ["/life/crm", "Kanban"],
   ["/school", null],
   ["/business", null],
   ["/offline", null],

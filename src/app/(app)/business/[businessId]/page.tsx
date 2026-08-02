@@ -9,6 +9,7 @@ import { BusinessSettings } from "@/components/business/BusinessSettings";
 import { getBusinessById, getBusinessTransactions, getBusinessTasks, getBusinessNotes } from "@/lib/db/queries";
 import { computeProfit, formatPhp } from "@/lib/business/profit";
 import { withRetry } from "@/lib/db/withRetry";
+import { withFallback } from "@/lib/db/withFallback";
 
 export default async function BusinessDetailPage({ params }: { params: Promise<{ businessId: string }> }) {
   const { businessId: businessIdParam } = await params;
@@ -18,15 +19,11 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
   const business = await withRetry(() => getBusinessById(businessId), { label: "Business detail" });
   if (!business) notFound();
 
-  const [transactions, tasks, notes] = await withRetry(
-    () =>
-      Promise.all([
-        getBusinessTransactions(businessId),
-        getBusinessTasks(businessId),
-        getBusinessNotes(businessId),
-      ]),
-    { label: "Business transactions/tasks/notes" }
-  );
+  const [transactions, tasks, notes] = await Promise.all([
+    withFallback(withRetry(() => getBusinessTransactions(businessId), { label: "Business detail: transactions" }), []),
+    withFallback(withRetry(() => getBusinessTasks(businessId), { label: "Business detail: tasks" }), []),
+    withFallback(withRetry(() => getBusinessNotes(businessId), { label: "Business detail: notes" }), []),
+  ]);
 
   const profit = computeProfit(transactions);
 

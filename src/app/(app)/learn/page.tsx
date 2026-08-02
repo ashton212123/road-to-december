@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getLearnProgress } from "@/lib/db/queries";
 import { LEARN_TRACKS } from "@/lib/data/learn-tracks";
 import { withRetry } from "@/lib/db/withRetry";
@@ -17,7 +17,7 @@ export default async function LearnPage() {
 
   return (
     <div className="flex flex-col gap-4 pt-1">
-      <SectionLabel>Learn</SectionLabel>
+      <SectionHeader title="Learn" className="mb-2" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {LEARN_TRACKS.map((track) => {
           const doneSet = doneByTrack.get(track.id);
