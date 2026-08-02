@@ -262,10 +262,11 @@ export const SWIM_SHORTHAND_RULES = `---
 
 Notation rules for this session's shorthand (parsing mechanics only):
 
-- TRAILING multiplier: when a repeat count trails a reps x distance block ("4x100 frim 3 sets", "4x100 x 3 sets", "..., 3 sets"), the trailing count multiplies the ENTIRE preceding block. "4x100 frim 3 sets" = 3 x (4 x 100) = 1200m. ("frim" is a typo for "from".)
+- TRAILING multiplier: when a repeat count trails a reps x distance block, the trailing count multiplies the ENTIRE preceding block, in ALL of these forms -- with a connector word ("4x100 frim 3 sets", "frim" is a typo for "from"), with "x" ("4x100 x 3 sets"), or completely BARE with no connector at all ("4x100 3 sets"). All three forms mean exactly the same thing: "4x100 3 sets" = 3 x (4 x 100) = 1200m, identically to "4x100 frim 3 sets" and "4x100 x 3 sets".
 - LEADING multiplier: when the repeat count leads ("3x16x50"), it multiplies the same way: 3 x 16 x 50 = 2400m.
 - PAIRED distances under a rep count: "25 scull + 25 IM" (or any "+"-joined list of distances) listed under a rep count means each listed distance counts once PER REP, not once total.
-- For every setByStepLog entry, put the distance of ONE occurrence of the block in "distanceM" and the number of times that whole block repeats in "sets" (default 1 when there is no outer repeat). Never fold an outer repeat count into "distanceM" yourself -- state it separately in "sets" so it can never be silently dropped.`;
+- For every setByStepLog entry, put the distance of ONE occurrence of the block in "distanceM" and the number of times that whole block repeats in "sets" (default 1 when there is no outer repeat). Never fold an outer repeat count into "distanceM" yourself -- state it separately in "sets" so it can never be silently dropped.
+- NEVER DROP A BLOCK. Every distinct line or bullet describing a swim block must produce a setByStepLog entry, even when you are not fully confident how to read it. If a line cannot be confidently interpreted, still emit it with your single best reading and add a matching "ambiguities" entry describing the uncertainty. Silently omitting a line from setByStepLog is always wrong -- a flagged guess is recoverable, a missing set is not.`;
 
 export type AnalystZone = "REC" | "TECH" | "EN1" | "EN2" | "EN3" | "SP1" | "SP2";
 const ANALYST_ZONES: AnalystZone[] = ["REC", "TECH", "EN1", "EN2", "EN3", "SP1", "SP2"];
