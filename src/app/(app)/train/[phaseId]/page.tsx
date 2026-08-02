@@ -144,17 +144,7 @@ export default async function PhaseSessionPage({
       (ex.defaultWeightKg !== null && ex.defaultWeightKg !== undefined ? Number(ex.defaultWeightKg) : null) ??
       progression?.suggestedWeightKg ??
       lastSessionTopWeight;
-    // Explosive-intent movements (box jump, broad jump, med-ball throws) are
-    // bodyweight by nature no matter what the prescription table says --
-    // "why would I need to put a weight in for a box jump? it's literally
-    // jumping." Otherwise, an exercise only counts as loaded if there's real
-    // evidence of load: a prescribed %1RM, a stored/learned default weight,
-    // or a weight actually logged for it before.
-    const hasHistoricalWeight = lastSessionSetsNum.some((s) => s.weightKg !== null);
-    const hasPct1rm = (ex.pct1rmMin !== null && ex.pct1rmMin !== undefined) || (ex.pct1rmMax !== null && ex.pct1rmMax !== undefined);
-    const hasStoredDefault = ex.defaultWeightKg !== null && ex.defaultWeightKg !== undefined;
-    const hasLoad = !ex.isExplosive && (hasPct1rm || hasStoredDefault || hasHistoricalWeight);
-    return { exercise: { ...ex, hasLoad }, lastSessionSets, todaysSets, progression, resolvedDefaultWeightKg };
+    return { exercise: ex, lastSessionSets, todaysSets, progression, resolvedDefaultWeightKg };
   });
 
   return (

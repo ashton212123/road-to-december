@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
   let transcript: string | null = null;
   if (audio instanceof Blob && audio.size > 0) {
     const filename = audio instanceof File && audio.name ? audio.name : `recording.${extensionForMimeType(audio.type)}`;
-    transcript = await transcribeAudio(audio, filename);
+    const transcribeResult = await transcribeAudio(audio, filename);
+    transcript = transcribeResult.ok ? transcribeResult.content : null;
   }
 
   const rawText = typeof typedText === "string" && typedText.trim() ? typedText.trim() : null;

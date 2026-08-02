@@ -32,8 +32,8 @@ function classifyRateLimitScope(body: string): "tpm" | "tpd" | "unknown" {
   return "unknown";
 }
 
-function logGroqError(error: GroqChatError): void {
-  console.error("[groq:callGroqChat]", error);
+function logGroqError(source: string, error: GroqChatError): void {
+  console.error(`[groq:${source}]`, error);
 }
 
 export async function callGroqChat(
@@ -43,7 +43,7 @@ export async function callGroqChat(
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     const error: GroqChatError = { kind: "missing_key" };
-    logGroqError(error);
+    logGroqError("callGroqChat", error);
     return { ok: false, error };
   }
 
@@ -66,7 +66,7 @@ export async function callGroqChat(
     });
   } catch (err) {
     const error: GroqChatError = { kind: "network_error", message: err instanceof Error ? err.message : String(err) };
-    logGroqError(error);
+    logGroqError("callGroqChat", error);
     return { ok: false, error };
   }
 
@@ -79,7 +79,7 @@ export async function callGroqChat(
       res.status === 429
         ? { kind: "rate_limited", scope: classifyRateLimitScope(bodyText), status: res.status, body: bodyText }
         : { kind: "http_error", status: res.status, body: bodyText };
-    logGroqError(error);
+    logGroqError("callGroqChat", error);
     return { ok: false, error };
   }
 
@@ -88,13 +88,13 @@ export async function callGroqChat(
     const content = data.choices?.[0]?.message?.content;
     if (typeof content !== "string") {
       const error: GroqChatError = { kind: "parse_error", body: bodyText };
-      logGroqError(error);
+      logGroqError("callGroqChat", error);
       return { ok: false, error };
     }
     return { ok: true, content };
   } catch {
     const error: GroqChatError = { kind: "parse_error", body: bodyText };
-    logGroqError(error);
+    logGroqError("callGroqChat", error);
     return { ok: false, error };
   }
 }
@@ -104,27 +104,59 @@ export async function callGroqChat(
  * returns an empty transcript -- the same gotcha the Telegram webhook's own
  * voice-note handler documents (api/telegram/webhook/route.ts); callers must
  * pass the actual recorded mimeType/filename, never a guessed default.
- * Never throws -- null on missing key, network error, or bad response. */
-export async function transcribeAudio(audio: Blob, filename: string): Promise<string | null> {
+ * Never throws -- callers get a discriminated result instead, same contract
+ * and same GroqChatError shape as callGroqChat, since this is the priority
+ * fix (WS5 §0 Task 3D): silent voice-logging failure was previously
+ * indistinguishable from "no speech in the recording." */
+export async function transcribeAudio(audio: Blob, filename: string): Promise<GroqChatResult> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    const error: GroqChatError = { kind: "missing_key" };
+    logGroqError("transcribeAudio", error);
+    return { ok: false, error };
+  }
 
   const form = new FormData();
   form.append("file", audio, filename);
   form.append("model", "whisper-large-v3-turbo");
 
+  let res: Response;
   try {
-    const res = await fetch(GROQ_TRANSCRIBE_URL, {
+    res = await fetch(GROQ_TRANSCRIBE_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}` },
       body: form,
       signal: AbortSignal.timeout(30_000),
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { text?: string };
-    return typeof data.text === "string" ? data.text : null;
+  } catch (err) {
+    const error: GroqChatError = { kind: "network_error", message: err instanceof Error ? err.message : String(err) };
+    logGroqError("transcribeAudio", error);
+    return { ok: false, error };
+  }
+
+  const bodyText = await res.text().catch(() => "");
+
+  if (!res.ok) {
+    const error: GroqChatError =
+      res.status === 429
+        ? { kind: "rate_limited", scope: classifyRateLimitScope(bodyText), status: res.status, body: bodyText }
+        : { kind: "http_error", status: res.status, body: bodyText };
+    logGroqError("transcribeAudio", error);
+    return { ok: false, error };
+  }
+
+  try {
+    const data = JSON.parse(bodyText) as { text?: string };
+    if (typeof data.text !== "string") {
+      const error: GroqChatError = { kind: "parse_error", body: bodyText };
+      logGroqError("transcribeAudio", error);
+      return { ok: false, error };
+    }
+    return { ok: true, content: data.text };
   } catch {
-    return null;
+    const error: GroqChatError = { kind: "parse_error", body: bodyText };
+    logGroqError("transcribeAudio", error);
+    return { ok: false, error };
   }
 }
 
@@ -172,6 +204,16 @@ function raceTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
   });
 }
 
+/** WS5 §0 Task 3D: same "no failure mode indistinguishable from no result"
+ * requirement as callGroqChat, applied without changing this function's
+ * external `string | null` shape -- route.ts already treats null as "fall
+ * back to the plain streaming path," and restructuring a multi-round tool
+ * loop's return type would ripple into that fallback logic for no real
+ * benefit. Every path that returns null now logs a reason first. */
+function logToolsError(reason: string, detail: unknown): void {
+  console.error("[groq:callGroqChatWithTools]", reason, detail);
+}
+
 /** Groq function-calling loop (same OpenAI-compatible shape the endpoint
  * already speaks for jsonMode). Executes any tool_calls the model requests
  * via `executeTool`, feeds results back, and repeats until the model
@@ -180,7 +222,8 @@ function raceTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
  * the athlete gets a real answer instead of a silent stop. Never throws --
  * null on missing key/network failure/deadline exhaustion, same contract
  * as the rest of this file (route.ts falls back to the plain streaming
- * path when this returns null). */
+ * path when this returns null) -- but every one of those null returns is
+ * now logged with its distinguishing reason first (see logToolsError). */
 export async function callGroqChatWithTools(
   messages: GroqMessage[],
   tools: GroqToolDef[],
@@ -188,13 +231,17 @@ export async function callGroqChatWithTools(
   opts: { temperature?: number } = {}
 ): Promise<string | null> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    logToolsError("missing_key", null);
+    return null;
+  }
 
   const conversation = [...messages];
   const deadline = Date.now() + TOOL_LOOP_DEADLINE_MS;
   const timeLeft = () => Math.max(0, deadline - Date.now());
 
   async function callOnce(toolChoice: "auto" | "none", timeoutMs: number): Promise<{ message: GroqMessage } | null> {
+    let settled = false;
     const attempt = (async (): Promise<{ message: GroqMessage } | null> => {
       try {
         const res = await fetch(GROQ_URL, {
@@ -207,25 +254,44 @@ export async function callGroqChatWithTools(
             ...(toolChoice === "auto" ? { tools, tool_choice: "auto" } : { tool_choice: "none" }),
           }),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          logToolsError("http_error", { status: res.status, body: await res.text().catch(() => "") });
+          return null;
+        }
         const data = (await res.json()) as { choices?: { message?: GroqMessage }[] };
         const message = data.choices?.[0]?.message;
-        return message ? { message } : null;
-      } catch {
+        if (!message) {
+          logToolsError("parse_error", "no message in response");
+          return null;
+        }
+        return { message };
+      } catch (err) {
+        logToolsError("network_error", err instanceof Error ? err.message : String(err));
         return null;
+      } finally {
+        settled = true;
       }
     })();
-    return raceTimeout(attempt, timeoutMs, null);
+    const result = await raceTimeout(attempt, timeoutMs, null);
+    // If the race resolved via its timeout fallback before `attempt` itself
+    // settled, `attempt`'s own catch/return branches above never ran, so
+    // this is the one null-path they can't have already logged.
+    if (result === null && !settled) logToolsError("timeout", { timeoutMs });
+    return result;
   }
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     if (timeLeft() < MIN_STEP_TIMEOUT_MS) break;
     const result = await callOnce("auto", timeLeft());
-    if (!result) return null;
+    if (!result) return null; // already logged inside callOnce
     const { message } = result;
 
     if (!message.tool_calls || message.tool_calls.length === 0) {
-      return message.content ?? null;
+      if (message.content === null || message.content === undefined) {
+        logToolsError("empty_content_no_tool_calls", null);
+        return null;
+      }
+      return message.content;
     }
 
     conversation.push(message);
@@ -251,18 +317,36 @@ export async function callGroqChatWithTools(
 
   // Ran out of rounds (or deadline) -- force a final plain-text answer if
   // there's still time, instead of silently stopping mid tool-call.
-  if (timeLeft() < MIN_STEP_TIMEOUT_MS) return null;
+  if (timeLeft() < MIN_STEP_TIMEOUT_MS) {
+    logToolsError("deadline_exhausted", null);
+    return null;
+  }
   const final = await callOnce("none", timeLeft());
-  return final?.message.content ?? null;
+  if (!final) return null; // already logged inside callOnce
+  if (final.message.content === null || final.message.content === undefined) {
+    logToolsError("empty_final_content", null);
+    return null;
+  }
+  return final.message.content;
 }
 
-/** Streams a chat completion as plain text chunks (already unwrapped from Groq's SSE/delta framing). Returns null immediately if the key is missing or the initial request fails; a mid-stream failure just ends the stream early. */
+/** Streams a chat completion as plain text chunks (already unwrapped from Groq's SSE/delta framing).
+ * Returns null immediately if the key is missing or the initial request fails -- every one of those
+ * pre-stream failures is now logged with its distinguishing reason (same GroqChatError classification
+ * as callGroqChat), so a null here is never indistinguishable from "no result" in the server log, even
+ * though the return type itself stays a plain stream-or-null (wrapping the stream in a result object
+ * would just push the same ok/err check onto every caller for no benefit -- the caller already treats
+ * null as "unavailable, fall back"). A mid-stream failure still just ends the stream early -- that's a
+ * partial-result case, not a "no result" one, so it's unchanged. */
 export async function streamGroqChat(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
   opts: { temperature?: number } = {}
 ): Promise<ReadableStream<string> | null> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    logGroqError("streamGroqChat", { kind: "missing_key" });
+    return null;
+  }
 
   let res: Response;
   try {
@@ -280,10 +364,24 @@ export async function streamGroqChat(
       }),
       signal: AbortSignal.timeout(60_000),
     });
-  } catch {
+  } catch (err) {
+    logGroqError("streamGroqChat", { kind: "network_error", message: err instanceof Error ? err.message : String(err) });
     return null;
   }
-  if (!res.ok || !res.body) return null;
+  if (!res.ok) {
+    const bodyText = await res.text().catch(() => "");
+    logGroqError(
+      "streamGroqChat",
+      res.status === 429
+        ? { kind: "rate_limited", scope: classifyRateLimitScope(bodyText), status: res.status, body: bodyText }
+        : { kind: "http_error", status: res.status, body: bodyText }
+    );
+    return null;
+  }
+  if (!res.body) {
+    logGroqError("streamGroqChat", { kind: "parse_error", body: "response had no body" });
+    return null;
+  }
 
   const upstream = res.body.getReader();
   const decoder = new TextDecoder();

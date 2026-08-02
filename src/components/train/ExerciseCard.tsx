@@ -50,11 +50,6 @@ export type ExerciseSummary = {
   restSecondsPrescribed: number | null;
   isExplosive: boolean;
   isMainLift: boolean;
-  /** False for bodyweight/no-load movements (explosive intent, or no %1RM,
-   * stored default, or logged history to suggest one) -- the Add-set grid
-   * drops the weight input entirely instead of asking for a kg number that
-   * doesn't apply (e.g. a box jump). */
-  hasLoad: boolean;
   movementPattern: string | null;
 };
 
@@ -151,7 +146,7 @@ export function ExerciseCard({
     const finishedNow = isFinalPrescribedSet;
     navigator.vibrate?.(50);
     startTransition(async () => {
-      const usedWeightDisplay = !exercise.hasLoad ? null : weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
+      const usedWeightDisplay = weight ? Number(weight) : ghostWeight ? Number(ghostWeight) : null;
       const usedWeight = usedWeightDisplay !== null ? displayToKg(usedWeightDisplay, weightUnit) : null;
       const usedReps = reps ? Number(reps) : ghostReps ? Number(ghostReps) : null;
       await logSetAction({
@@ -274,7 +269,7 @@ export function ExerciseCard({
           {todaysSets.length > 0 && (
             <div className="flex flex-col gap-1">
               {todaysSets.map((s) => (
-                <SetRow key={s.id} set={s} phaseId={phaseId} weightUnit={weightUnit} hasLoad={exercise.hasLoad} />
+                <SetRow key={s.id} set={s} phaseId={phaseId} weightUnit={weightUnit} />
               ))}
             </div>
           )}
@@ -311,19 +306,17 @@ export function ExerciseCard({
             </div>
           )}
 
-          <div className={`grid gap-2 items-end ${exercise.hasLoad ? "grid-cols-3" : "grid-cols-2"}`}>
-            {exercise.hasLoad && (
-              <label className="flex flex-col gap-1 col-span-1">
-                <span className="rtd-micro-label">{weightUnit}</span>
-                <input
-                  inputMode="decimal"
-                  value={weight}
-                  placeholder={ghostWeight || undefined}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
-                />
-              </label>
-            )}
+          <div className="grid gap-2 items-end grid-cols-3">
+            <label className="flex flex-col gap-1 col-span-1">
+              <span className="rtd-micro-label">{weightUnit}</span>
+              <input
+                inputMode="decimal"
+                value={weight}
+                placeholder={ghostWeight || "optional"}
+                onChange={(e) => setWeight(e.target.value)}
+                className="rounded-lg bg-white/[0.06] px-2 py-2 text-subhead text-center outline-none placeholder:text-[var(--rtd-text-tertiary)]"
+              />
+            </label>
             <label className="flex flex-col gap-1 col-span-1">
               <span className="rtd-micro-label">reps</span>
               <input
@@ -357,7 +350,7 @@ export function ExerciseCard({
   );
 }
 
-function SetRow({ set, phaseId, weightUnit, hasLoad }: { set: LoggedSet; phaseId: string; weightUnit: WeightUnit; hasLoad: boolean }) {
+function SetRow({ set, phaseId, weightUnit }: { set: LoggedSet; phaseId: string; weightUnit: WeightUnit }) {
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const initialWeightKg = set.weightKg !== null ? Number(set.weightKg) : null;
@@ -370,7 +363,7 @@ function SetRow({ set, phaseId, weightUnit, hasLoad }: { set: LoggedSet; phaseId
     startTransition(async () => {
       await updateSetAction({
         logId: set.id,
-        weightKg: hasLoad && weight ? displayToKg(Number(weight), weightUnit) : null,
+        weightKg: weight ? displayToKg(Number(weight), weightUnit) : null,
         reps: reps ? Number(reps) : null,
         rpe: rpe ? Number(rpe) : null,
         notes: notes || null,
@@ -383,16 +376,14 @@ function SetRow({ set, phaseId, weightUnit, hasLoad }: { set: LoggedSet; phaseId
   if (editing) {
     return (
       <div className="flex flex-col gap-2 bg-white/[0.04] rounded-lg px-2.5 py-2">
-        <div className={`grid gap-2 ${hasLoad ? "grid-cols-3" : "grid-cols-2"}`}>
-          {hasLoad && (
-            <input
-              inputMode="decimal"
-              placeholder={weightUnit}
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
-            />
-          )}
+        <div className="grid gap-2 grid-cols-3">
+          <input
+            inputMode="decimal"
+            placeholder={weightUnit}
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            className="rounded-lg bg-white/[0.06] px-2 py-1.5 text-subhead text-center outline-none"
+          />
           <input
             inputMode="numeric"
             placeholder="reps"
