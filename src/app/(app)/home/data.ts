@@ -87,7 +87,26 @@ const FALLBACK_SETTINGS = {
 // still gives immediate freshness right after any log action.
 const getCachedHomeData = unstable_cache(
   async (today: string) => {
-    const canvas = await getCanvasSummary({ sync: false });
+    // The only query in this whole pipeline that wasn't wrapped in
+    // withFallback -- getCanvasSummary's own db.select().from(canvasCourses)
+    // (lib/canvas/sync.ts) has no timeout/fallback of its own, and it's
+    // awaited here BEFORE the 19-query Promise.all even starts. Confirmed
+    // live (WS6 §2 Task 1) as the actual root cause of the "persistent"
+    // habits/phases 0-row fallbacks: canvas_courses hit Postgres's own 20s
+    // statement_timeout on essentially every real request, which alone ate
+    // the whole outer withRetry 15s budget before the Promise.all's own 19
+    // queries got a fair chance to even start, let alone finish -- not a
+    // queue-position problem inside the Promise.all at all.
+    // Shorter than the 10s default: this runs before the 19-query Promise.all
+    // even starts, so every second it eats here is a second stolen from the
+    // outer withRetry's 15s budget for everything that actually renders the
+    // page. Canvas only feeds the urgent/critical-assignments alert list, not
+    // any core Home card, so a tight budget is the right trade here.
+    const canvas = await withFallback(
+      getCanvasSummary({ sync: false }),
+      { configured: false, courses: [], assignments: [], syncedAt: null, error: null },
+      5000
+    );
 
     const [
       allPhases,
