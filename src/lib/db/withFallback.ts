@@ -14,7 +14,8 @@ export function withFallback<T>(promise: Promise<T>, fallback: T, timeoutMs = 10
         clearTimeout(timer);
         resolve(v);
       },
-      () => {
+      (err) => {
+        console.error("[DEBUG-1A-REJECT]", err);
         clearTimeout(timer);
         resolve(fallback);
       }
