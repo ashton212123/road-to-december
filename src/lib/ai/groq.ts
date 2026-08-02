@@ -13,7 +13,7 @@ const MODEL = "llama-3.3-70b-versatile";
 
 export async function callGroqChat(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
-  opts: { jsonMode?: boolean; temperature?: number; timeoutMs?: number } = {}
+  opts: { jsonMode?: boolean; temperature?: number; timeoutMs?: number; seed?: number } = {}
 ): Promise<string | null> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
@@ -29,6 +29,7 @@ export async function callGroqChat(
         model: MODEL,
         temperature: opts.temperature ?? 0.4,
         ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
+        ...(opts.seed !== undefined ? { seed: opts.seed } : {}),
         messages,
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),

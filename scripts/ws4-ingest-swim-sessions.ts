@@ -1,9 +1,12 @@
 /**
  * WS4 §4 -- one-off ingestion of four real swim sessions through The
- * Analyst (src/lib/swim/analyst.ts). Kept as a permanent, auditable record
- * of exactly what raw text and logic produced these four rows -- not meant
- * to be re-run (a second run would insert duplicate rows; there's no
- * upsert/dedupe key here on purpose, since these are one-time real data).
+ * Analyst (src/lib/swim/analyst.ts). Originally an INSERT; WS4 §4b turned
+ * it into an idempotent in-place UPDATE of rows 8-11 once the parser
+ * changed (fixed temperature/seed, required "sets" field, 3-run
+ * self-consistency gate) -- re-running it re-scores the same four rows
+ * rather than inserting duplicates. date and setsText are never touched by
+ * the UPDATE: setsText must stay byte-for-byte verbatim forever, and the
+ * year flags on July 22/23 (dateYearConfirmed) were a one-time decision.
  *
  * Run with: npx tsx scripts/ws4-ingest-swim-sessions.ts
  */
@@ -11,10 +14,12 @@ import "../src/lib/db/load-env";
 import { eq } from "drizzle-orm";
 import { db } from "../src/lib/db/index";
 import { swimSessions } from "../src/lib/db/schema";
-import { analyzeSwimSession } from "../src/lib/swim/analyst";
+import { analyzeSwimSession, type AnalystResult } from "../src/lib/swim/analyst";
 import { checkDistance } from "../src/lib/swim/distanceChecksum";
+import { evaluateConsistency, type ConsistencyConfidence } from "../src/lib/swim/selfConsistency";
 
 type RawSession = {
+  id: number;
   label: string;
   date: string;
   dateYearConfirmed: boolean;
@@ -24,8 +29,11 @@ type RawSession = {
 
 // Raw text reproduced verbatim from the athlete's notes -- every character,
 // bullet, checkmark, and line break exactly as given. Do not reformat.
+// ids match the rows originally inserted by this script's first run
+// (read back and reported to the athlete before WS4 §4b existed).
 const SESSIONS: RawSession[] = [
   {
+    id: 8,
     label: "July 23",
     date: "2026-07-23",
     dateYearConfirmed: false,
@@ -50,6 +58,7 @@ const SESSIONS: RawSession[] = [
 Total Distance: 4,800 m`,
   },
   {
+    id: 9,
     label: "July 28",
     date: "2026-07-28",
     dateYearConfirmed: true,
@@ -74,6 +83,7 @@ Workout
     * Total — 1,600 m`,
   },
   {
+    id: 10,
     label: "July 16",
     date: "2026-07-16",
     dateYearConfirmed: true,
@@ -107,6 +117,7 @@ paddle fins
 12.60`,
   },
   {
+    id: 11,
     label: "July 22",
     date: "2026-07-22",
     dateYearConfirmed: false,
@@ -138,7 +149,8 @@ function buildAiAnalysis(
   sessionTitle: string,
   sessionAnalysis: string,
   ambiguities: { location: string; issue: string; readings: string[] }[],
-  checksum: ReturnType<typeof checkDistance>
+  checksum: ReturnType<typeof checkDistance>,
+  consistency: { totals: number[]; confidence: ConsistencyConfidence; agreedTotal: number }
 ): string {
   const parts = [`## ${sessionTitle}`, "", sessionAnalysis];
 
@@ -163,56 +175,123 @@ function buildAiAnalysis(
     }
   }
 
+  parts.push(
+    "",
+    `⚠ SELF-CONSISTENCY (WS4 §4b): 3 runs -> [${consistency.totals.join(", ")}]m, confidence: ${consistency.confidence}${consistency.confidence === "medium" ? " (majority 2 of 3 agreed)" : " (all 3 agreed)"}, agreed total used: ${consistency.agreedTotal}m.`
+  );
+
   return parts.join("\n");
 }
 
+// Groq's on-demand tier caps this model at 12000 tokens/min; each call here
+// (large system prompt + structured JSON response) burns roughly a third of
+// that budget, so back-to-back calls exhaust it within a handful of requests
+// and every call after that gets silently swallowed to null by
+// callGroqChat (it never surfaces the 429). This delay keeps steady-state
+// throughput under the budget -- confirmed against the account's actual
+// x-ratelimit-limit-tokens/remaining-tokens headers, not guessed.
+const CALL_SPACING_MS = 20_000;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+let firstCall = true;
+async function pacedAnalyze(rawText: string) {
+  if (!firstCall) await sleep(CALL_SPACING_MS);
+  firstCall = false;
+  return analyzeSwimSession(rawText);
+}
+
 async function main() {
-  const insertedIds: number[] = [];
+  const updatedIds: number[] = [];
+  const skippedLabels: string[] = [];
 
   for (const session of SESSIONS) {
-    console.log(`\n=== ${session.label} ===`);
-    const result = await analyzeSwimSession(session.rawText);
-    if (!result) {
-      console.error(`FAILED: The Analyst returned no result for ${session.label}`);
+    console.log(`\n=== ${session.label} (id=${session.id}) ===`);
+
+    // Sanity check: refuse to overwrite a row whose setsText doesn't match
+    // what this script expects to be updating -- never blind-write by id.
+    const [existing] = await db.select().from(swimSessions).where(eq(swimSessions.id, session.id));
+    if (!existing) {
+      console.error(`  ABORT: no row with id=${session.id} -- refusing to insert a new one under §4b (UPDATE only).`);
+      skippedLabels.push(session.label);
+      continue;
+    }
+    if (existing.setsText !== session.rawText) {
+      console.error(`  ABORT: row ${session.id}'s stored setsText does not match this script's rawText for "${session.label}" -- refusing to update the wrong row.`);
+      skippedLabels.push(session.label);
       continue;
     }
 
-    const checksum = checkDistance(session.statedTotalDistanceM, result.parsedDistanceM);
-    console.log(`stated=${checksum.statedM ?? "null"} parsed=${checksum.parsedM} mismatch=${checksum.mismatch}`);
-    if (result.ambiguities.length > 0) {
-      console.log(`ambiguities: ${result.ambiguities.length}`);
-      for (const a of result.ambiguities) console.log(`  - ${a.location}: ${a.issue}`);
+    const runs: (AnalystResult | null)[] = [];
+    for (let i = 0; i < 3; i++) {
+      const result = await pacedAnalyze(session.rawText);
+      runs.push(result);
+      console.log(`  run ${i + 1}: ${result ? `${result.parsedDistanceM}m` : "FAILED (no result)"}`);
     }
 
-    const aiAnalysis = buildAiAnalysis(session, result.sessionTitle, result.sessionAnalysis, result.ambiguities, checksum);
-    const trainingLoad = result.overview.trainingLoad;
+    if (runs.some((r) => r === null)) {
+      console.error(`  SKIPPED: at least one of 3 runs returned no result for ${session.label}.`);
+      skippedLabels.push(session.label);
+      continue;
+    }
 
-    const [row] = await db
-      .insert(swimSessions)
-      .values({
-        date: session.date,
+    const totals = runs.map((r) => r!.parsedDistanceM) as [number, number, number];
+    const verdict = evaluateConsistency(totals);
+    if (verdict.confidence === null || verdict.agreedTotal === null) {
+      console.error(`  SKIPPED (per WS4 §4b Task 3): all 3 runs disagree -- [${totals.join(", ")}]m. Row left unchanged.`);
+      skippedLabels.push(session.label);
+      continue;
+    }
+
+    const chosen = runs.find((r) => r!.parsedDistanceM === verdict.agreedTotal)!;
+    console.log(`  confidence=${verdict.confidence} agreedTotal=${verdict.agreedTotal}m`);
+
+    const checksum = checkDistance(session.statedTotalDistanceM, chosen.parsedDistanceM);
+    console.log(`  stated=${checksum.statedM ?? "null"} parsed=${checksum.parsedM} mismatch=${checksum.mismatch}`);
+    if (chosen.ambiguities.length > 0) {
+      console.log(`  ambiguities: ${chosen.ambiguities.length}`);
+      for (const a of chosen.ambiguities) console.log(`    - ${a.location}: ${a.issue}`);
+    }
+
+    const aiAnalysis = buildAiAnalysis(session, chosen.sessionTitle, chosen.sessionAnalysis, chosen.ambiguities, checksum, {
+      totals,
+      confidence: verdict.confidence,
+      agreedTotal: verdict.agreedTotal,
+    });
+    const trainingLoad = chosen.overview.trainingLoad;
+
+    await db
+      .update(swimSessions)
+      .set({
         loadRating: trainingLoad,
-        setsText: session.rawText,
-        parsedDistanceM: result.parsedDistanceM,
+        parsedDistanceM: chosen.parsedDistanceM,
         statedTotalDistanceM: session.statedTotalDistanceM,
-        zoneDistanceM: result.intensityDistributionM,
-        strokeDistanceM: result.overview.strokeBreakdownM,
-        equipmentDistanceM: result.overview.equipmentBreakdownM,
-        qualityDistanceM: result.overview.qualityDistanceM,
-        durationMin: result.overview.estimatedDurationMin,
+        zoneDistanceM: chosen.intensityDistributionM,
+        strokeDistanceM: chosen.overview.strokeBreakdownM,
+        equipmentDistanceM: chosen.overview.equipmentBreakdownM,
+        qualityDistanceM: chosen.overview.qualityDistanceM,
+        durationMin: chosen.overview.estimatedDurationMin,
         sessionRpe: String(trainingLoad),
         aiAnalysis,
       })
-      .returning({ id: swimSessions.id });
+      .where(eq(swimSessions.id, session.id));
 
-    console.log(`inserted id=${row.id}`);
-    insertedIds.push(row.id);
+    console.log(`  updated id=${session.id}`);
+    updatedIds.push(session.id);
   }
 
-  console.log("\n=== READ BACK ===");
-  for (const id of insertedIds) {
-    const [row] = await db.select().from(swimSessions).where(eq(swimSessions.id, id));
+  console.log("\n=== READ BACK (all 4 rows, updated or not) ===");
+  for (const session of SESSIONS) {
+    const [row] = await db.select().from(swimSessions).where(eq(swimSessions.id, session.id));
+    if (!row) {
+      console.log(`id=${session.id}: MISSING`);
+      continue;
+    }
+    const setsTextOk = row.setsText === session.rawText;
+    console.log(`\n--- id=${session.id} (${session.label}) -- setsText byte-verbatim: ${setsTextOk ? "OK" : "MISMATCH"} ---`);
     console.log(JSON.stringify(row, null, 2));
+  }
+
+  if (skippedLabels.length > 0) {
+    console.error(`\nSKIPPED (not updated, left as previously stored): ${skippedLabels.join(", ")}`);
   }
 
   process.exit(0);
