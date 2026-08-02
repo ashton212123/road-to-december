@@ -1465,3 +1465,38 @@ corrections needed. This is WS5 §0's Task 1; the remaining tasks in this sectio
 rejection diagnosis, full logging-surface audit + weight-entry fix, Home UI gap pass, and a
 Groq-quota-permitting §4c A2 rerun) are tracked and reported in this session, each gated and
 committed on its own per the section's own rules.
+
+### Task 4C — "Today I will" intention input: schema gap, migration not applied
+
+Every other Task 4 item (`d27155c`) landed. 4C needed a single-line, per-day, user-authored
+intention that persists across reload. No existing column fits without repurposing something with
+a different documented purpose (`ai_takeaways` is a per-day cache keyed by feature name for
+*AI-generated* one-liners, explicitly to avoid re-costing a Groq call — using it for direct user
+input would conflate two different concerns the table's own comment says are meant to stay
+separate). Per the task's own instruction, showing the migration and stopping here rather than
+building on top of a repurposed table:
+
+```sql
+CREATE TABLE daily_intentions (
+  date       date PRIMARY KEY,
+  text       text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+Drizzle (`src/lib/db/schema.ts`, alongside `dailyBriefs` which shares the same date-primary-key
+shape):
+
+```ts
+export const dailyIntentions = pgTable("daily_intentions", {
+  date: date("date").primaryKey(),
+  text: text("text").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+Not applied — no `db:push`/`db:generate` run, no `getTodayIntention`/`setIntentionAction` written,
+no input rendered on `TodaysPlanCard`. Next step if approved: add the table, a query + a server
+action (upsert by `date`, mirroring `toggleHabitSubtaskAction`'s `onConflictDoUpdate` pattern), and
+the input itself below the greeting on "02 // SESSION," gated behind the same four checks as
+everything else in this pass.
