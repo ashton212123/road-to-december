@@ -1425,3 +1425,43 @@ not independently user-facing.
 resolution, exact kit-measured recipes, live manual verification since `/life/crm` isn't in
 `smoke.mjs`'s route list) — see `git show 3a9ba7f`. Gates: lint/tsc/build clean, smoke baseline-
 consistent. Deployed.
+
+---
+
+## WS4 §4d — close-out (2026-08-02)
+
+WS4 (swim schema, the Analyst, parse reliability — §0 through §4c) ran commit-by-commit
+(`c74fd6f`..`367688c`) without a section-by-section log entry each time, unlike WS3d; full detail
+for each lives in its own commit message (`git show <hash>`). This entry closes out §4d, the last
+two commits before WS5 begins:
+
+- **`e70c075`** — WS4 §4c Part A (A1 only): added the bare trailing-multiplier rule ("4x100 3
+  sets" reads identically to "4x100 x 3 sets") and the never-drop-a-block rule (an unconfident
+  parse line must still emit a best-reading + ambiguities entry, never silently vanish) to
+  `SWIM_SHORTHAND_RULES` — user-message only, `ANALYST_SYSTEM_PROMPT` untouched per the standing
+  constraint. **§4c A2 verification (the 4-session regression fixture) was left PENDING by this
+  commit's own message** — blocked mid-run by Groq's 100k-tokens/day cap. Not re-attempted since;
+  WS5 §0 Task 5 (this session, Groq-quota permitting) is the next attempt.
+- **`62f6945`** — WS4 §4d Task 2: `callGroqChat` converted from `string | null` to a discriminated
+  `GroqChatResult` (`missing_key` / `rate_limited{scope: "tpm"|"tpd"|"unknown"}` / `http_error` /
+  `network_error` / `parse_error`), every failure logged once centrally inside the function itself.
+  All 13 call sites across 12 files updated mechanically (`if (!content)` → `if (!result.ok)`).
+  Gates: lint clean (1 pre-existing unrelated warning), tsc clean, build clean, smoke unchanged
+  from baseline (6 pre-existing `/analytics` timeout failures, zero regressions). Three sibling
+  functions (`callGroqChatWithTools`, `streamGroqChat`, `transcribeAudio`) were explicitly left
+  returning plain `null` — out of scope for that task, picked up in WS5 §0 Task 3D.
+
+---
+
+## WS5 §0 — spec transcription, diagnosis, audit, UI pass (begun 2026-08-02)
+
+`SWIM_INTELLIGENCE_SPEC.md` added to the repo root: verbatim transcription of the swim
+intelligence architecture spec (governing "code computes, the LLM interprets" decision, athlete
+PBs with full split profiles, QT derivation rule, 2025 SEA Games reference times, QT stability
+ratings per event, the 7-phase build plan 5.1–5.7). Every time value in the file was re-read after
+writing and cross-checked digit-for-digit against the source spec text, including the worked-proof
+arithmetic (31.0 − 30.46 = 0.54s; 31.0+36.7+37.1+36.7 = 2:21.5) — transcribed clean, no
+corrections needed. This is WS5 §0's Task 1; the remaining tasks in this section (unhandled-
+rejection diagnosis, full logging-surface audit + weight-entry fix, Home UI gap pass, and a
+Groq-quota-permitting §4c A2 rerun) are tracked and reported in this session, each gated and
+committed on its own per the section's own rules.
