@@ -316,6 +316,8 @@ export const swimSessions = pgTable("swim_sessions", {
   sessionType: text("session_type"),
   zoneDistanceM: jsonb("zone_distance_m").$type<Record<string, number>>(),
   strokeDistanceM: jsonb("stroke_distance_m").$type<Record<string, number>>(),
+  equipmentDistanceM: jsonb("equipment_distance_m").$type<Record<string, number>>(),
+  qualityDistanceM: integer("quality_distance_m"),
   statedTotalDistanceM: integer("stated_total_distance_m"),
   breastKickM: integer("breast_kick_m"),
   durationMin: integer("duration_min"),
