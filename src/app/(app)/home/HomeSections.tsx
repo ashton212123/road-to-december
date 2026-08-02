@@ -166,6 +166,12 @@ export async function HomeMainContent({ today }: { today: string }) {
             todayExercises={vm.todaySession?.exercises.map((e) => ({ id: e.id, name: e.name })) ?? []}
             greeting={greetingForHour(vm.hour)}
           />
+          {/* TEMP WS6 §2 Task 1: differential-diagnosis marker, embeds the exact
+              server-rendered value of vm.habitsData.habits directly in the HTML
+              response so it's inspectable without log-tailing. Remove after diagnosis. */}
+          <div id="debug-1a-habits" style={{ display: "none" }}>
+            {JSON.stringify({ count: vm.habitsData.habits.length, first: vm.habitsData.habits[0] ?? null })}
+          </div>
           <HabitsCard habits={vm.habitsData.habits} dots={vm.habitStreakDots} today={today} />
           <CalendarStripCard days={vm.calendarStripDays} today={today} />
           <Suspense fallback={<CoachBriefSkeleton />}>
