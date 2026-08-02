@@ -78,7 +78,10 @@ const FALLBACK_SETTINGS = {
 // Key versioned (v3, loop 39) because this function's returned shape lost
 // mainLiftLogs (findRecentPRs no longer needs it -- swim PRs + CMJ only) --
 // same reasoning as analytics/page.tsx's cache key: the tag alone doesn't
-// invalidate a same-day entry warmed before this deploy.
+// invalidate a same-day entry warmed before this deploy. Bumped to v7 (WS6
+// §2 Task 1) for the same reason: a starved-habits fallback entry warmed
+// under the old query order would otherwise keep serving stale empty
+// habits for up to 300s after the reorder fix deployed.
 // revalidate: 300 (Personal OS merge, streaming pass) bounds staleness for a
 // read that lands with no matching write in between -- tag invalidation
 // still gives immediate freshness right after any log action.
@@ -156,7 +159,7 @@ const getCachedHomeData = unstable_cache(
       keyTasks,
     };
   },
-  ["home-page-data-v6"],
+  ["home-page-data-v7"],
   { tags: ["home-data"], revalidate: 300 }
 );
 
