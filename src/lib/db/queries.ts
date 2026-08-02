@@ -61,9 +61,16 @@ export async function getSettingsRow() {
 // nesting was observed in production to sometimes resolve to an empty
 // array instead of the real rows, silently (LOOP_LOG.md).
 export async function getAllPhasesWithSessionsUncached() {
-  const phaseRows = await db.select().from(phases).orderBy(asc(phases.orderIndex));
-  const sessionRows = await db.select().from(sessions).orderBy(asc(sessions.orderIndex));
-  const exerciseRows = await db.select().from(exercises).orderBy(asc(exercises.orderIndex));
+  // The three tables have no cross-dependency here (joined in JS below via
+  // .filter(), not by query) -- awaiting them in parallel instead of in
+  // sequence cuts this function's own pool-hold time ~3x, which matters
+  // because it's the heaviest single caller in Home's ~19-way Promise.all
+  // against the intentionally tiny 3-connection pool (see lib/db/index.ts).
+  const [phaseRows, sessionRows, exerciseRows] = await Promise.all([
+    db.select().from(phases).orderBy(asc(phases.orderIndex)),
+    db.select().from(sessions).orderBy(asc(sessions.orderIndex)),
+    db.select().from(exercises).orderBy(asc(exercises.orderIndex)),
+  ]);
 
   return phaseRows.map((phase) => ({
     ...phase,

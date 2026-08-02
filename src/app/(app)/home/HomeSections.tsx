@@ -103,6 +103,10 @@ export async function HomeMainContent({ today }: { today: string }) {
 
       <HomeHeroBand
         daysToNcaa={vm.daysToNcaa}
+        ncaaDateLabel={vm.ncaaDateLabel}
+        daysToSeaGames2027={vm.daysToSeaGames2027}
+        seaGamesDateLabel={vm.seaGamesDateLabel}
+        daysToPaiTryout={vm.daysToPaiTryout}
         daysToAsean={vm.daysToAsean}
         aseanLabel={vm.aseanLabel}
         aseanDateLabel={vm.aseanDateLabel}

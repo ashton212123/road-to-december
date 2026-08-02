@@ -23,7 +23,7 @@ const BASE = REMOTE ?? `http://localhost:${PORT}`;
 
 // [route, sentinel-that-must-appear] — sentinel null = just 200 + no error boundary.
 const CHECKS = [
-  ["/home", "Days to NCAA"],
+  ["/home", "Sea Games 2027"],
   ["/train", null],
   ["/fuel", "Protein"],
   ["/fuel?view=plan", "g/kg"],

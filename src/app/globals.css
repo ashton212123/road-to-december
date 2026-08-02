@@ -605,6 +605,24 @@ body {
   }
 }
 
+/* Medium tier of the same numeral system -- secondary meets in the hero
+   band's three-meet ladder (WS6 §1), sized between rtd-micro-label and
+   rtd-big-num so the ladder reads as one hierarchy, not three unrelated
+   sizes. */
+.rtd-big-num-sm {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  .rtd-big-num-sm {
+    font-size: 28px;
+  }
+}
+
 /* Liquid glowing ring (ProgressRing's `glow` prop). Was an animated
    filter: drop-shadow on the SVG stroke -- Windows/Chromium promotes a
    filter region for that which rasterizes as a visible square halo (the

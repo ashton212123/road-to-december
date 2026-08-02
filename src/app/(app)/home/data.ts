@@ -251,13 +251,13 @@ export const getHomeViewModel = cache(async (today: string) => {
   const daysToNcaa = Math.max(0, daysBetween(today, seasonData.meta.targets.ncaaDate));
   const daysToAsean = Math.max(0, daysBetween(today, seasonData.meta.targets.aseanDate));
   // WS5 §0 Task 4G: same storage/derivation pattern as NCAA/ASEAN above.
-  // Not surfaced on any Home card yet -- no card was named to host it and
-  // the two natural candidates (hero band, calendar strip) are out of
-  // scope for this pass -- but the countdown is ready for whichever card
-  // WS5 §1 or a later pass decides should show it.
+  // Surfaced in the hero band's three-meet ladder (WS6 §1) as the primary
+  // long-term target.
   const daysToSeaGames2027 = Math.max(0, daysBetween(today, seasonData.meta.targets.seaGames2027Date));
   const daysToPaiTryout = Math.max(0, daysBetween(today, seasonData.meta.targets.paiTryoutDate));
   const aseanDateLabel = new Date(seasonData.meta.targets.aseanDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const ncaaDateLabel = new Date(seasonData.meta.targets.ncaaDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const seaGamesDateLabel = new Date(seasonData.meta.targets.seaGames2027Date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const aseanLabel =
     settingsRow.aseanConfirmed === true
       ? `ASEAN confirmed — ~${aseanDateLabel}`
@@ -503,6 +503,8 @@ export const getHomeViewModel = cache(async (today: string) => {
     daysToPaiTryout,
     aseanLabel,
     aseanDateLabel,
+    ncaaDateLabel,
+    seaGamesDateLabel,
     seasonPct,
     currentPhase,
     phaseWeek,
