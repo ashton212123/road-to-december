@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     .map((c) => `[${c.sourceType}:${c.sourceId}]${c.sourceDate ? ` (${c.sourceDate})` : ""} ${truncate(c.text, CHARS_PER_CHUNK)}`)
     .join("\n");
 
-  const answer = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   );
 
   return Response.json({
-    answer: answer ?? "The Brain is unavailable right now (AI service error) -- try again shortly.",
+    answer: result.ok ? result.content : "The Brain is unavailable right now (AI service error) -- try again shortly.",
     sources: chunks.map((c) => ({ type: c.sourceType, id: c.sourceId, date: c.sourceDate })),
   });
 }

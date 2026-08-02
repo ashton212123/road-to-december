@@ -2,24 +2,54 @@
  * Shared low-level Groq chat-completion client. Every AI feature in the app
  * (macro estimation, the daily brief, the coach chat) calls through here so
  * there's one place that owns the endpoint, model, auth, and timeout. Never
- * throws -- callers get `null` on a missing key, network error, or bad
- * response and are expected to have a non-AI fallback or a plain "brief
- * unavailable" state.
+ * throws -- callers get a discriminated GroqChatResult instead, and are
+ * expected to have a non-AI fallback or a plain "unavailable" state. Every
+ * failure is logged here (once, centrally) so callers aren't required to
+ * inspect `error` themselves just to get a diagnosable log line.
  */
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_TRANSCRIBE_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 const MODEL = "llama-3.3-70b-versatile";
 
+// WS4 §4d Task 2: Groq's 429 body text names which limit was hit ("... on
+// tokens per minute (TPM): ..." vs "... on tokens per day (TPD): ..."). TPD
+// cannot be fixed by inter-call pacing -- distinguishing it from TPM here is
+// the whole point (see analyst.ts's ANALYST_SEED comment history for why
+// this was previously indistinguishable and cost real debugging time).
+export type GroqChatError =
+  | { kind: "missing_key" }
+  | { kind: "rate_limited"; scope: "tpm" | "tpd" | "unknown"; status: number; body: string }
+  | { kind: "http_error"; status: number; body: string }
+  | { kind: "network_error"; message: string }
+  | { kind: "parse_error"; body: string };
+
+export type GroqChatResult = { ok: true; content: string } | { ok: false; error: GroqChatError };
+
+function classifyRateLimitScope(body: string): "tpm" | "tpd" | "unknown" {
+  if (/tokens per day \(TPD\)/i.test(body)) return "tpd";
+  if (/tokens per minute \(TPM\)/i.test(body)) return "tpm";
+  return "unknown";
+}
+
+function logGroqError(error: GroqChatError): void {
+  console.error("[groq:callGroqChat]", error);
+}
+
 export async function callGroqChat(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
   opts: { jsonMode?: boolean; temperature?: number; timeoutMs?: number; seed?: number } = {}
-): Promise<string | null> {
+): Promise<GroqChatResult> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    const error: GroqChatError = { kind: "missing_key" };
+    logGroqError(error);
+    return { ok: false, error };
+  }
 
+  let res: Response;
   try {
-    const res = await fetch(GROQ_URL, {
+    res = await fetch(GROQ_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,12 +64,38 @@ export async function callGroqChat(
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),
     });
-    if (!res.ok) return null;
+  } catch (err) {
+    const error: GroqChatError = { kind: "network_error", message: err instanceof Error ? err.message : String(err) };
+    logGroqError(error);
+    return { ok: false, error };
+  }
 
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    return data.choices?.[0]?.message?.content ?? null;
+  // Read as text first (not res.json()) so a malformed body still leaves
+  // something to log and classify, instead of throwing the raw text away.
+  const bodyText = await res.text().catch(() => "");
+
+  if (!res.ok) {
+    const error: GroqChatError =
+      res.status === 429
+        ? { kind: "rate_limited", scope: classifyRateLimitScope(bodyText), status: res.status, body: bodyText }
+        : { kind: "http_error", status: res.status, body: bodyText };
+    logGroqError(error);
+    return { ok: false, error };
+  }
+
+  try {
+    const data = JSON.parse(bodyText) as { choices?: { message?: { content?: string } }[] };
+    const content = data.choices?.[0]?.message?.content;
+    if (typeof content !== "string") {
+      const error: GroqChatError = { kind: "parse_error", body: bodyText };
+      logGroqError(error);
+      return { ok: false, error };
+    }
+    return { ok: true, content };
   } catch {
-    return null;
+    const error: GroqChatError = { kind: "parse_error", body: bodyText };
+    logGroqError(error);
+    return { ok: false, error };
   }
 }
 

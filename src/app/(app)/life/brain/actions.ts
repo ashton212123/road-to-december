@@ -19,7 +19,7 @@ export type CategoryDetail = {
 export async function getCategoryDetailAction(category: BrainCategory): Promise<CategoryDetail> {
   const rows = await getChunksByCategory(category);
 
-  const summary =
+  const summaryResult =
     rows.length === 0
       ? null
       : await callGroqChat(
@@ -38,6 +38,7 @@ export async function getCategoryDetailAction(category: BrainCategory): Promise<
           ],
           { temperature: 0.3 }
         );
+  const summary = summaryResult?.ok ? summaryResult.content : null;
 
   return {
     summary,

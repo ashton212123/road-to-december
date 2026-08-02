@@ -77,17 +77,17 @@ function budgetLine(budget: MacroBudgetContext | null): string {
 
 async function callGroq(userContent: string, budget: MacroBudgetContext | null): Promise<AiMacroItem[] | null> {
   const avgWeightKg = budget?.avgWeightKg ?? 63;
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: buildSystemPrompt(avgWeightKg) },
       { role: "user", content: [userContent, budgetLine(budget)].filter(Boolean).join("\n\n") },
     ],
     { jsonMode: true, temperature: 0.2 }
   );
-  if (!content) return null;
+  if (!result.ok) return null;
 
   try {
-    const parsed = JSON.parse(content) as { items?: unknown[] } | unknown[];
+    const parsed = JSON.parse(result.content) as { items?: unknown[] } | unknown[];
     const rawItems = Array.isArray(parsed) ? parsed : parsed.items;
     if (!Array.isArray(rawItems)) return null;
 

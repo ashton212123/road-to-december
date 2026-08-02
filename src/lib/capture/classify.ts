@@ -164,15 +164,15 @@ function parseGroqClassification(raw: string): Classification | null {
  */
 export async function classify(text: string): Promise<Classification> {
   try {
-    const raw = await callGroqChat(
+    const result = await callGroqChat(
       [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: text },
       ],
       { jsonMode: true, temperature: 0.2 }
     );
-    if (raw) {
-      const parsed = parseGroqClassification(raw);
+    if (result.ok) {
+      const parsed = parseGroqClassification(result.content);
       if (parsed) return parsed;
     }
   } catch {

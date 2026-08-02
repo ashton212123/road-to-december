@@ -45,13 +45,13 @@ export async function refreshAthleteModel(
     if (already.length > 0) return;
 
     const userContent = `Previous model:\n${previousModel ?? "(none yet -- this is the first entry)"}\n\nToday's context (JSON):\n${todayContextText}`;
-    const content = await callGroqChat([
+    const result = await callGroqChat([
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userContent },
     ]);
-    if (!content) return;
+    if (!result.ok) return;
 
-    const trimmed = content.trim().slice(0, 900);
+    const trimmed = result.content.trim().slice(0, 900);
     if (!trimmed) return;
 
     await db.insert(aiTakeaways).values({ date: today, key: CACHE_KEY, message: trimmed }).onConflictDoNothing();

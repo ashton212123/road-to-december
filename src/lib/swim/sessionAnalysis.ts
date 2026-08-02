@@ -77,12 +77,12 @@ export async function generateSessionAnalysis(input: {
   daysToNextMeet: number | null;
   criticalSpeed: CriticalSpeed | null;
 }): Promise<string> {
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: buildUserMessage(input) },
     ],
     { temperature: 0.3, timeoutMs: 20_000 }
   );
-  return content?.trim() || fallbackAnalysis(input.classification);
+  return (result.ok ? result.content.trim() : "") || fallbackAnalysis(input.classification);
 }

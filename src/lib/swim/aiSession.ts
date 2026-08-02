@@ -129,17 +129,17 @@ function normalizeNotable(raw: unknown): AiSwimSession["notable"] {
  * call fails, or the response has no usable intervals -- the caller falls
  * back to manual (distance + duration + RPE only) logging. */
 export async function parseSwimSession(text: string): Promise<AiSwimSession | null> {
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: text },
     ],
     { jsonMode: true, temperature: 0.15 }
   );
-  if (!content) return null;
+  if (!result.ok) return null;
 
   try {
-    const raw = JSON.parse(content) as Record<string, unknown>;
+    const raw = JSON.parse(result.content) as Record<string, unknown>;
     const intervals = normalizeIntervals(raw.intervals);
     if (intervals.length === 0) return null;
 
@@ -216,17 +216,17 @@ function normalizeNumArray(v: unknown): number[] | null {
  * the call fails, or no usable event+time was extracted -- the caller falls
  * back to the manual structured form. */
 export async function parseSwimTimeText(text: string): Promise<AiSwimTime | null> {
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: TIME_SYSTEM_PROMPT },
       { role: "user", content: text },
     ],
     { jsonMode: true, temperature: 0.1 }
   );
-  if (!content) return null;
+  if (!result.ok) return null;
 
   try {
-    const raw = JSON.parse(content) as Record<string, unknown>;
+    const raw = JSON.parse(result.content) as Record<string, unknown>;
     const timeMs = num(raw.timeMs);
     if (typeof raw.event !== "string" || !raw.event.trim() || timeMs === null || timeMs <= 0) return null;
 

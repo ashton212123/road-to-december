@@ -54,8 +54,8 @@ export async function GET(req: NextRequest) {
     ? `Journal entry for the day: "${journalText}"\n\n${factsLine}\n\nWrite ONE factual sentence summarizing the day, weaving in the training/fuel facts above. Second person ("you"), no advice, no therapy voice.`
     : `No journal entry was logged. ${factsLine}\n\nWrite ONE factual sentence describing the day from these facts only. Second person, no advice.`;
 
-  const summary = await callGroqChat([{ role: "user", content: prompt }], { temperature: 0.3 });
-  const message = summary?.trim() || factsLine;
+  const summaryResult = await callGroqChat([{ role: "user", content: prompt }], { temperature: 0.3 });
+  const message = (summaryResult.ok ? summaryResult.content.trim() : "") || factsLine;
 
   await db
     .insert(aiTakeaways)

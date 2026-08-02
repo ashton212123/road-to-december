@@ -27,13 +27,13 @@ export async function getStrengthTakeaway(
   const userContent = JSON.stringify(
     Object.fromEntries(liftsWithData.map(([lift, points]) => [lift, points.slice(-8).map((p) => [p.date, p.e1rm])]))
   );
-  const content = await callGroqChat([
+  const result = await callGroqChat([
     { role: "system", content: SYSTEM_PROMPT },
     { role: "user", content: userContent },
   ]);
-  if (!content) return null;
+  if (!result.ok) return null;
 
-  const trimmed = content.trim().replace(/^"|"$/g, "").slice(0, 250);
+  const trimmed = result.content.trim().replace(/^"|"$/g, "").slice(0, 250);
   if (!trimmed) return null;
 
   await db.insert(aiTakeaways).values({ date: today, key: CACHE_KEY, message: trimmed }).onConflictDoNothing();

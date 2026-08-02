@@ -132,17 +132,17 @@ function normalizeGym(raw: Record<string, unknown>): ParsedGymExercise[] | null 
  * call fails, or the response doesn't resolve to a usable swim/gym shape --
  * the caller must keep the original pasted text and offer manual logging. */
 export async function parseTrainingSession(text: string): Promise<ParseSessionResult | null> {
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: text },
     ],
     { jsonMode: true, temperature: 0.2 }
   );
-  if (!content) return null;
+  if (!result.ok) return null;
 
   try {
-    const raw = JSON.parse(content) as Record<string, unknown>;
+    const raw = JSON.parse(result.content) as Record<string, unknown>;
     if (raw.kind === "swim") {
       const session = normalizeSwim(raw);
       return session ? { kind: "swim", session } : null;

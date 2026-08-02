@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const summary = await callGroqChat(
+  const summaryResult = await callGroqChat(
     [
       {
         role: "system",
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
     ],
     { temperature: 0.3 }
   );
+  const summary = summaryResult.ok ? summaryResult.content : null;
 
   const entryDate = todayManilaISO();
   const [entry] = await db

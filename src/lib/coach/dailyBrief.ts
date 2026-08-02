@@ -79,15 +79,15 @@ async function generateDailyBrief(ctx: DailyBriefContext, athleteModel: string |
   const systemContent = [SYSTEM_PROMPT, athleteModel ? `ATHLETE MODEL (persistent):\n${athleteModel}` : ""]
     .filter(Boolean)
     .join("\n\n");
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: systemContent },
       { role: "user", content: buildUserContent(ctx) },
     ],
     { temperature: 0.6 }
   );
-  if (!content) return null;
-  const trimmed = content.trim().replace(/^"|"$/g, "");
+  if (!result.ok) return null;
+  const trimmed = result.content.trim().replace(/^"|"$/g, "");
   return trimmed.length > 0 ? trimmed.slice(0, 300) : null;
 }
 

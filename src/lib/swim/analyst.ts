@@ -456,17 +456,17 @@ export async function analyzeSwimSession(
   rawText: string,
   opts: { previousSessions?: AnalystPreviousSession[] } = {}
 ): Promise<AnalystResult | null> {
-  const content = await callGroqChat(
+  const result = await callGroqChat(
     [
       { role: "system", content: `${ANALYST_SYSTEM_PROMPT}\n\n${JSON_SCHEMA_INSTRUCTIONS}` },
       { role: "user", content: buildUserMessage(rawText, opts.previousSessions) },
     ],
     { jsonMode: true, temperature: 0, seed: ANALYST_SEED, timeoutMs: 30_000 }
   );
-  if (!content) return null;
+  if (!result.ok) return null;
 
   try {
-    const raw = JSON.parse(content) as Record<string, unknown>;
+    const raw = JSON.parse(result.content) as Record<string, unknown>;
     const setByStepLog = normalizeSetByStepLog(raw.setByStepLog);
     if (setByStepLog.length === 0) return null;
 
