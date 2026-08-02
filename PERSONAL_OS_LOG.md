@@ -1500,3 +1500,58 @@ no input rendered on `TodaysPlanCard`. Next step if approved: add the table, a q
 action (upsert by `date`, mirroring `toggleHabitSubtaskAction`'s `onConflictDoUpdate` pattern), and
 the input itself below the greeting on "02 // SESSION," gated behind the same four checks as
 everything else in this pass.
+
+---
+
+## WS4 §4c A2 — FAILED, `e70c075` reverted (2026-08-02)
+
+Ran the reduced 6-call verification (3 runs on July 22, 1 spot-check run each on July 23/28/16,
+20s pacing — the full 12-call fixture wasn't affordable against today's remaining TPD budget).
+Raw text for all four sessions copied verbatim from `scripts/swim-parse-check.mjs`, not retyped.
+
+**July 22 (3 runs) — FAILED to reach 3-way agreement:**
+- Run 1: Groq HTTP 400 `json_validate_failed` — the model's own JSON output was syntactically
+  invalid (`"strokeBreakdownM": {"free": 200 + 1200, ...}` — an unevaluated arithmetic expression
+  where a number belongs). `callGroqChat` correctly classified and logged this as `http_error`;
+  `analyzeSwimSession` returned `null`, matching its documented contract.
+- Run 2: identical failure mode, same field.
+- Run 3: succeeded, valid JSON, **parsedDistanceM = 3400m**.
+
+Because runs 1 and 2 never produced a comparable number, the 3-way agreement check is
+unsatisfiable by definition — already a hard FAIL independent of what run 3 said. But run 3's own
+number is informative: 3400m is exactly what the session totals to if the `4x100 3 sets` block
+contributes **zero** (200 + 1600 + 1600 + 0 = 3400) — i.e. still dropped, the exact pre-fix bug the
+commit's "never drop a block" rule was meant to close. Reading the two *failed* generations'
+`failed_generation` bodies (Groq includes the raw text even on a validation-reject) shows the
+model getting the trailing-multiplier math right in both of them — `"distanceM": 100, "sets": 12`
+for that block (12 = 4 reps × 3 sets, 1200m) — but never in a response that was valid JSON overall.
+So the rule appears to work when it works, but the model's compliance with it (and with valid JSON
+at all) is inconsistent run-to-run against the same frozen input at temperature 0 — which is
+exactly the failure mode the 3-run consistency check exists to catch, and it caught it.
+
+**July 23 (1 run) — FAILED, no result:** same `json_validate_failed` / inline-arithmetic pattern in
+`strokeBreakdownM`, unrelated to the trailing-multiplier rule. Cannot confirm non-regression when
+the call itself didn't return a comparable number.
+
+**July 28 (1 run) — matched:** 4400m, exact match to hand-verified.
+**July 16 (1 run) — matched:** 4725m, exact match to hand-verified.
+
+**Verdict: A2 FAILED.** Per the task's own standing instructions, `e70c075` was reverted
+(`git revert --no-edit e70c075`, commit `c59493a`) rather than re-ingesting or adjusting anything —
+`git diff e70c075~1 HEAD -- src/lib/swim/analyst.ts` confirms `SWIM_SHORTHAND_RULES` is now
+byte-identical to its pre-`e70c075` text; the only remaining diff from that baseline is `62f6945`'s
+unrelated `result.ok`/`result.content` refactor. All four gates re-run clean post-revert.
+
+**Two separable findings, not conflated:**
+1. The bare-trailing-multiplier rule's *effectiveness on July 22 specifically* is unresolved by
+   this run — the one clean sample reproduced the drop, and the two invalid-JSON samples show
+   correct math but can't be scored as a pass. A real verdict needs the full 3-run set to actually
+   complete without a JSON-validity failure; the reduced fixture wasn't a clean enough replacement
+   for the pending full 12-call run.
+2. **New, separate from A2's original question:** the model spontaneously writes unevaluated
+   arithmetic (`200 + 1200`) into `overview.strokeBreakdownM` / `intensityDistributionM` instead of
+   the computed sum, which Groq's own JSON-mode validator rejects outright — 3 of the session's 6
+   calls failed this way. Nothing in `ANALYST_SYSTEM_PROMPT` or `JSON_SCHEMA_INSTRUCTIONS` was
+   touched to investigate or fix this (out of scope for Task 5, and the standing rule is escalate,
+   not silently patch the prompt) — flagging it here since it's a real, reproducible failure mode
+   independent of the shorthand-rule question and worth its own look before the next A2 attempt.
