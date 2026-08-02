@@ -130,12 +130,16 @@ const getCachedHomeData = unstable_cache(
       keyTasks,
     ] = await Promise.all([
       withFallback(getAllPhasesWithSessionsUncached(), []),
-      // Submitted 2nd (was 17th of 19): at its old position this query's own
-      // withFallback race had almost always already elapsed by the time it
-      // reached the front of the 3-connection queue, so it lost to its own
-      // fallback on essentially every real request -- not intermittent
-      // contention, a deterministic queue-position starvation (WS6 §2 Task 1).
-      withFallback(getHomeHabitsData(today, addDaysISO(today, -29)), { habits: [], dailyCompletion: [] }),
+      // Submitted 2nd (was 17th of 19) so it isn't waiting behind 16 other
+      // queries for a connection. getAllPhasesWithSessionsUncached (above)
+      // itself fires 3 parallel sub-queries and can legitimately hold all 3
+      // pool connections briefly, so this still needs a real margin beyond
+      // the 10s default to survive that. 12s, not the full 15s outer
+      // withRetry budget above (whose clock starts earlier, before canvas)
+      // -- leaves headroom so this fallback fires on its own terms instead
+      // of racing withRetry's abandon-and-retry-the-whole-thing path (WS6
+      // §2 Task 1).
+      withFallback(getHomeHabitsData(today, addDaysISO(today, -29)), { habits: [], dailyCompletion: [] }, 12000),
       withFallback(getLatestWeighIn(), null),
       withFallback(getWeighIns(21), []),
       withFallback(getFoodLogsForDate(today), []),
