@@ -16,14 +16,20 @@ export function SectionHeader({
   number,
   statusChip,
   className,
+  dotColor,
 }: {
   title: string;
   number?: string;
   statusChip?: ReactNode;
   className?: string;
+  /** Miles OS CRM board group headers (WS3d §10) prefix the label with a
+   * small solid dot instead of/alongside the numbered prefix -- optional so
+   * this component's many plain-title callers are unaffected. */
+  dotColor?: string;
 }) {
   return (
     <div className={clsx("flex items-center gap-2.5 min-w-0 shrink-0", className)}>
+      {dotColor && <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: dotColor }} />}
       <span
         className="uppercase whitespace-nowrap"
         style={{ font: "500 var(--rtd-mos-fs-section)/1 var(--rtd-font-mono)", letterSpacing: "var(--rtd-mos-ls-section)", color: "var(--rtd-mos-fg-dim)" }}

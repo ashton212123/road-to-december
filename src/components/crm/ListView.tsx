@@ -1,23 +1,21 @@
 import { CrmTask } from "@/lib/crm/queries";
 import { TaskCard } from "@/components/crm/TaskCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-
-const GROUP_ORDER: { value: CrmTask["urgency"]; label: string }[] = [
-  { value: "today", label: "Today" },
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "someday", label: "Someday" },
-];
+import { Bucket, BUCKET_COLUMNS, BUCKET_DOT_COLOR, bucketFor } from "@/lib/crm/buckets";
+import { todayManilaISO } from "@/lib/time";
 
 /** Flat, sorted by priorityScore (already the query's own ORDER BY), grouped
- * by urgency with sticky headers. */
+ * into the same OVERDUE/TODAY/THIS WEEK/LATER buckets as KanbanView (WS3d
+ * §10) rather than the raw urgency tiers -- one bucketing scheme across both
+ * views, so a task's group is consistent between Kanban and List. */
 export function ListView({ tasks, onOpen }: { tasks: CrmTask[]; onOpen: (task: CrmTask) => void }) {
-  const byGroup = new Map<CrmTask["urgency"], CrmTask[]>(GROUP_ORDER.map((g) => [g.value, []]));
-  for (const t of tasks) byGroup.get(t.urgency)?.push(t);
+  const today = todayManilaISO();
+  const byGroup = new Map<Bucket, CrmTask[]>(BUCKET_COLUMNS.map((g) => [g.value, []]));
+  for (const t of tasks) byGroup.get(bucketFor(t, today))?.push(t);
 
   return (
     <div className="flex flex-col gap-4">
-      {GROUP_ORDER.map((group) => {
+      {BUCKET_COLUMNS.map((group) => {
         const groupTasks = byGroup.get(group.value) ?? [];
         if (groupTasks.length === 0) return null;
         return (
@@ -25,6 +23,7 @@ export function ListView({ tasks, onOpen }: { tasks: CrmTask[]; onOpen: (task: C
             <div className="sticky top-0 z-10 -mx-3.5 px-3.5 py-1.5 backdrop-blur-md bg-[rgba(10,10,12,0.75)]">
               <SectionHeader
                 title={group.label}
+                dotColor={BUCKET_DOT_COLOR[group.value]}
                 statusChip={<span className="rtd-mono text-[11px] md:text-xs text-[var(--rtd-text-tertiary)]">{groupTasks.length}</span>}
               />
             </div>

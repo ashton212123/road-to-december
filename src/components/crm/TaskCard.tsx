@@ -26,6 +26,7 @@ export function TaskCard({
   onDragStart,
   onDragEnd,
   dragging = false,
+  surface = "open",
 }: {
   task: CrmTask;
   onOpen: () => void;
@@ -33,9 +34,25 @@ export function TaskCard({
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
   dragging?: boolean;
+  /** "panel2" is the Kanban board's card surface (MILES-OS-UI-SPEC.md's
+   * color-token table: "--panel-2 ... kanban card"), measured off the
+   * reference kit (`design/Miles OS UI Kit.html`, CRM screen) as
+   * background var(--rtd-mos-panel-2), border var(--rtd-mos-border-field),
+   * radius var(--rtd-radius-card). List/Category/Archive keep the existing
+   * "open" (no background until hover) look -- only the outer surface
+   * changes between the two, not this card's internal content. */
+  surface?: "open" | "panel2";
 }) {
   const due = dueBadge(task.dueDate);
   const sourceLabel = SOURCE_LABEL[task.sourceKind];
+  const panel2Style =
+    surface === "panel2"
+      ? {
+          background: "var(--rtd-mos-panel-2)",
+          border: "1px solid var(--rtd-mos-border-field)",
+          borderRadius: "var(--rtd-radius-card)",
+        }
+      : {};
 
   return (
     <TerminalPanel
@@ -57,7 +74,7 @@ export function TaskCard({
         }
       }}
       className="transition-opacity duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--rtd-blue)] focus-visible:outline-offset-2"
-      style={{ opacity: dragging ? 0.4 : 1 }}
+      style={{ opacity: dragging ? 0.4 : 1, ...panel2Style }}
     >
       <div className="flex items-start gap-2">
         <span className="flex-1 min-w-0 text-subhead font-medium text-[var(--rtd-text)] break-words">{task.title}</span>

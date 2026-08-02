@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import clsx from "clsx";
 import { CrmTask } from "@/lib/crm/queries";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
@@ -25,6 +26,17 @@ const RAIL_OPTIONS: { value: "life" | "athlete"; label: string }[] = [
   { value: "life", label: "Life" },
   { value: "athlete", label: "Athlete" },
 ];
+
+/** Miles OS inset-field surface (WS3d §10 -- this drawer used no shared
+ * primitive at all before) applied inline rather than via InsetField itself:
+ * InsetField has no onChange/disabled surface, and every field here needs
+ * one. */
+const FIELD_STYLE = {
+  background: "var(--rtd-mos-panel-2)",
+  border: "1px solid var(--rtd-mos-border-field)",
+  borderRadius: "var(--rtd-radius-inset)",
+};
+const FIELD_CLASS = "outline-none focus:ring-2 focus:ring-[var(--rtd-blue)] disabled:opacity-60";
 
 /** Slide-over sheet, same chrome as QuickLogSheet.tsx. `task: null` = create
  * mode. isKey/urgency auto-save immediately (the "move to" control the spec
@@ -177,7 +189,8 @@ export function TaskDrawer({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title"
           disabled={isMirrored}
-          className="bg-white/[0.04] rounded-lg px-3 py-2.5 text-body outline-none focus:ring-2 focus:ring-[var(--rtd-blue)] disabled:opacity-60"
+          className={clsx(FIELD_CLASS, "px-3 py-2.5 text-body")}
+          style={FIELD_STYLE}
         />
 
         <SegmentedControl options={URGENCY_OPTIONS} value={urgency} onChange={handleUrgencyChange} />
@@ -189,7 +202,8 @@ export function TaskDrawer({
           placeholder="Notes"
           disabled={isMirrored}
           rows={2}
-          className="bg-white/[0.04] rounded-lg px-3 py-2.5 text-subhead outline-none resize-none focus:ring-2 focus:ring-[var(--rtd-blue)] disabled:opacity-60"
+          className={clsx(FIELD_CLASS, "px-3 py-2.5 text-subhead resize-none")}
+          style={FIELD_STYLE}
         />
 
         <div className="grid grid-cols-2 gap-2">
@@ -199,7 +213,8 @@ export function TaskDrawer({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="bg-white/[0.04] rounded-lg px-3 py-2 text-subhead outline-none focus:ring-2 focus:ring-[var(--rtd-blue)]"
+              className={clsx(FIELD_CLASS, "px-3 py-2 text-subhead")}
+              style={FIELD_STYLE}
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -209,7 +224,8 @@ export function TaskDrawer({
               inputMode="numeric"
               value={timeEstimateMin}
               onChange={(e) => setTimeEstimateMin(e.target.value)}
-              className="bg-white/[0.04] rounded-lg px-3 py-2 text-subhead outline-none focus:ring-2 focus:ring-[var(--rtd-blue)]"
+              className={clsx(FIELD_CLASS, "px-3 py-2 text-subhead")}
+              style={FIELD_STYLE}
             />
           </label>
         </div>
@@ -220,7 +236,8 @@ export function TaskDrawer({
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-white/[0.04] rounded-lg px-3 py-2 text-subhead outline-none focus:ring-2 focus:ring-[var(--rtd-blue)]"
+            className={clsx(FIELD_CLASS, "px-3 py-2 text-subhead")}
+            style={FIELD_STYLE}
           />
         </label>
 
@@ -230,7 +247,8 @@ export function TaskDrawer({
             type="text"
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
-            className="bg-white/[0.04] rounded-lg px-3 py-2 text-subhead outline-none focus:ring-2 focus:ring-[var(--rtd-blue)]"
+            className={clsx(FIELD_CLASS, "px-3 py-2 text-subhead")}
+            style={FIELD_STYLE}
           />
         </label>
 
@@ -240,7 +258,7 @@ export function TaskDrawer({
             onClick={handleSave}
             disabled={saving || !title.trim()}
             className="flex-1 rtd-tap-target rounded-full py-2.5 text-subhead font-semibold cursor-pointer active:scale-[0.98] transition-transform duration-150 ease-out disabled:opacity-50"
-            style={{ background: "var(--rtd-blue)", color: "#fff" }}
+            style={{ background: "var(--rtd-blue)", color: "var(--rtd-text)" }}
           >
             {saving ? "Saving…" : isNew ? "Create" : "Save"}
           </button>
