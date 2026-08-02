@@ -1128,3 +1128,300 @@ the same "floating chrome keeps its own treatment" reasoning as the tab dock. Fo
 est. minutes) stayed on Inter — they're user-entered text fields, not displayed stats.
 
 **Gates:** `tsc`/`eslint`/`next build` clean. Deployed: `npx vercel deploy --prod`.
+
+---
+
+## WS3 — Miles OS design merge (supersedes Phase 9's own token values)
+
+Backfilled retroactively (WS3d §11) from each commit's actual message/diff/stat, not from memory —
+these 7 commits happened in an earlier session, between Phase 9's CRM tab (§9b tab 2/11 above) and
+WS3d's own §1. Gate output quoted below is what each commit's own message documented at the time,
+not re-run live today.
+
+**The one fact every later WS3/WS3d entry depends on:** Phase 9 (§9a above) set its own terminal
+tokens — `--rtd-radius-card: 4px`, a translucent glass panel background, `.14` border opacity. When
+the user handed over `design/MILES-OS-UI-SPEC.md` (a newer, more specific spec — see `f801e0c`
+below), it disagreed with Phase 9 on exactly 3 values: **panel radius 4px → 6px, panel background →
+flat `#101010` (was a translucent glass tint that differed mobile vs desktop), border opacity
+`.14` → `.055`.** The user's own instruction was "the spec wins" — all three were changed globally
+in `f801e0c`, superseding Phase 9's values app-wide, not per-tab. Every `--rtd-mos-*` token added
+after that point is new/additive, not a further override of the pre-existing `--rtd-green`/`red`/
+`orange`/`blue` domain-color system.
+
+**The second fact: those spec values are desktop-only.** The spec's own type scale and the above
+three overrides are a dense desktop-dashboard recipe (8–8.5px labels, `.14`–`.16em` tracking, hairline
+borders) that read as too small and low-contrast once actually used on a phone. `7efa672` (last commit
+in this section) added a **mobile floor**: `:root` now holds larger/higher-contrast mobile values for
+every Miles OS type/border token, overridden back to the spec's exact desktop numbers only inside the
+existing `@media (min-width: 1024px)` block. So: **below 1024px, Miles OS tokens read their mobile
+floor; at 1024px and up, they read the spec's literal values, unchanged.** Any future WS3d section
+touching these tokens must preserve this split, not collapse back to one global value.
+
+### Commit `3c0b6ba` — Give withRetry's timeout error a per-call label
+
+**Files:** 20 files, every `withRetry(...)` call site across the app (`analytics`, `business` ×2,
+`fuel`, `home`, `learn` ×2, `life/crm`, `life/journal`, `more/coach-ai`, `more/recovery`,
+`more/settings`, `school`, `swim` ×3, `train` ×2, `api/mcp/route.ts`, `lib/db/withRetry.ts`).
+
+**What/why:** `withRetry`'s timeout error message was a generic "DB call timed out" regardless of
+which query actually stalled — the commit message cites two real debugging sessions lost tracing a
+generic message back to the real query. Every call site now passes a label (e.g. "Home dashboard
+data", `` `MCP tool ${name}` ``) so a production timeout points straight at the stalled call. Not a
+Miles OS/visual change — an observability fix that happened to land in this stretch of commits.
+
+### Commit `db36e0a` — Fix gym completion checkbox: require all prescribed sets, not just one
+
+**Files:** `src/app/globals.css`, `src/components/train/ExerciseCard.tsx`,
+`src/components/train/WorkoutSession.tsx`.
+
+**What/why:** `WorkoutSession.tsx` computed an exercise as complete via `todaysSets.length > 0`, so
+one logged set read as "done" even when `targetSets` prescribed 4. Now requires
+`todaysSets.length >= targetSets`, falling back to `> 0` only when `targetSets` is null (legacy/
+unprescribed exercises). An in-progress exercise now shows "2/4 sets" instead of sitting unchecked
+with no explanation. Added a one-shot fill/pop animation (`rtd-check-fill`, ~300ms) gated strictly on
+the false→true transition (never fires on mount or on uncomplete/undo), folded into the existing
+`prefers-reduced-motion` override. `SessionCompleteSummary`'s entrance animation already existed from
+an earlier pass — confirmed working, untouched. Explicitly did **not** touch `train/page.tsx`'s
+`pctComplete` (a different variable — the phase's calendar-date progress, not exercise/set
+completion); the session-level completion bar inherits the fix automatically since it derives from
+the same corrected completion map. Also a non-visual bugfix, not a Miles OS change.
+
+### Commit `f801e0c` — Miles OS design system: tokens + primitives (WS3 part 1/N)
+
+**Files:** 17 files — `design/MILES-OS-UI-SPEC.md` and `design/Miles OS UI Kit.html` (copied into the
+repo from Downloads, didn't exist here yet), `design/serve.js` (throwaway static server), `eslint.config.mjs`,
+`src/app/fonts/InstrumentSerif-Italic.woff2` (new, self-hosted), `src/app/globals.css`,
+`src/app/layout.tsx`, `src/components/ui/{DataRow,InsetField(new),LiveDot(new),MicroLabel(new),
+MonoStat,PrimaryButton(new),SectionHeader,SerifAccent(new),Sparkline,StatusChip}.tsx`.
+
+**What/why:** Ports the spec's color tokens/type scale/geometry into `globals.css`, resolving the
+3 conflicts with Phase 9 described above in the spec's favor. Self-hosts Instrument Serif italic
+(same latin-subset self-hosting pattern as the existing Inter/JetBrains Mono files — no runtime
+Google Fonts network call, per the PWA's build-reliability requirement). New primitives —
+`MicroLabel`, `InsetField`, `LiveDot`, `PrimaryButton`, `SerifAccent` — are exact recipes from the
+spec's own Component Recipes section; `PrimaryButton`'s padding/radius were confirmed against the
+live reference kit's own CAPTURE button rather than guessed (same "measure the kit, don't guess"
+method WS3d §10 used later for the CRM board). `Sparkline` already existed and got tuned to the
+spec's exact numbers (stroke-width 1.2, gradient stop `.28`, `preserveAspectRatio`) instead of a
+duplicate component. `StatusChip` gained `hot`/`warm`/`cool` tones alongside its existing
+`ok`/`warn`/`danger`/`live`/`neutral` set (additive — this is the exact infrastructure WS3d §10's
+TaskCard due-badge discussion and Section 9's CSS-consumer analysis both later relied on being
+already in place). `MonoStat` gained `small`/`large` size variants matching the spec's Metric-small/
+Metric-large type scale (weight 300/200, not the legacy sizes' bold). `SectionHeader`/`DataRow` moved
+to the spec's exact type scale/geometry, cascading to every existing caller immediately — the
+intended effect per the task's own "token swap, most should move automatically" framing.
+
+**Gate (per commit message):** tsc/eslint clean (1 pre-existing unrelated warning), `next build`
+succeeds across all routes including the 5 tabs already converted by Phase 9. Visual confirmation on
+those 5 tabs flagged as not done — password-gated, no live check that session.
+
+### Commit `2748f12` — Rebuild Home to the Miles OS 3-column grid (WS3 part 2/N)
+
+**Files:** `src/app/(app)/home/page.tsx`, `src/app/globals.css`,
+`src/components/home/{FuelRingCard,NeedsAttentionList,OperatorCard,TodaysPlanCard,TrainingLoadCard}.tsx`,
+`src/components/ui/TerminalPanel.tsx`, `src/lib/time.ts`.
+
+**What/why:** Replaces Phase 8's "9 numbered sections" 12-col grid with the spec's 7-panel mapping:
+left rail Operator(01)/Training Load(07, repurposed from the spec's Finance Pulse)/Needs Attention
+(08, repurposed from the spec's Key Blockers); center Session(02)/Habits(03)/Calendar(04); right rail
+Nutrition(06). Finance itself stays out of scope for this app (Decision 13). New `.rtd-mos-grid` CSS
+is mobile-first: the spec's fixed `262px/1fr/262px` columns apply only at ≥1024px; a phone stacks all
+three columns in one flow. `OperatorCard` drops its `md:flex-row` layout (now permanently a narrow
+262px-rail card, not a full-width hero) and stacks vertically at every width. `TodaysPlanCard` gains
+the spec's serif greeting line (`SerifAccent`, time-of-day via a new `greetingForHour()` in
+`lib/time.ts`) — the spec's own capture bar is **not** duplicated, since `AppNav`'s global
+`CaptureBar` already predates this task. Goals/KeyTasks/AI-daily-brief/month-calendar/week-map/
+recent-PRs/bodyweight-stat aren't part of the spec's Home panel list — kept, not deleted, in their own
+12-col grid below the new one (same "kept, placed around" call Phase 8 made for the pre-Phase-8
+modules it superseded).
+
+**Gate (per commit message):** tsc/eslint clean (1 pre-existing unrelated warning), `next build`
+succeeds. Visual confirmation flagged as not done — same password-gate limitation.
+
+### Commit `ef65810` — Stream Home behind Suspense boundaries; finish its Miles OS grid migration
+
+**Files (new):** `src/app/(app)/home/{HomeSections,HomeSkeletons,data}.tsx`. **Modified:**
+`src/app/(app)/home/page.tsx` (668 → mostly deleted, most of it moved into the 3 new files),
+`src/app/globals.css`.
+
+**What/why:** Home previously awaited a 19-query fetch + `evaluateAlerts` + `dailyBrief` sequentially
+before sending any HTML — `withFallback` (§WS3d §1 material, but this predates that section number)
+had already stopped the timeouts, but the page still rendered nothing until everything settled.
+`HomePage` becomes a plain sync function with zero awaits; the data-dependent regions move into
+Suspense-wrapped async components in the 3 new files. `getHomeViewModel` (`data.ts`) wraps the
+existing cached+retried fetch and its whole derivation chain in React's `cache()` so
+`HeaderActions`/`HomeMainContent`/`CoachBriefSection` can each await it independently without
+tripling the query load against the 3-connection pool (§3.1) — **this assumption turned out to be
+wrong; see `282c741` immediately below.** `dailyBrief` (the slowest piece — first request of the day
+is a live LLM call) gets its own nested boundary so it never blocks the rest of the grid. Also
+finishes the grid migration started in `2748f12`: Goals/KeyTasks/CoachBrief/MonthCalendar/WeekMap/
+RecentPRs/StatCard move off the old 12-col `.rtd-home-grid` (which is deleted here — it had exactly
+one remaining JSX consumer) onto the 3-column Miles OS model, with the WeekMap/RecentPRs/StatCard
+group collapsed on mobile via `<details className="lg:contents">` (the exact pattern later reused —
+and independently re-verified live — by WS3d §10's KanbanView columns). Skeletons use Miles OS
+tokens only (panel bg, 6px radius, a pulse toward `--rtd-mos-panel-2` via new `.rtd-mos-skeleton`),
+no shimmer sweep.
+
+**Gate (per commit message):** tsc/eslint/`next build` clean. Could not get real browser TTFB
+numbers — session-gated behind a signed JWT cookie, and the commit explicitly declined to mint a
+session token to get past that gate ("would cross the same line as typing the account password").
+Verified structurally instead: grepped `HomePage`'s function body has no `await`.
+
+### Commit `282c741` — Fix Home streaming: React cache() wasn't deduping across boundaries
+
+**Files:** `src/app/(app)/home/{HomeSections,HomeSkeletons,page}.tsx`.
+
+**What/why:** Live-tested the previous commit's design with a temporary debug counter: the full
+19-query fetch + derivation ran **3 times per request**, not once — `cache()`'s request memoization
+didn't hold across the sibling/nested Suspense boundaries in practice, so it can't be trusted alone
+to guarantee de-duplication. Restructured so that's a structural guarantee instead of a framework
+assumption: `getHomeViewModel` is now called from exactly one place (`HomeMainContent`), grep-
+verified. The header's action buttons (`QuickLogSheet`/`MoreMenuButton`) moved into that same
+boundary rather than their own — splitting them out was what caused the duplicate call.
+`CoachBriefSection` (which must stay independently streamable, since `dailyBrief` is genuinely
+slower) now takes the already-resolved view model as a prop instead of re-fetching it.
+
+**Gate (per commit message):** verified end-to-end against the dev server with a real session — TTFB
+144ms, full response ~10s (dominated by a live cache-miss `dailyBrief` LLM call), confirming the
+shell genuinely ships before the slow boundary resolves. Noted React's `$RC` reveal scripts appearing
+not-yet-swapped in the rendered DOM well after load; attributed to the Browser pane's known non-
+compositing-background-tab limitation (the same class of issue this session hit repeatedly —
+`computer{screenshot}` failing, elements measuring `0×0` until the tab is fronted, both documented in
+WS3d §10's log entry below) rather than a real defect, since `$RC` is stock `react-dom` streaming
+machinery already used elsewhere in the app and the extracted text content was complete/correct —
+flagged for a real spot-check rather than asserted outright.
+
+### Commit `7efa672` — Phone-first pass: mobile type/border floor, pinch zoom, tap targets, SW race
+
+**Files:** 28 files — `public/sw.js`, `src/app/globals.css`, `src/app/layout.tsx`,
+`src/app/(app)/home/HomeSections.tsx`, `src/app/(app)/swim/{page,session/[sessionId]/page,
+sessions/page}.tsx`, and 22 component files across analytics/crm/fuel/home/swim/train/ui.
+
+**What/why:** the mobile-floor/1024px-override split described at the top of this section — added
+here, five fixes in one commit:
+1. **Type scale as tokens** — `SectionHeader`/`MicroLabel`/`StatusChip`/`PrimaryButton` plus
+   `DataRow` and `MonoStat`'s "small" variant read font-size (and, for section/micro, letter-spacing)
+   from CSS variables with a mobile floor in `:root`, overridden to the spec's exact values inside
+   `@media (min-width: 1024px)`.
+2. **Border contrast** — `--rtd-border`/`--rtd-mos-border-row`/`--rtd-mos-border-field` were desktop
+   opacities (`.055`/`.04`/`.05`) applied globally, making panel edges disappear on a phone; same
+   mobile-floor pattern (`.10`/`.07`/`.08` mobile).
+3. **Pinch zoom** — removed `maximumScale: 1` from the viewport config; it was disabling pinch-zoom
+   entirely.
+4. **Touch targets** — audited every interactive element on Home/Train/Swim/Fuel/CRM at 390px, added
+   `.rtd-tap-target` to ~32 controls under 44×44px. One deliberate judgment call flagged in the
+   commit: the swim zone-distribution bar's segment buttons get it too even though adjacent thin
+   segments' invisible hit zones now overlap — a wrong-zone tap there just re-opens a non-destructive
+   detail panel, judged a better trade than a 12px-tall target most phones would miss outright.
+5. **Service-worker perceived speed** — navigation requests were network-first with no timeout, so a
+   slow-cellular PWA session showed a blank screen for as long as the server took. Added a 3s race:
+   a cached copy serves immediately on timeout (network keeps updating the cache in the background);
+   with no cached copy it keeps waiting rather than falling through to `/offline` while still online.
+   Bumped `CACHE_VERSION` so installed clients pick up the new worker.
+
+**Gate (per commit message):** verified live — computed `--rtd-mos-fs-*`/`--rtd-mos-ls-*`/
+`--rtd-border*` token values at 390px match the mobile floor, and at 1280px match the original spec
+exactly unchanged (the governing "nothing about desktop changes" rule). Viewport meta confirmed to no
+longer carry `maximum-scale`. `.rtd-tap-target::after` confirmed live to expand a 20×14px probe to a
+44×44px hit area. Home/Train/Swim/Fuel/CRM themselves stayed behind the login gate, not visually
+confirmed that session — flagged for a real device/browser spot-check.
+
+---
+
+## WS3d — MILES OS SWEEP + CARRIED-OVER ITEMS
+
+Full sweep converting old primitives (`GlassCard`/`BentoCard`/`SectionLabel`) to the primitives WS3
+introduced above (`TerminalPanel`/`SectionHeader`), tab by tab, one commit per section, per-section
+gate (lint/tsc/build/`smoke.mjs`), deploy after every tab-conversion section. §9 and §11 are cleanup/
+documentation and don't get their own deploy. Detailed narration for §1–§10 (files, px/hex greps, full
+gate output, live verification) already exists in each commit's own message — summarized here per
+spec §8's log format rather than re-pasted in full; read `git show <hash>` for the complete text.
+
+### §1 — commit `bca9b20` — spread withFallback to fuel/business/recovery/settings/coach-ai/learn
+
+**Files:** `business/page.tsx`, `fuel/page.tsx`, `learn/[trackId]/page.tsx`, `more/coach-ai/page.tsx`,
+`more/recovery/page.tsx`, `more/settings/page.tsx`, `lib/coach/context.ts`. Extended the
+`withFallback` degrade-gracefully-under-pool-pressure pattern (already used elsewhere, §3.1) to 6
+more pages that were still firing unguarded concurrent queries. Gates: lint/tsc/build clean, smoke
+baseline-consistent. Deployed.
+
+### §2 — commit `c578754` — Miles OS restyle — Analytics (5 sections + chart infra)
+
+**Files:** `analytics/page.tsx` + 5 components (`BodyweightSection`, `ChartTooltip`,
+`ImprovementMatrix`, `LoadSection`, `PowerSection`, `StrengthSection`) + `chart-theme.ts`. Converted
+every Analytics section to `TerminalPanel`/`SectionHeader`; restyled `recharts` axes/grid/tooltips to
+hairline mono per §9b's "charts keep recharts, restyle to hairline mono" rule. Gates: lint/tsc/build
+clean, smoke baseline-consistent. Deployed.
+
+### §3 — commit `2abf3a2` — Miles OS restyle — School
+
+**Files:** `school/page.tsx` only. Straight `GlassCard`/`SectionLabel` → `TerminalPanel`/
+`SectionHeader` swap. Gates: lint/tsc/build clean, smoke baseline-consistent (`/school` unchanged
+~25s, the pre-existing Supabase-pool-contention pattern documented since Phase 0). Deployed.
+
+### §4 — commit `33994d1` — Miles OS restyle — Business (8 files)
+
+**Files:** `business/[businessId]/page.tsx`, `business/page.tsx`, and 6 `components/business/*.tsx`
+files. Converted the transaction list/logger, task list, note list, business settings, and the
+active/archived ventures lists on the index page. **Flagged, not fixed:** `business/[businessId]/
+page.tsx` has its own unguarded multi-query `Promise.all` — same vulnerability class §1 addressed
+elsewhere, but this file wasn't in §1's named list and wasn't in this section's restyle scope either.
+Gates: lint/tsc/build clean, smoke baseline-consistent. Deployed.
+
+### §5 — commit `c58a1af` — Miles OS restyle — Learn track detail
+
+**Files:** `learn/[trackId]/page.tsx` only. **Flagged, not fixed:** `learn/page.tsx` (the Learn tab's
+own index page, distinct from `[trackId]`) still uses `SectionLabel` — outside this section's named
+scope. Gates: lint/tsc/build clean; this section's first smoke run was interrupted by an MCP
+disconnect (task `bw3zqpkic`, no completion record) and re-run clean from a fresh build (`bbm02dw71`)
+before committing — noted in the commit message for auditability. Deployed.
+
+### §6 — commit `059619a` — Miles OS restyle — More/Recovery/Settings (7 files)
+
+**Files:** `more/recovery/page.tsx`, `more/settings/page.tsx`, and 5 `components/more/*.tsx` loggers
+(`CmjQuickLog`, `SettingsForm`, `SleepLogger`, `SorenessLogger`, `WeighInLogger`). Also fixed one
+hardcoded hex found along the way: `SorenessLogger.tsx`'s `color: rating === r ? "#fff" : ...` →
+`var(--rtd-text)`. Gates: lint/tsc/build clean, smoke baseline-consistent. Deployed.
+
+### §7 — commit `0c9c2fd` — Miles OS restyle — Coach (verify + convert)
+
+**Files:** `more/coach-ai/page.tsx` only (`SectionLabel` → `SectionHeader` on the page title;
+`src/components/coach/*` confirmed clean via grep, needed no changes). The user's original brief had
+flagged this tab as possibly needing no work — verified that assumption was wrong (the page-level
+title did need converting). `/more/coach-ai` is not in `scripts/smoke.mjs`'s route list, so this
+section was verified by grep + build + tsc only, not smoke. Deployed.
+
+### §8 — commit `533d2da` — Miles OS restyle — Shells (error/loading/login/not-found/offline)
+
+**Files:** `app/(app)/error.tsx`, `app/(app)/loading.tsx`, `app/login/page.tsx`, `app/not-found.tsx`,
+`app/offline/page.tsx`. Converting these 5 wasn't literally named in the original section-8
+instruction (which only asked for screenshot verification) — treated as a precondition for §9's
+primitive deletion and flagged as an interpretive extension in the commit message. Screenshot
+verification against production (substituting `get_page_text`/`read_page`/`javascript_tool` for the
+`computer{screenshot}` tool, which fails in this Browser pane environment — see below) confirmed
+`/login` and `/offline` clean at 390px/1440px, zero console errors, zero horizontal scroll.
+`/not-found` could **not** be verified — the auth middleware redirects any unmatched/unauthenticated
+path to `/login` before Next's own 404 routing resolves, so it's genuinely unreachable without
+credentials, contradicting the original instruction's premise that these 5 were "the only
+credential-free reachable screens." `error.tsx`/`loading.tsx` need an actual thrown error/slow
+navigation to trigger, not live-verified. Deployed.
+
+### §9 — commit `3190517` — delete dead GlassCard/BentoCard primitives
+
+**Files:** deleted `components/ui/{GlassCard,BentoCard}.tsx`; edited doc comments in `globals.css`
+(the `.rtd-open-section` block) and `TerminalPanel.tsx` to remove stale references to the deleted
+components. Required precondition, done first: grepped `.rtd-glass`/`.rtd-glass-blur`/
+`.rtd-glass-interactive`/`.rtd-open-section`/`.rtd-bento-card` across all of `src/` independent of the
+two components being deleted — all five classes have live raw-`className` consumers elsewhere
+(including `TerminalPanel.tsx` itself, `OverviewTile.tsx`, and `fuel`/`AnalyticsView`/
+`FuelAdherenceCard`/`RecoveryOverlayCard`), so **no CSS was removed**, only the two `.tsx` files and
+two stale comment blocks. Gates: lint/tsc/build clean, smoke baseline-consistent. No deploy — cleanup,
+not independently user-facing.
+
+### §10 — commit `3a9ba7f` — CRM layout rebuild (Miles OS board)
+
+**Files:** new `lib/crm/buckets.ts`; modified `CrmClient`, `KanbanView`, `ListView`, `TaskCard`,
+`TaskDrawer`, `SectionHeader`. Full detail already in this commit's own message (spec-conflict
+resolution, exact kit-measured recipes, live manual verification since `/life/crm` isn't in
+`smoke.mjs`'s route list) — see `git show 3a9ba7f`. Gates: lint/tsc/build clean, smoke baseline-
+consistent. Deployed.
