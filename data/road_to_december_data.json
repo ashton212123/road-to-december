@@ -10,7 +10,11 @@
       "ncaaName": "NCAA Philippines",
       "aseanDate": "2026-11-25",
       "aseanName": "ASEAN School Games",
-      "aseanConfirmed": null
+      "aseanConfirmed": null,
+      "seaGames2027Date": "2027-09-18",
+      "seaGames2027Name": "SEA Games 2027 (Malaysia, Sept 18-29)",
+      "paiTryoutDate": "2027-06-01",
+      "paiTryoutName": "PAI National Tryout (projected, unconfirmed — late May to mid June 2027)"
     },
     "weeklyLoad": "9 swims + 3 lifts / week",
     "bulkWindowEnd": "2026-08-30"

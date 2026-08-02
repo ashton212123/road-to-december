@@ -21,6 +21,18 @@ export function loadTakeaway(acwr: AcwrPoint[]): string | null {
   return `Your last 7 days averaged ${latest.acute} load/day against a 28-day average of ${latest.chronic}. Acute-to-chronic ratios are widely used but have known statistical problems and no demonstrated causal link to injury [strong critique — Impellizzeri 2020], so this is shown as a description of your last month, not a risk score.`;
 }
 
+/** One-line lead-in for loadTakeaway's fuller paragraph (§4f/WS5 §0) --
+ * Home's Training Load card shows this by default and puts the full
+ * (unedited, citation-intact) paragraph behind a disclosure. Same
+ * descriptive-only framing as loadTakeaway: a number, not a verdict on
+ * whether that number is good or bad. */
+export function loadVerdict(acwr: AcwrPoint[]): string | null {
+  if (acwr.length === 0) return null;
+  const latest = acwr[acwr.length - 1];
+  if (latest.ratio === null) return "Building your load baseline — about two weeks out.";
+  return `7d avg ${latest.acute} load/day vs. 28d avg ${latest.chronic}.`;
+}
+
 export function powerTakeaway(
   cmjSeries: { date: string; cm: number }[],
   broadJumpSeries: { date: string; cm: number }[]

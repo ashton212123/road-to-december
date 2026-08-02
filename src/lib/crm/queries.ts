@@ -60,7 +60,7 @@ export async function getCrmData(): Promise<CrmData> {
 
 export type KeyTask = { id: number; title: string; urgency: CrmTask["urgency"]; dueDate: string | null; rail: CrmTask["rail"] };
 
-/** Home's `06 // KEY TASKS` needs only the small ★-starred slice, not the
+/** Home's `09 // KEY TASKS` needs only the small ★-starred slice, not the
  * full CRM dataset getCrmData batches -- a lightweight dedicated query
  * (one round trip) rather than over-fetching the whole open+archived set. */
 export async function getHomeKeyTasks(limit = 5): Promise<KeyTask[]> {

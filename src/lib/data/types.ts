@@ -94,6 +94,16 @@ export type SeasonData = {
       aseanDate: string;
       aseanName: string;
       aseanConfirmed: boolean | null;
+      /** WS5 §0 Task 4G: primary long-term target, stored the same way as
+       * NCAA (fixed date, no separate confirmed toggle -- it's the given). */
+      seaGames2027Date: string;
+      seaGames2027Name: string;
+      /** Projected-only date (spec's "late May - mid June 2027" range,
+       * anchored to its midpoint); `paiTryoutName` itself carries the
+       * unconfirmed caveat since there's no settings-table toggle for it
+       * the way aseanConfirmed has for ASEAN. */
+      paiTryoutDate: string;
+      paiTryoutName: string;
     };
     weeklyLoad: string;
     bulkWindowEnd: string;

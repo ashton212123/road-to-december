@@ -1,11 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { DotStrip, type DotStatus } from "@/components/ui/DotStrip";
+import { ProgressRing } from "@/components/ui/ProgressRing";
 import { IconCheck } from "@/components/ui/icons";
 import { toggleHabitSubtaskAction } from "@/app/(app)/home/actions";
 import type { HabitWithTodayLog } from "@/lib/habits/queries";
+
+/** Which subtask a tile tap should toggle -- fills the next undone one
+ * (so a tap always advances the counter), or un-toggles the last one once
+ * every subtask is done (so a tap always does *something* on a full tile).
+ * Habits with zero subtasks have nothing to toggle from the tile. */
+function nextToggleId(habit: HabitWithTodayLog): string | null {
+  if (habit.subtasks.length === 0) return null;
+  const undone = habit.subtasks.find((s) => !habit.doneSubtaskIds.includes(s.id));
+  return undone ? undone.id : habit.subtasks[habit.subtasks.length - 1].id;
+}
 
 export function HabitsCard({
   habits,
@@ -72,55 +84,71 @@ export function HabitsCard({
 
   return (
     <TerminalPanel label="03 // HABITS" colSpan={4} rowSpan={2} className={className}>
-      <div className="flex items-center justify-between mb-1 gap-2">
-        <span className="text-subhead font-medium text-[var(--rtd-text-secondary)] rtd-nums rtd-mono">
-          {totalDone}/{localHabits.length} · {pct}%
-        </span>
+      <div className="flex justify-end mb-1 shrink-0">
         <DotStrip periods={dots} />
       </div>
-      <div className="flex flex-col gap-2.5 overflow-y-auto">
-        {localHabits.map((habit) => (
-          <div key={habit.id} className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span
-                className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center"
-                style={{
-                  background: habit.completed ? "var(--rtd-green)" : "transparent",
-                  border: habit.completed ? "none" : "1px solid var(--rtd-hairline)",
-                }}
-              >
-                {habit.completed && <IconCheck size={11} />}
-              </span>
-              <span
-                className="text-subhead font-medium"
-                style={{ color: habit.completed ? "var(--rtd-text-tertiary)" : "var(--rtd-text)" }}
-              >
-                {habit.name}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5 pl-6">
-              {habit.subtasks.map((sub) => {
-                const done = habit.doneSubtaskIds.includes(sub.id);
-                return (
-                  <button
-                    key={sub.id}
-                    onClick={() => toggle(habit.id, sub.id)}
-                    className="rtd-tap-target text-caption rounded-full px-2.5 py-1 border transition-colors"
-                    style={{
-                      borderColor: done ? "var(--rtd-green)" : "var(--rtd-hairline)",
-                      background: done ? "rgba(52,199,89,0.12)" : "transparent",
-                      color: done ? "var(--rtd-green)" : "var(--rtd-text-secondary)",
-                    }}
-                  >
-                    {sub.label}
-                  </button>
-                );
-              })}
-            </div>
+      <div className="flex gap-3 flex-1 min-h-0">
+        <div className="shrink-0 flex items-start pt-0.5">
+          <ProgressRing
+            pct={pct}
+            size={72}
+            strokeWidth={6}
+            color="var(--rtd-green)"
+            label={`${totalDone}/${localHabits.length}`}
+            sub="TODAY"
+            ariaLabel={`Habits completed today: ${totalDone} of ${localHabits.length}`}
+          />
+        </div>
+        {localHabits.length === 0 ? (
+          <Link
+            href="/more/settings"
+            className="rtd-tap-target flex-1 min-w-0 flex flex-col items-center justify-center gap-1 rounded-[8px] border border-dashed border-[var(--rtd-hairline)] px-3 py-4 text-center hover:bg-white/[0.04] transition-colors duration-150 ease-out"
+          >
+            <span className="text-subhead font-medium text-[var(--rtd-text-secondary)]">+ Add your first habit</span>
+            <span className="text-caption text-[var(--rtd-text-tertiary)]">Set it up in Settings</span>
+          </Link>
+        ) : (
+          <div className="flex-1 min-w-0 grid grid-cols-3 auto-rows-min gap-1.5 overflow-y-auto content-start">
+            {localHabits.map((habit) => {
+              const total = habit.subtasks.length;
+              const done = habit.doneSubtaskIds.length;
+              const nextId = nextToggleId(habit);
+              return (
+                <button
+                  key={habit.id}
+                  onClick={() => nextId && toggle(habit.id, nextId)}
+                  disabled={!nextId}
+                  className="rtd-tap-target flex flex-col items-start gap-0.5 rounded-[8px] border px-2 py-1.5 text-left transition-colors disabled:cursor-default"
+                  style={{
+                    borderColor: habit.completed ? "var(--rtd-green)" : "var(--rtd-hairline)",
+                    background: habit.completed ? "rgba(52,199,89,0.12)" : "rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5 w-full min-w-0">
+                    <span
+                      className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center"
+                      style={{
+                        background: habit.completed ? "var(--rtd-green)" : "transparent",
+                        border: habit.completed ? "none" : "1px solid var(--rtd-hairline)",
+                      }}
+                    >
+                      {habit.completed && <IconCheck size={9} />}
+                    </span>
+                    <span
+                      className="text-caption font-medium truncate"
+                      style={{ color: habit.completed ? "var(--rtd-text-tertiary)" : "var(--rtd-text)" }}
+                    >
+                      {habit.name}
+                    </span>
+                  </div>
+                  <span className="rtd-micro-label truncate w-full">{habit.category}</span>
+                  <span className="text-caption rtd-nums rtd-mono text-[var(--rtd-text-secondary)]">
+                    {total > 0 ? `${done}/${total}` : "—"}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ))}
-        {localHabits.length === 0 && (
-          <span className="text-subhead text-[var(--rtd-text-tertiary)]">No habits yet — add some in Settings.</span>
         )}
       </div>
     </TerminalPanel>

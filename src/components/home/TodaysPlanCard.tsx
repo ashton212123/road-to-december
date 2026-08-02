@@ -3,6 +3,7 @@ import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { IconCheck } from "@/components/ui/icons";
 import { ImportSessionButton } from "@/components/train/ImportSessionButton";
 import { SerifAccent } from "@/components/ui/SerifAccent";
+import { LocalTimeDisplay } from "@/components/home/LocalTimeDisplay";
 
 type PlanRow = {
   key: string;
@@ -48,7 +49,10 @@ export function TodaysPlanCard({
   return (
     <TerminalPanel colSpan={4} rowSpan={3} className={className}>
       <div className="flex items-center justify-between gap-2 mb-1 shrink-0">
-        <span className="rtd-micro-label truncate">02 // SESSION</span>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="rtd-micro-label truncate">02 // SESSION</span>
+          <LocalTimeDisplay />
+        </div>
         <ImportSessionButton phaseId={phaseId} todayExercises={todayExercises} compact />
       </div>
       {greeting && (

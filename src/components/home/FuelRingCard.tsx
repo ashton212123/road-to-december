@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { TerminalPanel } from "@/components/ui/TerminalPanel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import { HomeMealQuickLog } from "@/components/home/HomeMealQuickLog";
 
 function MacroBar({ label, current, targetG, color }: { label: string; current: number; targetG: number; color: string }) {
   const pct = targetG > 0 ? Math.min(100, (current / targetG) * 100) : 0;
@@ -20,8 +22,10 @@ function MacroBar({ label, current, targetG, color }: { label: string; current: 
 
 /** Whoop-style unified fuel card (V4 P3) -- replaces the separate Kcal/
  * Protein StatCards. One ring carries the headline number (kcal remaining);
- * P/C/F + water are secondary, slim capsule bars beside it. Taps through to
- * the detailed rings on /fuel. */
+ * P/C/F + water are secondary, slim capsule bars beside it. The ring/bars
+ * row taps through to the detailed rings on /fuel (§4e/WS5 §0 -- the panel
+ * itself stopped being the link once the quick-log input below it needed
+ * its own clicks, so only this row carries href now). */
 export function FuelRingCard({
   kcalToday,
   kcalTargetMid,
@@ -52,8 +56,8 @@ export function FuelRingCard({
   const waterPct = waterTargetMl > 0 ? Math.min(100, (waterMl / waterTargetMl) * 100) : 0;
 
   return (
-    <TerminalPanel href="/fuel" label="NUTRITION" number="06" colSpan={4} rowSpan={2} className={className}>
-      <div className="flex items-center gap-4 flex-1 min-h-0">
+    <TerminalPanel label="NUTRITION" number="06" colSpan={4} rowSpan={2} className={className}>
+      <Link href="/fuel" className="flex items-center gap-4 flex-1 min-h-0 rtd-tap-target">
         <ProgressRing
           pct={kcalPct}
           size={88}
@@ -82,7 +86,8 @@ export function FuelRingCard({
             />
           </div>
         </div>
-      </div>
+      </Link>
+      <HomeMealQuickLog />
     </TerminalPanel>
   );
 }

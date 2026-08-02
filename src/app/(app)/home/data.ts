@@ -42,7 +42,7 @@ import { getHomeGoalsData } from "@/lib/goals/queries";
 import { getHomeKeyTasks } from "@/lib/crm/queries";
 import { computeReadinessSignals } from "@/lib/rules/readiness";
 import { computeDailySessionLoads, computeAcwr, computeWeeklyLoad, computeWeekOverWeekRamp } from "@/lib/analytics/load";
-import { loadTakeaway } from "@/lib/analytics/takeaways";
+import { loadTakeaway, loadVerdict } from "@/lib/analytics/takeaways";
 
 const DAY_KEY_TO_WEEK_INDEX: Record<string, number> = {
   mon: 0,
@@ -250,6 +250,13 @@ export const getHomeViewModel = cache(async (today: string) => {
   );
   const daysToNcaa = Math.max(0, daysBetween(today, seasonData.meta.targets.ncaaDate));
   const daysToAsean = Math.max(0, daysBetween(today, seasonData.meta.targets.aseanDate));
+  // WS5 §0 Task 4G: same storage/derivation pattern as NCAA/ASEAN above.
+  // Not surfaced on any Home card yet -- no card was named to host it and
+  // the two natural candidates (hero band, calendar strip) are out of
+  // scope for this pass -- but the countdown is ready for whichever card
+  // WS5 §1 or a later pass decides should show it.
+  const daysToSeaGames2027 = Math.max(0, daysBetween(today, seasonData.meta.targets.seaGames2027Date));
+  const daysToPaiTryout = Math.max(0, daysBetween(today, seasonData.meta.targets.paiTryoutDate));
   const aseanDateLabel = new Date(seasonData.meta.targets.aseanDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const aseanLabel =
     settingsRow.aseanConfirmed === true
@@ -447,6 +454,7 @@ export const getHomeViewModel = cache(async (today: string) => {
   const thisWeekDaily = Array.from({ length: 7 }, (_, i) => dailyLoadByDate.get(addDaysISO(weekStart, i)) ?? null);
   const lastWeekDaily = Array.from({ length: 7 }, (_, i) => dailyLoadByDate.get(addDaysISO(weekStart, i - 7)) ?? null);
   const trainingLoadTakeaway = loadTakeaway(acwr);
+  const trainingLoadVerdict = loadVerdict(acwr);
 
   const recentPRs = findRecentPRs({ swimTimes, cmjTests });
 
@@ -491,6 +499,8 @@ export const getHomeViewModel = cache(async (today: string) => {
     alerts,
     daysToNcaa,
     daysToAsean,
+    daysToSeaGames2027,
+    daysToPaiTryout,
     aseanLabel,
     aseanDateLabel,
     seasonPct,
@@ -506,6 +516,7 @@ export const getHomeViewModel = cache(async (today: string) => {
     thisWeekDaily,
     lastWeekDaily,
     trainingLoadTakeaway,
+    trainingLoadVerdict,
     needsAttention,
     planRows,
     startHref,

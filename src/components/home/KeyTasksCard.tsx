@@ -8,12 +8,12 @@ const URGENCY_LABEL: Record<KeyTask["urgency"], string> = {
   someday: "Someday",
 };
 
-/** `06 // KEY TASKS` -- the ★-starred, ranked slice of the CRM (Phase 3),
+/** `09 // KEY TASKS` -- the ★-starred, ranked slice of the CRM (Phase 3),
  * surfaced on Home so the highest-priority items across both rails are
  * visible without a trip to /life/crm. */
 export function KeyTasksCard({ tasks, className }: { tasks: KeyTask[]; className?: string }) {
   return (
-    <TerminalPanel href="/life/crm" label="06 // KEY TASKS" colSpan={4} className={className}>
+    <TerminalPanel href="/life/crm" label="09 // KEY TASKS" colSpan={4} className={className}>
       {tasks.length === 0 ? (
         <span className="text-caption text-[var(--rtd-text-tertiary)]">No starred tasks</span>
       ) : (

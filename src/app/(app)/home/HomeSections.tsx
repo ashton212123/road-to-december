@@ -143,7 +143,12 @@ export async function HomeMainContent({ today }: { today: string }) {
             consistencyDone={vm.consistency.done}
             consistencyPlanned={vm.consistency.planned}
           />
-          <TrainingLoadCard thisWeekDaily={vm.thisWeekDaily} lastWeekDaily={vm.lastWeekDaily} takeaway={vm.trainingLoadTakeaway} />
+          <TrainingLoadCard
+            thisWeekDaily={vm.thisWeekDaily}
+            lastWeekDaily={vm.lastWeekDaily}
+            verdict={vm.trainingLoadVerdict}
+            takeaway={vm.trainingLoadTakeaway}
+          />
           <NeedsAttentionList items={vm.needsAttention} />
           <GoalsCard data={vm.goalsData} />
         </div>
