@@ -1555,3 +1555,60 @@ unrelated `result.ok`/`result.content` refactor. All four gates re-run clean pos
    touched to investigate or fix this (out of scope for Task 5, and the standing rule is escalate,
    not silently patch the prompt) — flagging it here since it's a real, reproducible failure mode
    independent of the shorthand-rule question and worth its own look before the next A2 attempt.
+
+---
+
+## WS6 §2 Task 1/2 — habits 0/0 differential diagnosis, smoke baseline update (2026-08-03)
+
+**Instructed not to assume pool contention** (the prior session's report had, without live
+verification) and to instrument the real deployed app instead. Did: a hidden HTML marker in
+`HomeSections.tsx` exposing the server-rendered `vm.habitsData.habits` value, a `console.log` inside
+`getHomeHabitsData`, one inside `HabitsCard`, and a session-gated `/api/debug-habits` route calling
+`getHomeHabitsData` in complete isolation (no other query competing for the pool). All four removed
+once diagnosis was done — none of this instrumentation is in the final commits.
+
+**Found via `vercel logs` on a genuinely fresh deployment's first `/home` request, not guesswork:**
+`getCanvasSummary({sync:false})`'s own `db.select().from(canvasCourses)`
+(`src/lib/canvas/sync.ts:76`) was the *only* query anywhere in Home's 20-query data pipeline with no
+`withFallback` protection, and it's awaited **before** the 19-query `Promise.all` even starts. Real
+log line: `Error: Failed query: select ... from "canvas_courses" ... [cause]: canceling statement due
+to statement timeout`. When it hangs, it alone burns through `withRetry`'s whole 15s outer budget
+before the Promise.all's other 19 queries get a fair chance to run at all — which is why `allPhases`
+(position 1) was *also* seen falling back to the placeholder phase on the same request, unrelated to
+its own position. **Fixed:** wrapped in `withFallback` with a 5s cap (Home doesn't render Canvas data
+directly, only feeds the urgent/critical-assignments alert list).
+
+**Second, separate bug found the same way:** an abandoned query later killed by Postgres's own
+`statement_timeout` was crashing the whole serverless process — `vercel logs` showed `Unhandled
+Rejection: ... canceling statement due to statement timeout` immediately followed by `Node.js process
+exited with exit status: 128`, on a request that had *already sent* its 200 response. Root cause: the
+crash surfaces via a raw `Socket` `"error"` event deep in `postgres-js`'s connection-cancellation path
+(stack ends `Socket.emit -> TCP.onStreamRead`), which Node treats as an `uncaughtException`, not a
+promise rejection — so an `unhandledRejection` listener alone (tried first) did not stop it. **Fixed:**
+new `src/instrumentation.ts` registers both listeners; only Postgres error code `57014`
+(statement_timeout) is swallowed, everything else still exits the process per Node's own guidance.
+
+**`habitsData` also reordered** from position 17 of 19 to position 2 (right after `allPhases`), with
+its own `withFallback` timeout widened from the 10s default to 12s.
+
+**Despite all three fixes, the habits card itself still shows 0/0 live.** A diagnostic test widened
+its timeout to 19s (just under the hard 20s Postgres `statement_timeout`) and it *still* never
+resolved — ruling out "just needs more time." This looks like a permanent hang specific to how this
+one query interacts with the pool under real load, not ordinary timing contention, and needs deeper
+investigation (e.g. instrumenting connection-acquisition time separately from query-execution time)
+in a future session. Reported to the user as an open item, not silently carried forward as fixed.
+
+**Task 2 — smoke baseline confirmed genuinely fixed.** Ran `node scripts/smoke.mjs` against
+production three times, spaced ~2–3 minutes apart, after the canvas + uncaughtException fixes landed:
+
+| Run | `/analytics` (5 checks) | `/learn` | Everything else |
+|---|---|---|---|
+| 1 | 5/5 pass | fail (sentinel flake) | pass |
+| 2 | 5/5 pass | fail (sentinel flake) | pass |
+| 3 | 5/5 pass | fail (sentinel flake) | pass |
+
+Identical pattern all three times: zero `/analytics` failures, only the pre-existing `/learn` sentinel
+flake (`missing sentinel "30 Days of Python"`, timing-related, unrelated to this session's changes).
+**Baseline updated**: the "6 pre-existing `/analytics` timeout failures" baseline referenced above
+(§ line ~1450) is retired as of this deploy — `/analytics` is clean. The `/learn` timing flake remains
+open and is the only accepted baseline exception going forward.
