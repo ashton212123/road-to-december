@@ -73,12 +73,12 @@ All checks pass:
 ### MCP Bearer Token (for claude.ai connector)
 
 ```
-862cc4c0d24ac4c58c5b523a4399630ed0b73a38af87cbf69421dacff7e5137c
+<REDACTED_ROTATE_THIS_TOKEN>
 ```
 
 **Setup in claude.ai:** Settings → Connectors → Add custom connector
 - **URL:** `https://road-to-december.vercel.app/api/mcp`
-- **Header:** `Authorization: Bearer 862cc4c0d24ac4c58c5b523a4399630ed0b73a38af87cbf69421dacff7e5137c`
+- **Header:** `Authorization: Bearer <REDACTED_ROTATE_THIS_TOKEN>`
 
 **Test:** "check my dashboard" should return current phase, bodyweight, fuel targets, and alerts.
 
