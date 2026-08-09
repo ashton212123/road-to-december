@@ -49,3 +49,6 @@ next-env.d.ts
 /.claude-flow/
 /supabase/.temp/
 /loop-artifacts/
+
+# personal training data (kept local, not on GitHub)
+/data/
